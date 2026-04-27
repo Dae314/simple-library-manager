@@ -1,0 +1,47 @@
+import { count } from 'drizzle-orm';
+import { db } from './index.js';
+import { games, conventionConfig } from './schema.js';
+
+const SEED_GAMES = [
+	{ title: 'Catan', bggId: 13, gameType: 'standard' },
+	{ title: 'Catan', bggId: 13, gameType: 'standard' },
+	{ title: 'Ticket to Ride', bggId: 9209, gameType: 'standard' },
+	{ title: 'Ticket to Ride', bggId: 9209, gameType: 'standard' },
+	{ title: 'Pandemic', bggId: 30549, gameType: 'standard' },
+	{ title: 'Azul', bggId: 230802, gameType: 'standard' },
+	{ title: 'Codenames', bggId: 178900, gameType: 'play_and_win' },
+	{ title: 'Wingspan', bggId: 266192, gameType: 'standard' },
+	{ title: '7 Wonders', bggId: 68448, gameType: 'play_and_take' },
+	{ title: 'Splendor', bggId: 148228, gameType: 'standard' }
+] as const;
+
+export async function seed(): Promise<void> {
+	const [result] = await db.select({ value: count() }).from(games);
+	if (result.value > 0) {
+		return;
+	}
+
+	// Track copy numbers per BGG ID
+	const copyNumbers = new Map<number, number>();
+
+	const rows = SEED_GAMES.map((game) => {
+		const current = (copyNumbers.get(game.bggId) ?? 0) + 1;
+		copyNumbers.set(game.bggId, current);
+		return {
+			title: game.title,
+			bggId: game.bggId,
+			copyNumber: current,
+			gameType: game.gameType
+		};
+	});
+
+	await db.insert(games).values(rows);
+
+	// Ensure a default convention config row exists
+	const [configResult] = await db.select({ value: count() }).from(conventionConfig);
+	if (configResult.value === 0) {
+		await db.insert(conventionConfig).values({});
+	}
+
+	console.log(`Seeded ${rows.length} example games`);
+}

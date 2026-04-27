@@ -6,38 +6,38 @@ Incremental implementation of a convention board game library management system 
 
 ## Tasks
 
-- [ ] 1. Project scaffolding and infrastructure setup
-  - [ ] 1.1 Initialize SvelteKit project with TypeScript and Node adapter
+- [x] 1. Project scaffolding and infrastructure setup
+  - [x] 1.1 Initialize SvelteKit project with TypeScript and Node adapter
     - Run `npm create svelte@latest` with TypeScript, install dependencies
     - Configure `svelte.config.js` with Node adapter, `tsconfig.json`, `vite.config.ts`
     - Install core dependencies: drizzle-orm, pg, drizzle-kit, svelte-french-toast
     - _Requirements: 10.8, 10.9, 10.11_
 
-  - [ ] 1.2 Create Docker and deployment configuration
+  - [x] 1.2 Create Docker and deployment configuration
     - Create `Dockerfile` (Node.js build + production image)
     - Create `docker-compose.yml` with Caddy, SvelteKit app, PostgreSQL services
     - Create `Caddyfile` with self-signed TLS and reverse proxy to port 3000
     - Configure PostgreSQL Docker volume for data persistence
     - _Requirements: 10.1, 10.2, 10.3, 10.5, 10.6_
 
-  - [ ] 1.3 Set up Drizzle ORM configuration and migration runner
+  - [x] 1.3 Set up Drizzle ORM configuration and migration runner
     - Create `drizzle.config.ts` pointing to schema and migrations directory
     - Implement migration runner in `src/hooks.server.ts` to auto-run pending migrations on startup
     - _Requirements: 10.9, 10.10_
 
-- [ ] 2. Database schema and seed data
-  - [ ] 2.1 Define Drizzle schema for all tables
+- [x] 2. Database schema and seed data
+  - [x] 2.1 Define Drizzle schema for all tables
     - Create `src/lib/server/db/schema.ts` with `convention_config`, `id_types`, `games`, `transactions` tables
     - Include all indexes as specified in design (bgg_id, status, game_type, game_id, type, created_at, attendee)
     - Include version columns for optimistic locking on `games` and `convention_config`
     - _Requirements: 10.9, 11.1, 11.2, 20.1_
 
-  - [ ] 2.2 Create Drizzle database client instance
+  - [x] 2.2 Create Drizzle database client instance
     - Create `src/lib/server/db/index.ts` with PostgreSQL connection using `pg` driver
     - Export typed Drizzle client for use in services
     - _Requirements: 10.9_
 
-  - [ ] 2.3 Generate initial migration and seed data
+  - [x] 2.3 Generate initial migration and seed data
     - Run `drizzle-kit generate` to create the initial migration SQL
     - Create `src/lib/server/db/seed.ts` with 10 example games (Catan ×2, Ticket to Ride ×2, Pandemic, Azul, Codenames as play_and_win, Wingspan, 7 Wonders as play_and_take, Splendor)
     - Seed runs only when games table is empty (first-run check)

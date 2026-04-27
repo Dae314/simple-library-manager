@@ -13,6 +13,7 @@ services:
       - caddy_config:/config
     depends_on:
       - app
+    restart: unless-stopped
 
   app:
     build: .
@@ -24,6 +25,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
 
   db:
     image: postgres:16-alpine
@@ -38,6 +40,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
 volumes:
   pgdata:
