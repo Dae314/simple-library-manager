@@ -215,14 +215,14 @@ Incremental implementation of a convention board game library management system 
     - Create `FilterPanel.svelte` (composable filter panel with text, dropdowns, date pickers, toggles)
     - _Requirements: 16.2, 16.3, 16.4, 10.12_
 
-- [ ] 11. Checkout page
-  - [ ] 11.1 Implement checkout page server logic
+- [x] 11. Checkout page
+  - [x] 11.1 Implement checkout page server logic
     - Create `src/routes/checkout/+page.server.ts` with load (available games, paginated, searchable) and checkout action
     - Pass game version for optimistic locking, validate all required fields, call transactionService.checkout
     - Handle conflict (409) response for stale version
     - _Requirements: 4.1, 4.4–4.9, 4.10, 4.12, 4.13, 4.14, 4.15_
 
-  - [ ] 11.2 Implement checkout page UI
+  - [x] 11.2 Implement checkout page UI
     - Create `src/routes/checkout/+page.svelte` with search bar, paginated game list with type badges
     - Checkout form: attendee first/last name, ID type dropdown (from config), weight input, optional note
     - Display validation errors, conflict messages, success toast
