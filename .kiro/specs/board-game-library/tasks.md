@@ -299,8 +299,8 @@ Incremental implementation of a convention board game library management system 
 - [x] 16. Checkpoint - Core pages and filtering tests complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 17. Statistics page
-  - [ ] 17.1 Implement statistics page
+- [x] 17. Statistics page
+  - [x] 17.1 Implement statistics page
     - Create `src/routes/statistics/+page.server.ts` with load (aggregated stats with all filters)
     - Create `src/routes/statistics/+page.svelte` with FilterPanel (time range, time of day, convention day, game title, attendee, status, game type, BGG grouping toggle)
     - Display metric cards, ranked game list (paginated), duration distribution
