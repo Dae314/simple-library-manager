@@ -98,22 +98,111 @@ Incremental implementation of a convention board game library management system 
     - Export all games with title, BGG_ID, copy_number, status
     - _Requirements: 19.1–19.6_
 
-- [ ] 5. Checkpoint - Core services complete
+- [ ] 5. Property-based tests: Validation properties
+  - [ ] 5.1 Write property test for game record validation
+    - **Property 1: Game record validation rejects invalid input**
+    - **Validates: Requirements 1.2, 1.3, 1.4, 2.2, 2.3**
+    - Test file: `tests/properties/game-validation.prop.test.ts`
+
+  - [ ] 5.2 Write property test for checkout validation
+    - **Property 2: Checkout validation rejects incomplete input**
+    - **Validates: Requirements 4.4, 4.5, 4.6, 4.7, 4.8**
+    - Test file: `tests/properties/transaction-validation.prop.test.ts`
+
+  - [ ] 5.3 Write property test for checkin validation
+    - **Property 3: Checkin validation rejects missing or invalid weight**
+    - **Validates: Requirements 5.5, 5.8**
+    - Test file: `tests/properties/transaction-validation.prop.test.ts`
+
+  - [ ] 5.4 Write property test for transaction data round-trip
+    - **Property 6: Transaction data round-trip**
+    - **Validates: Requirements 4.9, 4.15, 5.6, 5.13**
+    - Test file: `tests/properties/transaction-validation.prop.test.ts`
+
+- [ ] 6. Property-based tests: State machine and locking
+  - [ ] 6.1 Write property test for game status state machine
+    - **Property 4: Game status state machine transitions**
+    - **Validates: Requirements 4.1, 4.2, 5.1, 5.2**
+    - Test file: `tests/properties/state-machine.prop.test.ts`
+
+  - [ ] 6.2 Write property test for optimistic locking
+    - **Property 5: Optimistic locking rejects stale versions**
+    - **Validates: Requirements 4.13**
+    - Test file: `tests/properties/state-machine.prop.test.ts`
+
+  - [ ] 6.3 Write property test for transaction reversal
+    - **Property 15: Transaction reversal restores status and creates corrective record**
+    - **Validates: Requirements 8.1, 8.2, 8.3**
+    - Test file: `tests/properties/state-machine.prop.test.ts`
+
+- [ ] 7. Property-based tests: Weight, retire/restore, and game types
+  - [ ] 7.1 Write property test for weight warning correctness
+    - **Property 7: Weight warning correctness**
+    - **Validates: Requirements 5.7**
+    - Test file: `tests/properties/weight-warning.prop.test.ts`
+
+  - [ ] 7.2 Write property test for retire/restore round-trip
+    - **Property 8: Retire/restore round-trip**
+    - **Validates: Requirements 3.1, 3.8, 3.9**
+    - Test file: `tests/properties/retire-restore.prop.test.ts`
+
+  - [ ] 7.3 Write property test for retired games excluded from views
+    - **Property 9: Retired games excluded from checkout and checkin views**
+    - **Validates: Requirements 3.5, 4.10, 5.9**
+    - Test file: `tests/properties/retire-restore.prop.test.ts`
+
+  - [ ] 7.4 Write property test for play-and-take checkin behavior
+    - **Property 17: Play-and-take checkin behavior**
+    - **Validates: Requirements 20.7, 20.8**
+    - Test file: `tests/properties/game-types.prop.test.ts`
+
+- [ ] 8. Property-based tests: Copy numbers, statistics, config, CSV, and BGG URL
+  - [ ] 8.1 Write property test for copy number sequential uniqueness
+    - **Property 14: Copy number sequential uniqueness**
+    - **Validates: Requirements 11.2**
+    - Test file: `tests/properties/game-validation.prop.test.ts`
+
+  - [ ] 8.2 Write property test for statistics duration metrics
+    - **Property 16: Statistics duration metrics use only completed pairs**
+    - **Validates: Requirements 12.16, 12.19**
+    - Test file: `tests/properties/statistics.prop.test.ts`
+
+  - [ ] 8.3 Write property test for BGG URL format
+    - **Property 18: BGG URL format**
+    - **Validates: Requirements 9.1**
+    - Test file: `tests/properties/game-validation.prop.test.ts`
+
+  - [ ] 8.4 Write property test for convention configuration validation
+    - **Property 19: Convention configuration validation**
+    - **Validates: Requirements 14.6, 14.7**
+    - Test file: `tests/properties/config-validation.prop.test.ts`
+
+  - [ ] 8.5 Write property test for CSV validation error reporting
+    - **Property 20: CSV validation reports all errors**
+    - **Validates: Requirements 19.2, 19.3**
+    - Test file: `tests/properties/csv.prop.test.ts`
+
+  - [ ] 8.6 Write property test for CSV export completeness
+    - **Property 21: CSV export completeness**
+    - **Validates: Requirements 19.6**
+    - Test file: `tests/properties/csv.prop.test.ts`
+
+- [ ] 9. Checkpoint - Core services and property tests complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Layout, navigation, and shared components
-  - [ ] 6.1 Implement root layout with Navbar and convention name
+- [ ] 10. Layout, navigation, and shared components
+  - [ ] 10.1 Implement root layout with Navbar and convention name
     - Create `src/routes/+layout.svelte` with responsive Navbar, Toaster (svelte-french-toast)
     - Create `src/routes/+layout.server.ts` to load convention config (name, weight unit)
     - _Requirements: 17.1, 14.2_
 
-  - [ ] 6.2 Implement Navbar component with responsive behavior
+  - [ ] 10.2 Implement Navbar component with responsive behavior
     - Create `src/lib/components/Navbar.svelte` with persistent bar (tablet/desktop) and hamburger menu (mobile)
     - Show Checkout, Checkin always visible; Catalog, Statistics, Management, Config in hamburger on mobile
     - Highlight active page
     - _Requirements: 17.1, 17.2, 17.3, 17.4_
 
-  - [ ] 6.3 Implement shared UI components
+  - [ ] 10.3 Implement shared UI components
     - Create `Pagination.svelte` (page controls, page size selector, total count display)
     - Create `SearchFilter.svelte` (debounced text input, 300ms)
     - Create `ConfirmDialog.svelte` (modal with configurable title/message/warning)
@@ -122,224 +211,135 @@ Incremental implementation of a convention board game library management system 
     - Create `FilterPanel.svelte` (composable filter panel with text, dropdowns, date pickers, toggles)
     - _Requirements: 16.2, 16.3, 16.4, 10.12_
 
-- [ ] 7. Checkout page
-  - [ ] 7.1 Implement checkout page server logic
+- [ ] 11. Checkout page
+  - [ ] 11.1 Implement checkout page server logic
     - Create `src/routes/checkout/+page.server.ts` with load (available games, paginated, searchable) and checkout action
     - Pass game version for optimistic locking, validate all required fields, call transactionService.checkout
     - Handle conflict (409) response for stale version
     - _Requirements: 4.1, 4.4–4.9, 4.10, 4.12, 4.13, 4.14, 4.15_
 
-  - [ ] 7.2 Implement checkout page UI
+  - [ ] 11.2 Implement checkout page UI
     - Create `src/routes/checkout/+page.svelte` with search bar, paginated game list with type badges
     - Checkout form: attendee first/last name, ID type dropdown (from config), weight input, optional note
     - Display validation errors, conflict messages, success toast
     - _Requirements: 4.3, 4.8, 4.10, 4.11, 4.12, 4.13_
 
-- [ ] 8. Checkin page
-  - [ ] 8.1 Implement checkin page server logic
+- [ ] 12. Checkin page
+  - [ ] 12.1 Implement checkin page server logic
     - Create `src/routes/checkin/+page.server.ts` with load (checked-out games with attendee info and duration, paginated, searchable) and checkin action
     - Validate weight, call transactionService.checkin, return weight warning if applicable
     - Handle play_and_win reminder flag and play_and_take attendee choice
     - _Requirements: 5.1, 5.4–5.13, 20.5, 20.6, 20.7, 20.8_
 
-  - [ ] 8.2 Implement checkin page UI
+  - [ ] 12.2 Implement checkin page UI
     - Create `src/routes/checkin/+page.svelte` with search bar (title or attendee name), paginated game list with attendee info and checkout duration
     - Checkin form: weight input, optional note
     - ID return reminder, weight warning display, play_and_win raffle reminder, play_and_take dialog
     - _Requirements: 5.3, 5.4, 5.7, 5.9, 5.10, 5.11, 5.12, 20.5, 20.6_
 
-- [ ] 9. Catalog page
-  - [ ] 9.1 Implement catalog page
+- [ ] 13. Catalog page
+  - [ ] 13.1 Implement catalog page
     - Create `src/routes/catalog/+page.server.ts` with load (all non-retired games, filtered, paginated)
     - Create `src/routes/catalog/+page.svelte` with filter bar (status, game type, title search), game list with BGG links, status indicators, type badges, copy identifiers
     - _Requirements: 6.1–6.5, 9.1, 9.2, 11.3_
 
-- [ ] 10. Management area
-  - [ ] 10.1 Implement management game list page
+- [ ] 14. Management area
+  - [ ] 14.1 Implement management game list page
     - Create `src/routes/management/+page.server.ts` with load (games with advanced filters, sorting, pagination) and actions (bulk retire, restore)
     - Create `src/routes/management/+page.svelte` with FilterPanel, bulk select checkboxes, retire/restore buttons, confirmation dialogs
     - _Requirements: 3.1–3.9, 13.1–13.10_
 
-  - [ ] 10.2 Implement add game page
+  - [ ] 14.2 Implement add game page
     - Create `src/routes/management/games/new/+page.server.ts` and `+page.svelte`
     - Form: title, BGG_ID, game type selector; validation errors display
     - _Requirements: 1.1–1.5, 20.2_
 
-  - [ ] 10.3 Implement edit game page
+  - [ ] 14.3 Implement edit game page
     - Create `src/routes/management/games/[id]/+page.server.ts` and `+page.svelte`
     - Form: edit title, BGG_ID, game type; status toggle with corrective transaction
     - _Requirements: 2.1–2.6, 20.3_
 
-  - [ ] 10.4 Implement transaction log page
+  - [ ] 14.4 Implement transaction log page
     - Create `src/routes/management/transactions/+page.server.ts` and `+page.svelte`
     - Display chronological transaction list with filters (game title, type, attendee name), pagination
     - Reversal action buttons with conflict handling
     - _Requirements: 7.1–7.5, 8.1–8.3_
 
-- [ ] 11. Checkpoint - Core pages complete
+- [ ] 15. Property-based tests: Filtering, sorting, and pagination
+  - [ ] 15.1 Write property test for transaction log chronological ordering
+    - **Property 10: Transaction log chronological ordering**
+    - **Validates: Requirements 7.1**
+    - Test file: `tests/properties/filtering.prop.test.ts`
+
+  - [ ] 15.2 Write property test for filter predicate correctness
+    - **Property 11: Filter predicate correctness**
+    - **Validates: Requirements 6.2, 6.3, 6.4, 7.3, 7.4, 7.5, 12.6, 13.1**
+    - Test file: `tests/properties/filtering.prop.test.ts`
+
+  - [ ] 15.3 Write property test for combined filters intersection
+    - **Property 12: Combined filters produce intersection**
+    - **Validates: Requirements 12.18, 13.9**
+    - Test file: `tests/properties/filtering.prop.test.ts`
+
+  - [ ] 15.4 Write property test for sort ordering correctness
+    - **Property 13: Sort ordering correctness**
+    - **Validates: Requirements 13.5**
+    - Test file: `tests/properties/filtering.prop.test.ts`
+
+  - [ ] 15.5 Write property test for pagination correctness
+    - **Property 22: Pagination returns correct subset**
+    - **Validates: Requirements 16.1, 16.4**
+    - Test file: `tests/properties/pagination.prop.test.ts`
+
+- [ ] 16. Checkpoint - Core pages and filtering tests complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 12. Statistics page
-  - [ ] 12.1 Implement statistics page
+- [ ] 17. Statistics page
+  - [ ] 17.1 Implement statistics page
     - Create `src/routes/statistics/+page.server.ts` with load (aggregated stats with all filters)
     - Create `src/routes/statistics/+page.svelte` with FilterPanel (time range, time of day, convention day, game title, attendee, status, game type, BGG grouping toggle)
     - Display metric cards, ranked game list (paginated), duration distribution
     - Handle empty results with "no matching data" message
     - _Requirements: 12.1–12.20_
 
-- [ ] 13. Configuration page
-  - [ ] 13.1 Implement convention configuration page
+- [ ] 18. Configuration page
+  - [ ] 18.1 Implement convention configuration page
     - Create `src/routes/management/config/+page.server.ts` and `+page.svelte`
     - Form: convention name, start/end dates, weight tolerance, weight unit selector
     - ID types management (add/remove list)
     - Validation errors for invalid dates and non-positive tolerance
     - _Requirements: 14.1–14.10_
 
-- [ ] 14. Backup and CSV pages
-  - [ ] 14.1 Implement database backup page
+- [ ] 19. Backup and CSV pages
+  - [ ] 19.1 Implement database backup page
     - Create `src/routes/management/backup/+page.server.ts` and `+page.svelte`
     - Create `src/routes/api/backup/export/+server.ts` for streaming download
     - Export button (download), import with file upload and confirmation dialog
     - Error handling for invalid files, success confirmations
     - _Requirements: 15.1–15.7_
 
-  - [ ] 14.2 Implement CSV import/export page
+  - [ ] 19.2 Implement CSV import/export page
     - Create `src/routes/management/csv/+page.server.ts` and `+page.svelte`
     - CSV upload with validation preview (show errors or row count), confirmation dialog, import action
     - CSV export download button
     - _Requirements: 19.1–19.6_
 
-- [ ] 15. Checkpoint - All features complete
-  - Ensure all tests pass, ask the user if questions arise.
-
-- [ ] 16. Property-based tests: Validation properties
-  - [ ] 16.1 Write property test for game record validation
-    - **Property 1: Game record validation rejects invalid input**
-    - **Validates: Requirements 1.2, 1.3, 1.4, 2.2, 2.3**
-    - Test file: `tests/properties/game-validation.prop.test.ts`
-
-  - [ ] 16.2 Write property test for checkout validation
-    - **Property 2: Checkout validation rejects incomplete input**
-    - **Validates: Requirements 4.4, 4.5, 4.6, 4.7, 4.8**
-    - Test file: `tests/properties/transaction-validation.prop.test.ts`
-
-  - [ ] 16.3 Write property test for checkin validation
-    - **Property 3: Checkin validation rejects missing or invalid weight**
-    - **Validates: Requirements 5.5, 5.8**
-    - Test file: `tests/properties/transaction-validation.prop.test.ts`
-
-  - [ ] 16.4 Write property test for transaction data round-trip
-    - **Property 6: Transaction data round-trip**
-    - **Validates: Requirements 4.9, 4.15, 5.6, 5.13**
-    - Test file: `tests/properties/transaction-validation.prop.test.ts`
-
-- [ ] 17. Property-based tests: State machine and locking
-  - [ ] 17.1 Write property test for game status state machine
-    - **Property 4: Game status state machine transitions**
-    - **Validates: Requirements 4.1, 4.2, 5.1, 5.2**
-    - Test file: `tests/properties/state-machine.prop.test.ts`
-
-  - [ ] 17.2 Write property test for optimistic locking
-    - **Property 5: Optimistic locking rejects stale versions**
-    - **Validates: Requirements 4.13**
-    - Test file: `tests/properties/state-machine.prop.test.ts`
-
-  - [ ] 17.3 Write property test for transaction reversal
-    - **Property 15: Transaction reversal restores status and creates corrective record**
-    - **Validates: Requirements 8.1, 8.2, 8.3**
-    - Test file: `tests/properties/state-machine.prop.test.ts`
-
-- [ ] 18. Property-based tests: Weight, retire/restore, and game types
-  - [ ] 18.1 Write property test for weight warning correctness
-    - **Property 7: Weight warning correctness**
-    - **Validates: Requirements 5.7**
-    - Test file: `tests/properties/weight-warning.prop.test.ts`
-
-  - [ ] 18.2 Write property test for retire/restore round-trip
-    - **Property 8: Retire/restore round-trip**
-    - **Validates: Requirements 3.1, 3.8, 3.9**
-    - Test file: `tests/properties/retire-restore.prop.test.ts`
-
-  - [ ] 18.3 Write property test for retired games excluded from views
-    - **Property 9: Retired games excluded from checkout and checkin views**
-    - **Validates: Requirements 3.5, 4.10, 5.9**
-    - Test file: `tests/properties/retire-restore.prop.test.ts`
-
-  - [ ] 18.4 Write property test for play-and-take checkin behavior
-    - **Property 17: Play-and-take checkin behavior**
-    - **Validates: Requirements 20.7, 20.8**
-    - Test file: `tests/properties/game-types.prop.test.ts`
-
-- [ ] 19. Property-based tests: Filtering, sorting, and pagination
-  - [ ] 19.1 Write property test for transaction log chronological ordering
-    - **Property 10: Transaction log chronological ordering**
-    - **Validates: Requirements 7.1**
-    - Test file: `tests/properties/filtering.prop.test.ts`
-
-  - [ ] 19.2 Write property test for filter predicate correctness
-    - **Property 11: Filter predicate correctness**
-    - **Validates: Requirements 6.2, 6.3, 6.4, 7.3, 7.4, 7.5, 12.6, 13.1**
-    - Test file: `tests/properties/filtering.prop.test.ts`
-
-  - [ ] 19.3 Write property test for combined filters intersection
-    - **Property 12: Combined filters produce intersection**
-    - **Validates: Requirements 12.18, 13.9**
-    - Test file: `tests/properties/filtering.prop.test.ts`
-
-  - [ ] 19.4 Write property test for sort ordering correctness
-    - **Property 13: Sort ordering correctness**
-    - **Validates: Requirements 13.5**
-    - Test file: `tests/properties/filtering.prop.test.ts`
-
-  - [ ] 19.5 Write property test for pagination correctness
-    - **Property 22: Pagination returns correct subset**
-    - **Validates: Requirements 16.1, 16.4**
-    - Test file: `tests/properties/pagination.prop.test.ts`
-
-- [ ] 20. Property-based tests: Copy numbers, statistics, config, CSV, and BGG URL
-  - [ ] 20.1 Write property test for copy number sequential uniqueness
-    - **Property 14: Copy number sequential uniqueness**
-    - **Validates: Requirements 11.2**
-    - Test file: `tests/properties/game-validation.prop.test.ts`
-
-  - [ ] 20.2 Write property test for statistics duration metrics
-    - **Property 16: Statistics duration metrics use only completed pairs**
-    - **Validates: Requirements 12.16, 12.19**
-    - Test file: `tests/properties/statistics.prop.test.ts`
-
-  - [ ] 20.3 Write property test for BGG URL format
-    - **Property 18: BGG URL format**
-    - **Validates: Requirements 9.1**
-    - Test file: `tests/properties/game-validation.prop.test.ts`
-
-  - [ ] 20.4 Write property test for convention configuration validation
-    - **Property 19: Convention configuration validation**
-    - **Validates: Requirements 14.6, 14.7**
-    - Test file: `tests/properties/config-validation.prop.test.ts`
-
-  - [ ] 20.5 Write property test for CSV validation error reporting
-    - **Property 20: CSV validation reports all errors**
-    - **Validates: Requirements 19.2, 19.3**
-    - Test file: `tests/properties/csv.prop.test.ts`
-
-  - [ ] 20.6 Write property test for CSV export completeness
-    - **Property 21: CSV export completeness**
-    - **Validates: Requirements 19.6**
-    - Test file: `tests/properties/csv.prop.test.ts`
-
-- [ ] 21. Integration tests (Playwright)
-  - [ ] 21.1 Write Playwright test for full checkout → checkin flow
+- [ ] 20. Integration tests (Playwright)
+  - [ ] 20.1 Write Playwright test for full checkout → checkin flow
     - Test complete checkout and checkin through browser UI
     - Verify status changes, attendee info display, weight warning
     - _Requirements: 4.1–4.15, 5.1–5.13_
 
-  - [ ] 21.2 Write Playwright test for database backup/restore round-trip
+  - [ ] 20.2 Write Playwright test for database backup/restore round-trip
     - Export database, import on fresh state, verify data integrity
     - _Requirements: 15.1–15.7_
 
-  - [ ] 21.3 Write Playwright test for responsive navigation
+  - [ ] 20.3 Write Playwright test for responsive navigation
     - Test navbar on desktop vs hamburger menu on mobile viewports
     - _Requirements: 17.1–17.4_
+
+- [ ] 21. Checkpoint - All features and integration tests complete
+  - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 22. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
