@@ -322,15 +322,15 @@ Incremental implementation of a convention board game library management system 
     - Validation errors for invalid dates and non-positive tolerance
     - _Requirements: 14.1–14.10_
 
-- [ ] 19. Backup and CSV pages
-  - [ ] 19.1 Implement database backup page
+- [x] 19. Backup and CSV pages
+  - [x] 19.1 Implement database backup page
     - Create `src/routes/management/backup/+page.server.ts` and `+page.svelte`
     - Create `src/routes/api/backup/export/+server.ts` for streaming download
     - Export button (download), import with file upload and confirmation dialog
     - Error handling for invalid files, success confirmations
     - _Requirements: 15.1–15.7_
 
-  - [ ] 19.2 Add CSV import/export actions to management games page
+  - [x] 19.2 Add CSV import/export actions to management games page
     - Add CSV import action to `src/routes/management/games/+page.server.ts` with validation preview (show errors or row count), confirmation dialog
     - Add CSV export action to `src/routes/management/games/+page.server.ts` for download
     - CSV Import and Export buttons are part of the `/management/games` page UI (no separate CSV route)
