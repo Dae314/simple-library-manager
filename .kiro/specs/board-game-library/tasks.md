@@ -247,23 +247,23 @@ Incremental implementation of a convention board game library management system 
     - Create `src/routes/catalog/+page.svelte` with filter bar (status, game type, title search), game list with BGG links, status indicators, type badges, copy identifiers
     - _Requirements: 6.1–6.5, 9.1, 9.2, 11.3_
 
-- [ ] 14. Management area
-  - [ ] 14.1 Implement management game list page
+- [x] 14. Management area
+  - [x] 14.1 Implement management game list page
     - Create `src/routes/management/+page.server.ts` with load (games with advanced filters, sorting, pagination) and actions (bulk retire, restore)
     - Create `src/routes/management/+page.svelte` with FilterPanel, bulk select checkboxes, retire/restore buttons, confirmation dialogs
     - _Requirements: 3.1–3.9, 13.1–13.10_
 
-  - [ ] 14.2 Implement add game page
+  - [x] 14.2 Implement add game page
     - Create `src/routes/management/games/new/+page.server.ts` and `+page.svelte`
     - Form: title, BGG_ID, game type selector; validation errors display
     - _Requirements: 1.1–1.5, 20.2_
 
-  - [ ] 14.3 Implement edit game page
+  - [x] 14.3 Implement edit game page
     - Create `src/routes/management/games/[id]/+page.server.ts` and `+page.svelte`
     - Form: edit title, BGG_ID, game type; status toggle with corrective transaction
     - _Requirements: 2.1–2.6, 20.3_
 
-  - [ ] 14.4 Implement transaction log page
+  - [x] 14.4 Implement transaction log page
     - Create `src/routes/management/transactions/+page.server.ts` and `+page.svelte`
     - Display chronological transaction list with filters (game title, type, attendee name), pagination
     - Reversal action buttons with conflict handling
