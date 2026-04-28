@@ -307,8 +307,8 @@ Incremental implementation of a convention board game library management system 
     - Handle empty results with "no matching data" message
     - _Requirements: 12.1–12.20_
 
-- [ ] 18. Configuration page
-  - [ ] 18.1 Implement convention configuration page
+- [x] 18. Configuration page
+  - [x] 18.1 Implement convention configuration page
     - Create `src/routes/management/config/+page.server.ts` and `+page.svelte`
     - Form: convention name, start/end dates, weight tolerance, weight unit selector
     - ID types management (add/remove list)
