@@ -251,3 +251,15 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 export function shouldWarnWeight(checkoutWeight: number, checkinWeight: number, tolerance: number): boolean {
 	return Math.abs(checkinWeight - checkoutWeight) > tolerance;
 }
+
+// --- Error Classes ---
+
+export class ValidationError extends Error {
+	errors: Record<string, string>;
+
+	constructor(errors: Record<string, string>) {
+		super('Validation failed');
+		this.name = 'ValidationError';
+		this.errors = errors;
+	}
+}

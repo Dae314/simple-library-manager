@@ -54,8 +54,8 @@ Incremental implementation of a convention board game library management system 
     - Create `src/lib/utils/validation.ts` for client-side validation helpers
     - _Requirements: 10.7, 14.4_
 
-- [ ] 4. Core server-side services
-  - [ ] 4.1 Implement Game Service
+- [x] 4. Core server-side services
+  - [x] 4.1 Implement Game Service
     - Create `src/lib/server/services/games.ts` with CRUD operations (create, update, retire, restore)
     - Implement copy number auto-generation (MAX+1 per BGG_ID within transaction)
     - Implement list queries with filters (status, game type, title search, date filters) and pagination
@@ -63,7 +63,7 @@ Incremental implementation of a convention board game library management system 
     - Implement `toggleStatus` with optimistic locking and corrective transaction creation
     - _Requirements: 1.1, 1.5, 2.1, 2.4, 2.5, 2.6, 3.1, 3.8, 11.1, 11.2_
 
-  - [ ] 4.2 Implement Transaction Service
+  - [x] 4.2 Implement Transaction Service
     - Create `src/lib/server/services/transactions.ts` with checkout, checkin, and reversal logic
     - Implement optimistic locking check in checkout (version match)
     - Implement weight comparison in checkin (return warning if |diff| > tolerance)
@@ -72,7 +72,7 @@ Incremental implementation of a convention board game library management system 
     - Implement transaction list query with filters (game title, type, attendee name) and pagination
     - _Requirements: 4.1, 4.9, 4.13, 5.1, 5.6, 5.7, 8.1, 8.2, 8.3, 20.7, 20.8_
 
-  - [ ] 4.3 Implement Statistics Service
+  - [x] 4.3 Implement Statistics Service
     - Create `src/lib/server/services/statistics.ts` with aggregation queries
     - Implement total checkouts, current checked-out/available counts, avg checkouts per day
     - Implement duration metrics (avg, min, max) using only completed checkout-checkin pairs
@@ -80,19 +80,19 @@ Incremental implementation of a convention board game library management system 
     - Implement all filters: time range, time of day, convention day, game title, attendee, status, game type, BGG title grouping
     - _Requirements: 12.1–12.20_
 
-  - [ ] 4.4 Implement Config Service
+  - [x] 4.4 Implement Config Service
     - Create `src/lib/server/services/config.ts` with get/update for convention configuration
     - Implement ID types management (add, remove, list)
     - Validate end date >= start date, weight tolerance > 0
     - _Requirements: 14.1–14.10_
 
-  - [ ] 4.5 Implement Backup Service
+  - [x] 4.5 Implement Backup Service
     - Create `src/lib/server/services/backup.ts` with pg_dump export (streaming) and pg_restore import
     - Validate uploaded file before restoring
     - _Requirements: 15.1–15.7_
 
-  - [ ] 4.6 Implement CSV Service
-    - Create `src/lib/server/services/csv.ts` with CSV validation, import, and export
+  - [x] 4.6 Implement CSV Service
+    - Create `src/lib/server/services/csv.ts` with CSV validation, import, and export using PapaParse
     - Validate all rows before importing (collect all errors)
     - Generate copy numbers for imported games
     - Export all games with title, BGG_ID, copy_number, status

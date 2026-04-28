@@ -58,6 +58,7 @@ graph TB
 | Notifications | svelte-french-toast | Lightweight toast notifications for success, error, and warning popups |
 | Testing (Unit/PBT) | Vitest + fast-check | Fast unit tests and property-based testing |
 | Testing (Integration) | Playwright | Browser-based end-to-end testing against the full stack |
+| CSV Parsing | PapaParse | Robust CSV parsing/generation with quoted fields, BOM handling |
 | Package Manager | npm | Per requirements |
 | Containerization | Docker + docker-compose | Single-command deployment |
 
@@ -262,11 +263,13 @@ interface BackupService {
 
 #### CSV Service (`csv.ts`)
 
+Uses PapaParse for robust CSV parsing and generation (handles quoted fields, BOM, newlines in values).
+
 ```typescript
 interface CsvService {
-  validateImport(file: File): Promise<{ valid: boolean; errors: string[]; rowCount: number }>;
-  importGames(file: File): Promise<{ created: number }>;
-  exportGames(): Promise<string>;  // CSV string
+  validateImport(fileContent: string): Promise<{ valid: boolean; errors: { row: number; message: string }[]; rowCount: number }>;
+  importGames(fileContent: string): Promise<{ created: number }>;
+  exportGames(): Promise<string>;  // CSV string via Papa.unparse()
 }
 ```
 
