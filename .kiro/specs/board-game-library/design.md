@@ -123,9 +123,11 @@ board-game-library/
 │       │   ├── +page.svelte
 │       │   └── +page.server.ts
 │       ├── management/
-│       │   ├── +page.svelte        # Game list with filters
+│       │   ├── +page.svelte        # Landing/nav page for management area
 │       │   ├── +page.server.ts
 │       │   ├── games/
+│       │   │   ├── +page.svelte    # Game list with filters, bulk ops, CSV import/export
+│       │   │   ├── +page.server.ts
 │       │   │   ├── new/
 │       │   │   │   ├── +page.svelte
 │       │   │   │   └── +page.server.ts
@@ -138,10 +140,7 @@ board-game-library/
 │       │   ├── config/
 │       │   │   ├── +page.svelte
 │       │   │   └── +page.server.ts
-│       │   ├── backup/
-│       │   │   ├── +page.svelte
-│       │   │   └── +page.server.ts
-│       │   └── csv/
+│       │   └── backup/
 │       │       ├── +page.svelte
 │       │       └── +page.server.ts
 │       └── api/
@@ -333,13 +332,13 @@ Each page follows the SvelteKit pattern:
 - UI: Filter panel (time range, time of day, convention day, game title, attendee, status, game type, BGG grouping toggle), metric cards, ranked game list, duration distribution
 
 #### Management Pages
-- `/management`: Game list with advanced filters, bulk select, retire/restore actions
+- `/management`: Management area landing page with navigation cards linking to sub-sections (games, transactions, config, backup)
+- `/management/games`: Game list with advanced filters, bulk select, inline retire/restore buttons per row, bulk retire action, CSV import/export buttons, confirmation dialogs. Clicking a game row navigates to `/management/games/[id]` for detailed editing. Similar to the catalog view but with additional management capabilities.
 - `/management/games/new`: Add game form (title, BGG ID, game type)
 - `/management/games/[id]`: Edit game form, status toggle
 - `/management/transactions`: Transaction log with filters, reversal actions
 - `/management/config`: Convention configuration form
 - `/management/backup`: Database export/import
-- `/management/csv`: CSV import/export
 
 
 ## Data Models

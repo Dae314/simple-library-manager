@@ -106,7 +106,7 @@
 		</div>
 
 		<div class="form-actions">
-			<a href="/management" class="btn-cancel">Cancel</a>
+			<a href="/management/games" class="btn-cancel">Cancel</a>
 			<button type="submit" class="btn-submit">Save Changes</button>
 		</div>
 	</form>

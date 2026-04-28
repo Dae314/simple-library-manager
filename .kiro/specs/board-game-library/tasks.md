@@ -247,11 +247,18 @@ Incremental implementation of a convention board game library management system 
     - Create `src/routes/catalog/+page.svelte` with filter bar (status, game type, title search), game list with BGG links, status indicators, type badges, copy identifiers
     - _Requirements: 6.1–6.5, 9.1, 9.2, 11.3_
 
-- [x] 14. Management area
-  - [x] 14.1 Implement management game list page
-    - Create `src/routes/management/+page.server.ts` with load (games with advanced filters, sorting, pagination) and actions (bulk retire, restore)
-    - Create `src/routes/management/+page.svelte` with FilterPanel, bulk select checkboxes, retire/restore buttons, confirmation dialogs
-    - _Requirements: 3.1–3.9, 13.1–13.10_
+- [ ] 14. Management area
+  - [x] 14.0 Implement management landing page
+    - Move game list logic from `src/routes/management/+page.svelte` to `src/routes/management/games/+page.svelte`
+    - Update `src/routes/management/+page.server.ts` to load summary counts (total games, checked out, etc.)
+    - Update `src/routes/management/+page.svelte` to be a landing/navigation page with cards linking to sub-sections: Games, Transactions, Configuration, Backup
+    - _Requirements: 3.1, 14.1_
+
+  - [x] 14.1 Implement management game list page at /management/games
+    - Create `src/routes/management/games/+page.server.ts` with load (games with advanced filters, sorting, pagination) and actions (bulk retire, CSV import, CSV export)
+    - Create `src/routes/management/games/+page.svelte` with catalog-like view: FilterPanel, inline retire/restore buttons per game row, bulk select with bulk retire, CSV Import and CSV Export buttons, confirmation dialogs
+    - Clicking a game row navigates to `/management/games/[id]` for detailed editing
+    - _Requirements: 3.1–3.9, 13.1–13.10, 19.1–19.6_
 
   - [x] 14.2 Implement add game page
     - Create `src/routes/management/games/new/+page.server.ts` and `+page.svelte`
@@ -323,10 +330,10 @@ Incremental implementation of a convention board game library management system 
     - Error handling for invalid files, success confirmations
     - _Requirements: 15.1–15.7_
 
-  - [ ] 19.2 Implement CSV import/export page
-    - Create `src/routes/management/csv/+page.server.ts` and `+page.svelte`
-    - CSV upload with validation preview (show errors or row count), confirmation dialog, import action
-    - CSV export download button
+  - [ ] 19.2 Add CSV import/export actions to management games page
+    - Add CSV import action to `src/routes/management/games/+page.server.ts` with validation preview (show errors or row count), confirmation dialog
+    - Add CSV export action to `src/routes/management/games/+page.server.ts` for download
+    - CSV Import and Export buttons are part of the `/management/games` page UI (no separate CSV route)
     - _Requirements: 19.1–19.6_
 
 - [ ] 20. Integration tests (Playwright)
