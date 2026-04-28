@@ -228,14 +228,14 @@ Incremental implementation of a convention board game library management system 
     - Display validation errors, conflict messages, success toast
     - _Requirements: 4.3, 4.8, 4.10, 4.11, 4.12, 4.13_
 
-- [ ] 12. Checkin page
-  - [ ] 12.1 Implement checkin page server logic
+- [x] 12. Checkin page
+  - [x] 12.1 Implement checkin page server logic
     - Create `src/routes/checkin/+page.server.ts` with load (checked-out games with attendee info and duration, paginated, searchable) and checkin action
     - Validate weight, call transactionService.checkin, return weight warning if applicable
     - Handle play_and_win reminder flag and play_and_take attendee choice
     - _Requirements: 5.1, 5.4–5.13, 20.5, 20.6, 20.7, 20.8_
 
-  - [ ] 12.2 Implement checkin page UI
+  - [x] 12.2 Implement checkin page UI
     - Create `src/routes/checkin/+page.svelte` with search bar (title or attendee name), paginated game list with attendee info and checkout duration
     - Checkin form: weight input, optional note
     - ID return reminder, weight warning display, play_and_win raffle reminder, play_and_take dialog
