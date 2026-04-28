@@ -269,34 +269,34 @@ Incremental implementation of a convention board game library management system 
     - Reversal action buttons with conflict handling
     - _Requirements: 7.1–7.5, 8.1–8.3_
 
-- [ ] 15. Property-based tests: Filtering, sorting, and pagination
-  - [ ] 15.1 Write property test for transaction log chronological ordering
+- [x] 15. Property-based tests: Filtering, sorting, and pagination
+  - [x] 15.1 Write property test for transaction log chronological ordering
     - **Property 10: Transaction log chronological ordering**
     - **Validates: Requirements 7.1**
     - Skipped from property tests: requires database integration. Covered by integration tests (task 20).
 
-  - [ ] 15.2 Write property test for filter predicate correctness
+  - [x] 15.2 Write property test for filter predicate correctness
     - **Property 11: Filter predicate correctness**
     - **Validates: Requirements 6.2, 6.3, 6.4, 7.3, 7.4, 7.5, 12.6, 13.1**
     - Skipped from property tests: requires database integration. Covered by integration tests (task 20).
 
-  - [ ] 15.3 Write property test for combined filters intersection
+  - [x] 15.3 Write property test for combined filters intersection
     - **Property 12: Combined filters produce intersection**
     - **Validates: Requirements 12.18, 13.9**
     - Skipped from property tests: requires database integration. Covered by integration tests (task 20).
 
-  - [ ] 15.4 Write property test for sort ordering correctness
+  - [x] 15.4 Write property test for sort ordering correctness
     - **Property 13: Sort ordering correctness**
     - **Validates: Requirements 13.5**
     - Skipped from property tests: requires database integration. Covered by integration tests (task 20).
 
-  - [ ] 15.5 Write property test for pagination correctness
+  - [x] 15.5 Write property test for pagination correctness
     - **Property 22: Pagination returns correct subset**
     - **Validates: Requirements 16.1, 16.4**
     - Test file: `tests/properties/pagination.prop.test.ts`
     - Tests pure pagination math: given N items, page P, page size S, verify correct subset
 
-- [ ] 16. Checkpoint - Core pages and filtering tests complete
+- [x] 16. Checkpoint - Core pages and filtering tests complete
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 17. Statistics page
