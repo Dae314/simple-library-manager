@@ -43,13 +43,13 @@ Incremental implementation of a convention board game library management system 
     - Seed runs only when games table is empty (first-run check)
     - _Requirements: 18.1, 18.2, 18.3_
 
-- [ ] 3. Shared validation and utility modules
-  - [ ] 3.1 Implement server-side validation schemas
+- [x] 3. Shared validation and utility modules
+  - [x] 3.1 Implement server-side validation schemas
     - Create `src/lib/server/validation.ts` with validation functions for game input, checkout input, checkin input, config input, CSV rows
     - Validate title non-empty, BGG_ID positive integer, weight positive number, dates logical
     - _Requirements: 1.2, 1.3, 1.4, 4.8, 5.8, 14.6, 14.7_
 
-  - [ ] 3.2 Implement client-side utility modules
+  - [x] 3.2 Implement client-side utility modules
     - Create `src/lib/utils/formatting.ts` for date, duration, and weight formatting
     - Create `src/lib/utils/validation.ts` for client-side validation helpers
     - _Requirements: 10.7, 14.4_
