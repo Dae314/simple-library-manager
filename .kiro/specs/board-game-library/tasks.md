@@ -194,19 +194,19 @@ Incremental implementation of a convention board game library management system 
 - [x] 9. Checkpoint - Core services and property tests complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 10. Layout, navigation, and shared components
-  - [ ] 10.1 Implement root layout with Navbar and convention name
+- [x] 10. Layout, navigation, and shared components
+  - [x] 10.1 Implement root layout with Navbar and convention name
     - Create `src/routes/+layout.svelte` with responsive Navbar, Toaster (svelte-french-toast)
     - Create `src/routes/+layout.server.ts` to load convention config (name, weight unit)
     - _Requirements: 17.1, 14.2_
 
-  - [ ] 10.2 Implement Navbar component with responsive behavior
+  - [x] 10.2 Implement Navbar component with responsive behavior
     - Create `src/lib/components/Navbar.svelte` with persistent bar (tablet/desktop) and hamburger menu (mobile)
     - Show Checkout, Checkin always visible; Catalog, Statistics, Management, Config in hamburger on mobile
     - Highlight active page
     - _Requirements: 17.1, 17.2, 17.3, 17.4_
 
-  - [ ] 10.3 Implement shared UI components
+  - [x] 10.3 Implement shared UI components
     - Create `Pagination.svelte` (page controls, page size selector, total count display)
     - Create `SearchFilter.svelte` (debounced text input, 300ms)
     - Create `ConfirmDialog.svelte` (modal with configurable title/message/warning)
