@@ -336,19 +336,87 @@ Incremental implementation of a convention board game library management system 
     - CSV Import and Export buttons are part of the `/management/games` page UI (no separate CSV route)
     - _Requirements: 19.1–19.6_
 
-- [ ] 20. Integration tests (Playwright)
-  - [ ] 20.1 Write Playwright test for full checkout → checkin flow
+- [x] 20. Integration tests (Playwright)
+  - [x] 20.0 Set up Playwright test infrastructure
+    - Create `playwright.config.ts` with baseURL `http://localhost:3000`, webServer config using `npm run build && npm run preview`
+    - Create `docker-compose.test.yml` override that exposes DB on host port 5433, exposes app on port 3000 (bypassing Caddy), uses a separate `boardgames_test` database
+    - Add test profile or scripts to `package.json` for spinning up test containers (`test:e2e`)
+    - Install Playwright browsers (`npx playwright install`)
+    - Verify the test stack starts and Playwright can reach the app
+    - _Requirements: 10.1, 10.2_
+
+  - [x] 20.1 Write Playwright test for full checkout → checkin flow
     - Test complete checkout and checkin through browser UI
     - Verify status changes, attendee info display, weight warning
     - _Requirements: 4.1–4.15, 5.1–5.13_
 
-  - [ ] 20.2 Write Playwright test for database backup/restore round-trip
+  - [x] 20.2 Write Playwright test for database backup/restore round-trip
     - Export database, import on fresh state, verify data integrity
     - _Requirements: 15.1–15.7_
 
-  - [ ] 20.3 Write Playwright test for responsive navigation
+  - [x] 20.3 Write Playwright test for responsive navigation
     - Test navbar on desktop vs hamburger menu on mobile viewports
     - _Requirements: 17.1–17.4_
+
+  - [x] 20.4 Write Playwright test for catalog page
+    - Test catalog displays seed games with status indicators and game type badges
+    - Test filtering by status (available, checked_out) and game type (standard, play_and_win, play_and_take)
+    - Test title search filtering
+    - Test BGG links are present and correctly formatted
+    - _Requirements: 6.1–6.5, 9.1, 9.2, 11.3_
+
+  - [x] 20.5 Write Playwright test for management area
+    - Test management landing page displays summary counts and navigation cards
+    - Test add game flow: navigate to /management/games/new, fill form, submit, verify game appears
+    - Test game list with filters, inline retire/restore buttons
+    - Test bulk select and bulk retire with confirmation dialog
+    - Test navigation from game row to edit page
+    - _Requirements: 1.1–1.5, 2.1–2.6, 3.1–3.9, 13.1–13.10_
+
+  - [x] 20.6 Write Playwright test for transaction log and reversals
+    - Test transaction log displays entries after checkout/checkin
+    - Test filtering by game title, transaction type, and attendee name
+    - Test checkout reversal and checkin reversal with corrective transaction creation
+    - Test reversal conflict handling
+    - _Requirements: 7.1–7.5, 8.1–8.3_
+
+  - [x] 20.7 Write Playwright test for statistics page
+    - Test statistics page displays metric cards with seed data
+    - Test filter panel renders all filter options (time range, time of day, game title, attendee, status, game type, BGG grouping)
+    - Test "no matching data" message when filters exclude all results
+    - Test top games ranked list and duration distribution sections
+    - _Requirements: 12.1–12.20_
+
+  - [x] 20.8 Write Playwright test for convention configuration page
+    - Test config page displays and saves convention name, dates, weight tolerance, weight unit
+    - Test ID types management (add and remove)
+    - Test validation errors for invalid dates and non-positive tolerance
+    - Test convention name appears in navbar after saving
+    - _Requirements: 14.1–14.10_
+
+  - [x] 20.9 Write Playwright test for play-and-win and play-and-take flows
+    - Test play_and_win checkin shows raffle reminder
+    - Test play_and_take checkin shows dialog asking if attendee wants to keep the game
+    - Test play_and_take "yes" retires the game, "no" returns it to available
+    - _Requirements: 20.5–20.8_
+
+  - [x] 20.10 Write Playwright test for edit game and status toggle
+    - Test editing a game's title and BGG ID via the edit page
+    - Test status override toggle creates corrective transactions
+    - Test edit validation errors for empty title and invalid BGG ID
+    - _Requirements: 2.1–2.6_
+
+  - [x] 20.11 Write Playwright test for retired games hidden from checkout/checkin
+    - Test that after retiring a game, it no longer appears on the checkout page
+    - Test that after retiring a game, it no longer appears on the checkin page
+    - Test that restoring a retired game makes it appear on checkout page again
+    - _Requirements: 3.5, 4.10, 5.9_
+
+  - [x] 20.12 Write Playwright test for CSV import and export
+    - Test CSV export button triggers a download
+    - Test CSV import flow: upload file, validation, confirmation dialog, import
+    - Test CSV validation errors are displayed for invalid files
+    - _Requirements: 19.1–19.6_
 
 - [ ] 21. Checkpoint - All features and integration tests complete
   - Ensure all tests pass, ask the user if questions arise.

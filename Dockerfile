@@ -8,7 +8,7 @@ RUN npm run build
 
 FROM node:24-alpine AS production
 
-RUN apk add --no-cache postgresql16-client
+RUN apk add --no-cache postgresql17-client
 
 WORKDIR /app
 ENV NODE_ENV=production
