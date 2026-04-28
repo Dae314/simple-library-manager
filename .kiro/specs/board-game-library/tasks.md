@@ -241,8 +241,8 @@ Incremental implementation of a convention board game library management system 
     - ID return reminder, weight warning display, play_and_win raffle reminder, play_and_take dialog
     - _Requirements: 5.3, 5.4, 5.7, 5.9, 5.10, 5.11, 5.12, 20.5, 20.6_
 
-- [ ] 13. Catalog page
-  - [ ] 13.1 Implement catalog page
+- [x] 13. Catalog page
+  - [x] 13.1 Implement catalog page
     - Create `src/routes/catalog/+page.server.ts` with load (all non-retired games, filtered, paginated)
     - Create `src/routes/catalog/+page.svelte` with filter bar (status, game type, title search), game list with BGG links, status indicators, type badges, copy identifiers
     - _Requirements: 6.1–6.5, 9.1, 9.2, 11.3_

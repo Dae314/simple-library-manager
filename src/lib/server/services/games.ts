@@ -1,6 +1,6 @@
 import { db } from '../db/index.js';
 import { games, transactions } from '../db/schema.js';
-import { eq, and, sql, ilike, gte, lte, inArray, max, count, desc, asc, type SQL } from 'drizzle-orm';
+import { eq, ne, and, sql, ilike, gte, lte, inArray, max, count, desc, asc, type SQL } from 'drizzle-orm';
 
 // --- Types ---
 
@@ -21,6 +21,7 @@ export interface GameRecord {
 
 export interface GameFilters {
 	status?: GameStatus;
+	excludeStatus?: GameStatus;
 	gameType?: GameType;
 	titleSearch?: string;
 	createdSince?: Date;
@@ -53,6 +54,9 @@ function buildGameWhereConditions(filters: GameFilters): SQL[] {
 
 	if (filters.status) {
 		conditions.push(eq(games.status, filters.status));
+	}
+	if (filters.excludeStatus) {
+		conditions.push(ne(games.status, filters.excludeStatus));
 	}
 	if (filters.gameType) {
 		conditions.push(eq(games.gameType, filters.gameType));
