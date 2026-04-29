@@ -1,88 +1,77 @@
 import { test, expect } from './fixtures';
 
 test.describe('Retired Games Visibility', () => {
-	test('retired game disappears from checkout page', async ({ page }) => {
-		// Verify Splendor is visible on /checkout
-		await page.goto('/checkout');
-		await expect(page.locator('.game-card', { hasText: 'Splendor' })).toBeVisible();
+	test('retired game disappears from checkout page', async ({ page, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_RetVis1`);
 
-		// Go to management, retire Splendor
-		await page.goto('/management/games');
-		await page.locator('button[aria-label="Retire Splendor"]').click();
+		// Verify visible on checkout
+		await page.goto(`/checkout?search=${game.title}`);
+		await expect(page.locator('.game-card', { hasText: game.title })).toBeVisible();
+
+		// Retire via management
+		await page.goto(`/management/games?search=${game.title}`);
+		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
 		await expect(page.locator('.status-indicator.retired').first()).toBeVisible();
 
-		// Go back to checkout — Splendor should be gone
-		await page.goto('/checkout');
-		await expect(page.locator('.game-card', { hasText: 'Splendor' })).not.toBeVisible();
+		// Should be gone from checkout
+		await page.goto(`/checkout?search=${game.title}`);
+		await expect(page.locator('.game-card', { hasText: game.title })).not.toBeVisible();
 	});
 
-	test('retired game disappears from checkin page', async ({ page }) => {
-		// First, checkout Splendor so it appears on the checkin page
-		await page.goto('/checkout');
-		const splendorCard = page.locator('.game-card', { hasText: 'Splendor' });
-		await expect(splendorCard).toBeVisible();
-		await splendorCard.getByRole('button', { name: 'Checkout' }).click();
+	test('retired game disappears from checkin page', async ({ page, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_RetVis2`);
 
-		const checkoutForm = page.locator('section[aria-label="Checkout form"]');
-		await expect(checkoutForm).toBeVisible();
-		await checkoutForm.locator('#attendeeFirstName').fill('Retire');
-		await checkoutForm.locator('#attendeeLastName').fill('Test');
-		await checkoutForm.locator('#idType').selectOption({ index: 1 });
-		await checkoutForm.locator('#checkoutWeight').fill('20');
-		await checkoutForm.getByRole('button', { name: 'Confirm Checkout' }).click();
-		await expect(page.getByText('Game checked out successfully!')).toBeVisible();
+		// Checkout the game so it appears on checkin
+		await helpers.checkoutGame(game.title, 'Retire', 'Test', '20');
 
-		// Verify Splendor is visible on /checkin (it's checked out)
+		// Verify visible on checkin
 		await page.goto('/checkin');
-		await expect(page.locator('.game-card', { hasText: 'Splendor' })).toBeVisible();
+		await expect(page.locator('.game-card', { hasText: game.title })).toBeVisible();
 
-		// Go to management, retire Splendor (even though it's checked out)
-		await page.goto('/management/games');
-		await page.locator('button[aria-label="Retire Splendor"]').click();
+		// Retire via management
+		await page.goto(`/management/games?search=${game.title}`);
+		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
 		await expect(page.locator('.status-indicator.retired').first()).toBeVisible();
 
-		// Go back to checkin — Splendor should be gone
+		// Should be gone from checkin
 		await page.goto('/checkin');
-		await expect(page.locator('.game-card', { hasText: 'Splendor' })).not.toBeVisible();
+		await expect(page.locator('.game-card', { hasText: game.title })).not.toBeVisible();
 	});
 
-	test('restoring a retired game makes it appear on checkout page again', async ({ page }) => {
-		// Retire Splendor via management
-		await page.goto('/management/games');
-		await page.locator('button[aria-label="Retire Splendor"]').click();
+	test('restoring a retired game makes it appear on checkout page again', async ({ page, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_RetVis3`);
+
+		// Retire
+		await page.goto(`/management/games?search=${game.title}`);
+		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
 		await expect(page.locator('.status-indicator.retired').first()).toBeVisible();
 
-		// Verify Splendor is NOT on /checkout
-		await page.goto('/checkout');
-		await expect(page.locator('.game-card', { hasText: 'Splendor' })).not.toBeVisible();
+		// Verify NOT on checkout
+		await page.goto(`/checkout?search=${game.title}`);
+		await expect(page.locator('.game-card', { hasText: game.title })).not.toBeVisible();
 
-		// Go to management, filter by "retired" status to find Splendor
-		await page.goto('/management/games');
-		await page.locator('#filter-status').selectOption('retired');
-		await page.waitForURL(/status=retired/);
-		await expect(page.locator('.game-card', { hasText: 'Splendor' })).toBeVisible();
-
-		// Restore Splendor
-		await page.locator('button[aria-label="Restore Splendor"]').click();
-		// Wait for the restore action to complete
+		// Restore
+		await page.goto(`/management/games?search=${game.title}&status=retired`);
+		await expect(page.locator('.game-card', { hasText: game.title })).toBeVisible();
+		await page.locator(`button[aria-label="Restore ${game.title}"]`).click();
 		await expect(page.getByText('Restored')).toBeVisible();
 
-		// Go to checkout — Splendor should be visible again
-		await page.goto('/checkout');
-		await expect(page.locator('.game-card', { hasText: 'Splendor' })).toBeVisible();
+		// Should be back on checkout
+		await page.goto(`/checkout?search=${game.title}`);
+		await expect(page.locator('.game-card', { hasText: game.title })).toBeVisible();
 	});
 
-	test('retired game still visible in management area', async ({ page }) => {
-		await page.goto('/management/games');
+	test('retired game still visible in management area', async ({ page, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_RetVis4`);
 
-		// Retire Splendor
-		await page.locator('button[aria-label="Retire Splendor"]').click();
+		await page.goto(`/management/games?search=${game.title}`);
 
-		// The game should still appear with "Retired" status indicator
-		const splendorRow = page.locator('.game-row', { hasText: 'Splendor' });
-		await expect(splendorRow).toBeVisible();
+		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
 
-		const retiredBadge = splendorRow.locator('.status-indicator.retired');
+		const row = page.locator('.game-row', { hasText: game.title });
+		await expect(row).toBeVisible();
+
+		const retiredBadge = row.locator('.status-indicator.retired');
 		await expect(retiredBadge).toBeVisible();
 		await expect(retiredBadge).toHaveText('Retired');
 	});

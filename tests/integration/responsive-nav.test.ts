@@ -11,11 +11,9 @@ test.describe('Responsive Navigation', () => {
 			const nav = page.locator('nav[aria-label="Main navigation"]');
 			await expect(nav).toBeVisible();
 
-			// Primary links
 			await expect(nav.locator('a.nav-link', { hasText: 'Checkout' })).toBeVisible();
 			await expect(nav.locator('a.nav-link', { hasText: 'Checkin' })).toBeVisible();
 
-			// Secondary links inside desktop-links span
 			const desktopLinks = nav.locator('.desktop-links');
 			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Catalog' })).toBeVisible();
 			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Statistics' })).toBeVisible();
@@ -50,7 +48,6 @@ test.describe('Responsive Navigation', () => {
 			const checkoutLink = nav.locator('a.nav-link', { hasText: 'Checkout' });
 			await expect(checkoutLink).toHaveClass(/active/);
 
-			// Other links should not be active
 			await expect(nav.locator('a.nav-link', { hasText: 'Checkin' })).not.toHaveClass(/active/);
 		});
 	});
@@ -87,7 +84,6 @@ test.describe('Responsive Navigation', () => {
 			const mobileMenu = page.locator('#mobile-menu[role="menu"]');
 			await expect(mobileMenu).toBeVisible();
 
-			// All secondary links present as menuitems
 			await expect(mobileMenu.locator('a[role="menuitem"]', { hasText: 'Catalog' })).toBeVisible();
 			await expect(mobileMenu.locator('a[role="menuitem"]', { hasText: 'Statistics' })).toBeVisible();
 			await expect(mobileMenu.locator('a[role="menuitem"]', { hasText: 'Management' })).toBeVisible();
@@ -104,19 +100,16 @@ test.describe('Responsive Navigation', () => {
 			await mobileMenu.locator('a[role="menuitem"]', { hasText: 'Catalog' }).click();
 			await expect(page).toHaveURL(/\/catalog/);
 
-			// Menu should be closed after navigation
 			await expect(page.locator('#mobile-menu')).not.toBeVisible();
 		});
 
 		test('clicking hamburger again closes the menu', async ({ page }) => {
 			const hamburger = page.getByRole('button', { name: 'Toggle navigation menu' });
 
-			// Open
 			await hamburger.click();
 			await expect(page.locator('#mobile-menu[role="menu"]')).toBeVisible();
 			await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
 
-			// Close
 			await hamburger.click();
 			await expect(page.locator('#mobile-menu')).not.toBeVisible();
 			await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
@@ -132,7 +125,6 @@ test.describe('Responsive Navigation', () => {
 		test('behaves like desktop — all links visible, no hamburger', async ({ page }) => {
 			const nav = page.locator('nav[aria-label="Main navigation"]');
 
-			// All links visible
 			await expect(nav.locator('a.nav-link', { hasText: 'Checkout' })).toBeVisible();
 			await expect(nav.locator('a.nav-link', { hasText: 'Checkin' })).toBeVisible();
 
@@ -142,7 +134,6 @@ test.describe('Responsive Navigation', () => {
 			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Management' })).toBeVisible();
 			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Config' })).toBeVisible();
 
-			// Hamburger not visible
 			const hamburger = page.getByRole('button', { name: 'Toggle navigation menu' });
 			await expect(hamburger).not.toBeVisible();
 		});
