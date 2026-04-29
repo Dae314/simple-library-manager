@@ -48,7 +48,8 @@ export async function seed(): Promise<void> {
 	if (idTypeResult.value === 0) {
 		await db.insert(idTypes).values([
 			{ name: "Driver's License" },
-			{ name: 'Student ID' }
+			{ name: 'Student ID' },
+			{ name: 'State ID' }
 		]);
 		console.log('Seeded 2 default ID types');
 	}
