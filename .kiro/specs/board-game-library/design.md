@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Board Game Library is a LAN-based web application for managing board game checkouts and returns at conventions. It runs as a Docker-composed stack of three services — Caddy (HTTPS reverse proxy), SvelteKit (TypeScript full-stack app), and PostgreSQL — on a single commodity machine serving 2–10 librarian stations.
+The Board Game Library is a LAN-based web application for managing board game checkouts and returns at conventions. It runs as a Docker-composed stack of three services — Caddy (HTTP reverse proxy), SvelteKit (TypeScript full-stack app), and PostgreSQL — on a single commodity machine serving 2–10 librarian stations.
 
 The system provides:
 - Game catalog management with soft-delete (retire/restore), multiple copies per title, and three game types (standard, play_and_win, play_and_take)
@@ -25,7 +25,7 @@ No authentication is required. All timestamps use server local time.
 ```mermaid
 graph TB
     subgraph Docker Compose
-        Caddy["Caddy<br/>(HTTPS reverse proxy)<br/>:443"]
+        Caddy["Caddy<br/>(HTTP reverse proxy)<br/>:80"]
         SvelteKit["SvelteKit App<br/>(Node adapter)<br/>:3000"]
         PostgreSQL["PostgreSQL 16<br/>:5432"]
         Volume["Docker Volume<br/>(pgdata)"]
@@ -33,7 +33,7 @@ graph TB
 
     Clients["Librarian Browsers<br/>(2–10 stations)"]
 
-    Clients -->|HTTPS| Caddy
+    Clients -->|HTTP| Caddy
     Caddy -->|HTTP| SvelteKit
     SvelteKit -->|TCP| PostgreSQL
     PostgreSQL --- Volume
@@ -41,8 +41,8 @@ graph TB
 
 ### Request Flow
 
-1. Librarian browser connects to Caddy over HTTPS (self-signed TLS)
-2. Caddy terminates TLS and proxies to SvelteKit on internal port 3000
+1. Librarian browser connects to Caddy over HTTP (plain HTTP, suitable for LAN use)
+2. Caddy proxies the request to SvelteKit on internal port 3000
 3. SvelteKit handles routing, SSR, form actions, and API endpoints
 4. Server-side code uses Drizzle ORM to query/mutate PostgreSQL
 5. SSR renders pages and streams HTML to the client; client-side hydration enables interactivity
@@ -51,7 +51,7 @@ graph TB
 
 | Layer | Technology | Rationale |
 |-------|-----------|-----------|
-| Reverse Proxy | Caddy 2 | Auto-generates self-signed TLS certs, zero-config HTTPS |
+| Reverse Proxy | Caddy 2 | Lightweight, zero-config HTTP reverse proxy for LAN deployments |
 | Application | SvelteKit (Node adapter) | Full-stack TypeScript, SSR, form actions, file-based routing |
 | ORM | Drizzle ORM | Type-safe schema, lightweight, PostgreSQL-native, migration support |
 | Database | PostgreSQL 16 | Robust relational DB, ACID transactions, JSON support |

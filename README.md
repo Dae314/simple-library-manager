@@ -44,11 +44,11 @@ That's it. All other dependencies (Node.js, PostgreSQL, Caddy) are handled by th
    docker compose up -d
    ```
 
-   This builds the SvelteKit app, starts PostgreSQL, and puts Caddy in front as a reverse proxy with a self-signed TLS certificate.
+   This builds the SvelteKit app, starts PostgreSQL, and puts Caddy in front as a reverse proxy on port 80.
 
-4. Access the application at **https://localhost**
+4. Access the application at **http://localhost** (or **http://\<host-ip\>** from other devices on the LAN).
 
-   Your browser will warn about the self-signed certificate — this is expected for local/convention use. Accept the warning to proceed.
+   At a convention, clients on the local network can connect using the host machine's IP address.
 
 5. On first startup, the database migrations run automatically and seed data (10 example games) is loaded.
 
@@ -69,7 +69,7 @@ docker compose down -v
 - **Frontend**: SvelteKit 2 with Svelte 5 (TypeScript)
 - **Database**: PostgreSQL 17
 - **ORM**: Drizzle ORM
-- **Reverse Proxy**: Caddy (self-signed HTTPS)
+- **Reverse Proxy**: Caddy (HTTP)
 - **Notifications**: svelte-hot-french-toast
 - **Testing**: Vitest + fast-check (property-based), Playwright (E2E)
 - **Deployment**: Docker + Docker Compose

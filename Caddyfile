@@ -1,8 +1,3 @@
-{
-	auto_https disable_redirects
-}
-
-:443 {
-	tls internal
+:80 {
 	reverse_proxy app:3000
 }

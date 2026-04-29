@@ -52,7 +52,7 @@ docker compose down -v            # Stop and destroy database volume
 ```
 
 Services:
-- **caddy** — Reverse proxy with self-signed TLS on ports 80/443
+- **caddy** — Reverse proxy on port 80 (plain HTTP, suitable for LAN access at conventions)
 - **app** — SvelteKit Node server on port 3000 (internal)
 - **db** — PostgreSQL 17 with health check
 

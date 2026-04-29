@@ -16,7 +16,7 @@ Incremental implementation of a convention board game library management system 
   - [x] 1.2 Create Docker and deployment configuration
     - Create `Dockerfile` (Node.js build + production image)
     - Create `docker-compose.yml` with Caddy, SvelteKit app, PostgreSQL services
-    - Create `Caddyfile` with self-signed TLS and reverse proxy to port 3000
+    - Create `Caddyfile` with HTTP reverse proxy to port 3000 (plain HTTP for LAN access)
     - Configure PostgreSQL Docker volume for data persistence
     - _Requirements: 10.1, 10.2, 10.3, 10.5, 10.6_
 
