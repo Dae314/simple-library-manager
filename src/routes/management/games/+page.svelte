@@ -346,8 +346,9 @@
 										return async ({ result, update }) => {
 											if (result.type === 'success') {
 												toast.success(`Retired "${game.title}"`);
-											} else {
-												toast.error('Failed to retire game');
+											} else if (result.type === 'failure') {
+												const data = (result as any).data;
+												toast.error(data?.error || 'Failed to retire game');
 											}
 											await update();
 										};
@@ -363,8 +364,9 @@
 											if (result.type === 'success') {
 												toast.success(`Restored "${game.title}"`);
 												selectedIds = new Set([...selectedIds].filter((id) => id !== game.id));
-											} else {
-												toast.error('Failed to restore game');
+											} else if (result.type === 'failure') {
+												const data = (result as any).data;
+												toast.error(data?.error || 'Failed to restore game');
 											}
 											await update();
 										};
@@ -421,8 +423,9 @@
 			if (result.type === 'success') {
 				toast.success(`Retired ${selectedNonRetiredGames.length} game(s)`);
 				selectedIds = new Set();
-			} else {
-				toast.error('Failed to retire games');
+			} else if (result.type === 'failure') {
+				const data = (result as any).data;
+				toast.error(data?.error || 'Failed to retire games');
 			}
 			await update();
 		};

@@ -5,6 +5,7 @@
 	let { form }: {
 		form: {
 			errors?: Record<string, string>;
+			error?: string;
 			values?: Record<string, string>;
 		} | null;
 	} = $props();
@@ -13,7 +14,19 @@
 <div class="add-game-page">
 	<h1>Add Game</h1>
 
-	<form method="POST" use:enhance novalidate>
+	<form method="POST" use:enhance={() => {
+		return async ({ result, update }) => {
+			if (result.type === 'failure') {
+				const data = (result as any).data;
+				if (data?.error) {
+					toast.error(data.error);
+				} else if (data?.errors) {
+					toast.error('Please fix the errors below.');
+				}
+			}
+			await update({ reset: false });
+		};
+	}} novalidate>
 		<div class="form-group">
 			<label for="title">Title</label>
 			<input
@@ -55,6 +68,10 @@
 				<span class="field-error">{form.errors.gameType}</span>
 			{/if}
 		</div>
+
+		{#if form?.error}
+			<div class="form-error" role="alert">{form.error}</div>
+		{/if}
 
 		<div class="form-actions">
 			<a href="/management/games" class="btn-cancel">Cancel</a>
@@ -110,6 +127,16 @@
 		font-size: 0.8rem;
 		color: #ef4444;
 		margin-top: 0.2rem;
+	}
+
+	.form-error {
+		padding: 0.6rem 0.8rem;
+		background-color: #fef2f2;
+		border: 1px solid #fecaca;
+		border-radius: 6px;
+		color: #dc2626;
+		font-size: 0.85rem;
+		margin-bottom: 0.5rem;
 	}
 
 	.form-actions {

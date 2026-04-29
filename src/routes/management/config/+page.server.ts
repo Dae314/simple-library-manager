@@ -2,6 +2,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
 import { configService } from '$lib/server/services/config.js';
 import { ValidationError } from '$lib/server/validation.js';
+import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 import { db } from '$lib/server/db/index.js';
 import { idTypes } from '$lib/server/db/schema.js';
 
@@ -43,7 +44,10 @@ export const actions: Actions = {
 					configValues: { conventionName, startDate, endDate, weightTolerance: rawTolerance, weightUnit }
 				});
 			}
-			throw err;
+			return fail(500, {
+				configError: getUserFriendlyDbMessage(err),
+				configValues: { conventionName, startDate, endDate, weightTolerance: rawTolerance, weightUnit }
+			});
 		}
 	},
 
@@ -58,7 +62,7 @@ export const actions: Actions = {
 			if (err instanceof ValidationError) {
 				return fail(400, { idTypeErrors: err.errors, idTypeValue: name });
 			}
-			throw err;
+			return fail(500, { idTypeErrors: { name: getUserFriendlyDbMessage(err) }, idTypeValue: name });
 		}
 	},
 
@@ -74,7 +78,7 @@ export const actions: Actions = {
 			await configService.removeIdType(id);
 			return { idTypeRemoved: true };
 		} catch (err) {
-			return fail(400, { idTypeErrors: { id: 'Failed to remove ID type' } });
+			return fail(500, { removeError: getUserFriendlyDbMessage(err) });
 		}
 	}
 };

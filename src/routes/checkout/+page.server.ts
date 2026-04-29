@@ -3,6 +3,7 @@ import { fail } from '@sveltejs/kit';
 import { gameService } from '$lib/server/services/games.js';
 import { transactionService } from '$lib/server/services/transactions.js';
 import { configService } from '$lib/server/services/config.js';
+import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 import { validateCheckoutInput } from '$lib/server/validation.js';
 
 export const load: PageServerLoad = async ({ url }) => {
@@ -66,7 +67,7 @@ export const actions: Actions = {
 					message: 'This game was just checked out by another station.'
 				});
 			}
-			throw err;
+			return fail(500, { error: getUserFriendlyDbMessage(err) });
 		}
 	}
 };

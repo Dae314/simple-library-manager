@@ -2,6 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { gameService } from '$lib/server/services/games.js';
 import { validateGameInput } from '$lib/server/validation.js';
+import { isDuplicateKeyError, getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const id = parseInt(params.id, 10);
@@ -40,8 +41,19 @@ export const actions: Actions = {
 			return fail(400, { errors: validation.errors, values });
 		}
 
-		await gameService.update(id, validation.data!);
-		redirect(303, '/management');
+		try {
+			await gameService.update(id, validation.data!);
+			redirect(303, '/management');
+		} catch (err: unknown) {
+			if (isDuplicateKeyError(err)) {
+				return fail(409, {
+					error: 'A game with this BGG ID already exists.',
+					values
+				});
+			}
+			const message = getUserFriendlyDbMessage(err);
+			return fail(500, { error: message, values });
+		}
 	},
 
 	toggleStatus: async ({ request, params }) => {

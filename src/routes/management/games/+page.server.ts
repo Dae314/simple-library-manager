@@ -3,6 +3,7 @@ import { gameService } from '$lib/server/services/games.js';
 import type { GameStatus, GameType, GameFilters, SortParams } from '$lib/server/services/games.js';
 import { csvService } from '$lib/server/services/csv.js';
 import { fail } from '@sveltejs/kit';
+import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || '';
@@ -88,7 +89,7 @@ export const actions: Actions = {
 			await gameService.retire(ids);
 			return { success: true, action: 'retire', count: ids.length };
 		} catch (e) {
-			return fail(500, { error: 'Failed to retire games' });
+			return fail(500, { error: getUserFriendlyDbMessage(e) });
 		}
 	},
 
@@ -104,7 +105,7 @@ export const actions: Actions = {
 			await gameService.restore(id);
 			return { success: true, action: 'restore' };
 		} catch (e) {
-			return fail(500, { error: 'Failed to restore game' });
+			return fail(500, { error: getUserFriendlyDbMessage(e) });
 		}
 	},
 
@@ -133,8 +134,7 @@ export const actions: Actions = {
 			const result = await csvService.importGames(fileContent);
 			return { success: true, action: 'csvImport', csvImported: result.created };
 		} catch (e) {
-			const message = e instanceof Error ? e.message : 'Unknown error';
-			return fail(500, { csvError: `Import failed: ${message}` });
+			return fail(500, { csvError: `Import failed: ${getUserFriendlyDbMessage(e)}` });
 		}
 	},
 
@@ -160,7 +160,7 @@ export const actions: Actions = {
 			const csvString = await csvService.exportGames();
 			return { csvExportData: csvString };
 		} catch (e) {
-			return fail(500, { csvError: 'Failed to export games' });
+			return fail(500, { csvError: getUserFriendlyDbMessage(e) });
 		}
 	}
 };

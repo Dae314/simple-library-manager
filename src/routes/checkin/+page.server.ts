@@ -4,6 +4,7 @@ import { gameService } from '$lib/server/services/games.js';
 import { transactionService } from '$lib/server/services/transactions.js';
 import { configService } from '$lib/server/services/config.js';
 import { validateCheckinInput } from '$lib/server/validation.js';
+import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || undefined;
@@ -71,7 +72,7 @@ export const actions: Actions = {
 					message: 'This game is no longer checked out.'
 				});
 			}
-			throw err;
+			return fail(500, { error: getUserFriendlyDbMessage(err), gameId });
 		}
 	}
 };

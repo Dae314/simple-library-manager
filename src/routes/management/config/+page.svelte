@@ -44,7 +44,12 @@
 				if (result.type === 'success') {
 					toast.success('Configuration saved.');
 				} else if (result.type === 'failure') {
-					toast.error('Please fix the errors below.');
+					const data = (result as any).data;
+					if (data?.configError) {
+						toast.error(data.configError);
+					} else {
+						toast.error('Please fix the errors below.');
+					}
 				}
 				await update({ reset: false });
 			};
@@ -134,8 +139,9 @@
 						return async ({ result, update }) => {
 							if (result.type === 'success') {
 								toast.success('ID type removed.');
-							} else {
-								toast.error('Failed to remove ID type');
+							} else if (result.type === 'failure') {
+								const data = (result as any).data;
+								toast.error(data?.removeError || 'Failed to remove ID type');
 							}
 							await update({ reset: false });
 						};

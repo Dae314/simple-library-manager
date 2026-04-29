@@ -2,6 +2,7 @@ import type { Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { gameService } from '$lib/server/services/games.js';
 import { validateGameInput } from '$lib/server/validation.js';
+import { isDuplicateKeyError, getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 
 export const actions: Actions = {
 	default: async ({ request }) => {
@@ -25,7 +26,17 @@ export const actions: Actions = {
 			return fail(400, { errors: validation.errors, values });
 		}
 
-		await gameService.create(validation.data!);
-		redirect(303, '/management');
+		try {
+			await gameService.create(validation.data!);
+			redirect(303, '/management');
+		} catch (err: unknown) {
+			if (isDuplicateKeyError(err)) {
+				return fail(409, {
+					error: 'A game with this BGG ID and copy number already exists.',
+					values
+				});
+			}
+			return fail(500, { error: getUserFriendlyDbMessage(err), values });
+		}
 	}
 };

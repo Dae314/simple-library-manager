@@ -2,6 +2,7 @@ import { db } from '../db/index.js';
 import { conventionConfig, idTypes } from '../db/schema.js';
 import { eq, sql } from 'drizzle-orm';
 import { validateConfigInput, ValidationError, type ConfigInput } from '../validation.js';
+import { isDuplicateKeyError } from './db-errors.js';
 
 // --- Types ---
 
@@ -125,7 +126,7 @@ export const configService = {
 			await db.insert(idTypes).values({ name: trimmed });
 		} catch (err: unknown) {
 			if (isDuplicateKeyError(err)) {
-				throw new ValidationError({ name: `ID type "${trimmed}" already exists` });
+				throw new ValidationError({ name: `"${trimmed}" already exists` });
 			}
 			throw err;
 		}
@@ -146,11 +147,4 @@ export const configService = {
 	}
 };
 
-function isDuplicateKeyError(err: unknown): boolean {
-	return (
-		typeof err === 'object' &&
-		err !== null &&
-		'code' in err &&
-		(err as { code: string }).code === '23505'
-	);
-}
+

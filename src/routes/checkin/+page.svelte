@@ -245,6 +245,8 @@
 						const data = (result as any).data;
 						if (data?.conflict) {
 							toast.error(data.message || 'This game is no longer checked out.');
+						} else if (data?.error) {
+							toast.error(data.error);
 						}
 					}
 					await update({ reset: false });
