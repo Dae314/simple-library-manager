@@ -10,19 +10,6 @@
 	let fileInputEl: HTMLInputElement | undefined = $state();
 	let importing = $state(false);
 
-	$effect(() => {
-		if (form?.success) {
-			toast.success('Database restored successfully. The page will reload.');
-			selectedFile = null;
-			importing = false;
-			setTimeout(() => window.location.reload(), 1500);
-		}
-		if (form?.error) {
-			toast.error(form.error);
-			importing = false;
-		}
-	});
-
 	function handleFileSelect(e: Event) {
 		const input = e.target as HTMLInputElement;
 		const file = input.files?.[0] ?? null;
@@ -93,7 +80,7 @@
 			<button
 				class="btn btn-danger"
 				onclick={openImportDialog}
-				disabled={!selectedFile || importing}
+				disabled={importing}
 			>
 				{importing ? 'Importing…' : 'Restore from Backup'}
 			</button>
@@ -119,7 +106,23 @@
 	action="?/import"
 	enctype="multipart/form-data"
 	class="hidden-form"
-	use:enhance
+	use:enhance={() => {
+		return async ({ result, update }) => {
+			if (result.type === 'success') {
+				toast.success('Database restored successfully. The page will reload.');
+				selectedFile = null;
+				importing = false;
+				setTimeout(() => window.location.reload(), 1500);
+			} else if (result.type === 'failure') {
+				const data = (result as any).data;
+				if (data?.error) {
+					toast.error(data.error);
+				}
+				importing = false;
+			}
+			await update({ reset: false });
+		};
+	}}
 >
 	<input type="file" name="backupFile" />
 </form>

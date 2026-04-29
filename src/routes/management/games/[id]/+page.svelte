@@ -24,18 +24,6 @@
 		} | null;
 	} = $props();
 
-	$effect(() => {
-		if (form?.errors && Object.keys(form.errors).length > 0) {
-			toast.error('Please fix the errors below.');
-		}
-		if (form?.toggleSuccess) {
-			toast.success('Game status updated successfully!');
-		}
-		if (form?.toggleError) {
-			toast.error(form.toggleError);
-		}
-	});
-
 	const statusLabel = $derived(data.game.status === 'available' ? 'Available' : 'Checked Out');
 	const statusColor = $derived(data.game.status === 'available' ? 'status-available' : 'status-checked-out');
 	const toggleTarget = $derived(data.game.status === 'available' ? 'checked_out' : 'available');
@@ -62,7 +50,14 @@
 		</a>
 	</div>
 
-	<form method="POST" action="?/update" use:enhance>
+	<form method="POST" action="?/update" use:enhance={() => {
+		return async ({ result, update }) => {
+			if (result.type === 'failure') {
+				toast.error('Please fix the errors below.');
+			}
+			await update({ reset: false });
+		};
+	}} novalidate>
 		<div class="form-group">
 			<label for="title">Title</label>
 			<input
@@ -122,8 +117,16 @@
 			method="POST"
 			action="?/toggleStatus"
 			use:enhance={() => {
-				return async ({ update }) => {
-					await update();
+				return async ({ result, update }) => {
+					if (result.type === 'success') {
+						toast.success('Game status updated successfully!');
+					} else if (result.type === 'failure') {
+						const data = (result as any).data;
+						if (data?.toggleError) {
+							toast.error(data.toggleError);
+						}
+					}
+					await update({ reset: false });
 					await invalidateAll();
 				};
 			}}

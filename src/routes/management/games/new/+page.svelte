@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { enhance, applyAction } from '$app/forms';
 	import toast from 'svelte-hot-french-toast';
 
 	let { form }: {
@@ -8,18 +8,12 @@
 			values?: Record<string, string>;
 		} | null;
 	} = $props();
-
-	$effect(() => {
-		if (form?.errors && Object.keys(form.errors).length > 0) {
-			toast.error('Please fix the errors below.');
-		}
-	});
 </script>
 
 <div class="add-game-page">
 	<h1>Add Game</h1>
 
-	<form method="POST" use:enhance>
+	<form method="POST" use:enhance novalidate>
 		<div class="form-group">
 			<label for="title">Title</label>
 			<input

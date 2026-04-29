@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Checkout → Checkin Flow', () => {
 	test('happy path: checkout a game, then check it back in', async ({ page }) => {

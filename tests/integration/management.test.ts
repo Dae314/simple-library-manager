@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Management Area', () => {
 	test.describe('Landing Page', () => {
@@ -147,7 +147,7 @@ test.describe('Management Area', () => {
 			await bulkActions.locator('button', { hasText: 'Retire Selected' }).click();
 
 			// Confirmation dialog should appear
-			const dialog = page.locator('dialog.confirm-dialog');
+			const dialog = page.locator('dialog.confirm-dialog[aria-label="Retire Selected Games"]');
 			await expect(dialog).toBeVisible();
 			await expect(dialog.locator('.dialog-title')).toHaveText('Retire Selected Games');
 

@@ -24,6 +24,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/boardgames_test
       - NODE_ENV=production
+      - ORIGIN=http://localhost:8080
+      - ALLOW_TEST_RESET=true
     depends_on:
       db:
         condition: service_healthy

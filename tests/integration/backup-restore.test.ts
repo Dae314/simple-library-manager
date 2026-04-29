@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -47,10 +47,10 @@ test.describe('Database Backup & Restore', () => {
 		await expect(fileInput).toBeVisible();
 		await expect(fileInput).toHaveAttribute('accept', '.dump,.backup,.sql');
 
-		// Restore button (disabled when no file selected)
+		// Restore button (enabled, shows toast if no file selected)
 		const restoreButton = importSection.getByRole('button', { name: 'Restore from Backup' });
 		await expect(restoreButton).toBeVisible();
-		await expect(restoreButton).toBeDisabled();
+		await expect(restoreButton).toBeEnabled();
 	});
 
 	test('export download link returns a response', async ({ page }) => {
@@ -81,15 +81,8 @@ test.describe('Database Backup & Restore', () => {
 	test('restore button shows error toast when no file is selected', async ({ page }) => {
 		await page.goto('/management/backup');
 
-		// Force-enable the button to test the click handler guard
-		// The button is disabled when no file is selected, but the openImportDialog
-		// function also checks for selectedFile and shows a toast
-		await page.evaluate(() => {
-			const btn = document.querySelector('.btn-danger') as HTMLButtonElement;
-			if (btn) btn.disabled = false;
-		});
-
-		await page.locator('.btn-danger').click();
+		// Click the restore button without selecting a file first
+		await page.getByRole('button', { name: 'Restore from Backup' }).click();
 
 		// Should show error toast about selecting a file first
 		await expect(page.getByText('Please select a backup file first')).toBeVisible();

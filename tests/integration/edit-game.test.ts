@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Edit Game and Status Toggle', () => {
 	test('navigate to edit page from game list', async ({ page }) => {

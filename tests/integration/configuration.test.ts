@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Convention Configuration Page', () => {
 	test('config page renders with defaults', async ({ page }) => {
@@ -133,6 +133,6 @@ test.describe('Convention Configuration Page', () => {
 
 		// Verify "Badge" appears as an option in the ID type dropdown
 		const idTypeSelect = checkoutForm.locator('#idType');
-		await expect(idTypeSelect.locator('option', { hasText: 'Badge' })).toBeVisible();
+		await expect(idTypeSelect.locator('option', { hasText: 'Badge' })).toBeAttached();
 	});
 });

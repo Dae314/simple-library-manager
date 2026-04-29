@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import toast from 'svelte-hot-french-toast';
 
 	type ConventionConfig = {
@@ -24,25 +25,6 @@
 
 	let newIdType = $state('');
 
-	$effect(() => {
-		if (form?.success) {
-			toast.success('Configuration saved.');
-		}
-		if (form?.idTypeAdded) {
-			toast.success('ID type added.');
-			newIdType = '';
-		}
-		if (form?.idTypeRemoved) {
-			toast.success('ID type removed.');
-		}
-		if (form?.configErrors) {
-			toast.error('Please fix the errors below.');
-		}
-		if (form?.idTypeErrors) {
-			toast.error(Object.values(form.idTypeErrors)[0] as string);
-		}
-	});
-
 	const configValues = $derived({
 		conventionName: form?.configValues?.conventionName ?? data.config.conventionName,
 		startDate: form?.configValues?.startDate ?? data.config.startDate ?? '',
@@ -57,7 +39,16 @@
 
 	<section class="config-section">
 		<h2>General Settings</h2>
-		<form method="POST" action="?/updateConfig" use:enhance>
+		<form method="POST" action="?/updateConfig" use:enhance={() => {
+			return async ({ result, update }) => {
+				if (result.type === 'success') {
+					toast.success('Configuration saved.');
+				} else if (result.type === 'failure') {
+					toast.error('Please fix the errors below.');
+				}
+				await update({ reset: false });
+			};
+		}} novalidate>
 			<input type="hidden" name="version" value={data.config.version} />
 
 			<div class="form-group">
@@ -139,7 +130,16 @@
 				{#each data.idTypes as idType (idType.id)}
 					<li class="id-type-item">
 						<span class="id-type-name">{idType.name}</span>
-						<form method="POST" action="?/removeIdType" use:enhance>
+						<form method="POST" action="?/removeIdType" use:enhance={() => {
+						return async ({ result, update }) => {
+							if (result.type === 'success') {
+								toast.success('ID type removed.');
+							} else {
+								toast.error('Failed to remove ID type');
+							}
+							await update({ reset: false });
+						};
+					}}>
 							<input type="hidden" name="id" value={idType.id} />
 							<button type="submit" class="btn-remove" aria-label="Remove {idType.name}">✕</button>
 						</form>
@@ -150,7 +150,20 @@
 			<p class="empty-message">No ID types configured. Add one below.</p>
 		{/if}
 
-		<form method="POST" action="?/addIdType" class="add-id-form" use:enhance>
+		<form method="POST" action="?/addIdType" class="add-id-form" use:enhance={() => {
+			return async ({ result, update }) => {
+				if (result.type === 'success') {
+					toast.success('ID type added.');
+					newIdType = '';
+				} else if (result.type === 'failure') {
+					const data = (result as any).data;
+					if (data?.idTypeErrors) {
+						toast.error(Object.values(data.idTypeErrors)[0] as string);
+					}
+				}
+				await update({ reset: false });
+			};
+		}}>
 			<input
 				name="name"
 				type="text"

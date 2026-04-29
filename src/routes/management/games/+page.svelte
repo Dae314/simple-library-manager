@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import FilterPanel from '$lib/components/FilterPanel.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
@@ -128,34 +128,13 @@
 		data.games.items.filter((g) => selectedIds.has(g.id) && g.status !== 'retired')
 	);
 
-	// Handle CSV export result from form action
-	$effect(() => {
-		if (form?.csvExportData) {
-			const blob = new Blob([form.csvExportData], { type: 'text/csv' });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = 'games-export.csv';
-			a.click();
-			URL.revokeObjectURL(url);
-			toast.success('CSV exported successfully');
-			form = null;
+	// Handle CSV validation result
+	function handleCsvValidationResult(validationResult: any) {
+		csvValidationResult = validationResult;
+		if (validationResult.valid) {
+			showCsvImportDialog = true;
 		}
-		if (form?.csvImported) {
-			toast.success(`Imported ${form.csvImported} game(s) from CSV`);
-			csvValidationResult = null;
-			csvFileForImport = null;
-			showCsvImportDialog = false;
-			form = null;
-		}
-		if (form?.csvValidation) {
-			csvValidationResult = form.csvValidation;
-			if (form.csvValidation.valid) {
-				showCsvImportDialog = true;
-			}
-			form = null;
-		}
-	});
+	}
 
 	function updateUrl(params: Record<string, string>) {
 		const url = new URL(window.location.href);
@@ -257,7 +236,24 @@
 		</div>
 		<div class="header-actions">
 			<a href="/management/games/new" class="btn btn-primary">+ Add Game</a>
-			<form method="POST" action="?/csvExport" use:enhance>
+			<form method="POST" action="?/csvExport" use:enhance={() => {
+				return async ({ result, update }) => {
+					if (result.type === 'success') {
+						const data = (result as any).data;
+						if (data?.csvExportData) {
+							const blob = new Blob([data.csvExportData], { type: 'text/csv' });
+							const url = URL.createObjectURL(blob);
+							const a = document.createElement('a');
+							a.href = url;
+							a.download = 'games-export.csv';
+							a.click();
+							URL.revokeObjectURL(url);
+							toast.success('CSV exported successfully');
+						}
+					}
+					await update({ reset: false });
+				};
+			}}>
 				<button type="submit" class="btn btn-secondary">CSV Export</button>
 			</form>
 			<button class="btn btn-secondary" onclick={() => csvFileInput?.click()}>CSV Import</button>
@@ -442,7 +438,22 @@
 	action="?/csvValidate"
 	enctype="multipart/form-data"
 	class="hidden-form"
-	use:enhance
+	use:enhance={() => {
+		return async ({ result, update }) => {
+			if (result.type === 'success') {
+				const data = (result as any).data;
+				if (data?.csvValidation) {
+					handleCsvValidationResult(data.csvValidation);
+				}
+			} else if (result.type === 'failure') {
+				const data = (result as any).data;
+				if (data?.csvError) {
+					toast.error(data.csvError);
+				}
+			}
+			await update({ reset: false });
+		};
+	}}
 >
 	<input type="file" name="csvFile" accept=".csv" />
 </form>
@@ -477,7 +488,25 @@
 	action="?/csvImport"
 	enctype="multipart/form-data"
 	class="hidden-form"
-	use:enhance
+	use:enhance={() => {
+		return async ({ result, update }) => {
+			if (result.type === 'success') {
+				const data = (result as any).data;
+				if (data?.csvImported) {
+					toast.success(`Imported ${data.csvImported} game(s) from CSV`);
+				}
+				csvValidationResult = null;
+				csvFileForImport = null;
+				showCsvImportDialog = false;
+			} else if (result.type === 'failure') {
+				const data = (result as any).data;
+				if (data?.csvError) {
+					toast.error(data.csvError);
+				}
+			}
+			await update({ reset: false });
+		};
+	}}
 >
 	<input type="file" name="csvFile" accept=".csv" />
 </form>

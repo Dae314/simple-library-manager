@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 /** Checkout a game through the UI */
 async function checkoutGame(

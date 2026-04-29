@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import toast from 'svelte-hot-french-toast';
 	import SearchFilter from '$lib/components/SearchFilter.svelte';
@@ -39,16 +39,6 @@
 	} = $props();
 
 	let selectedGame: GameRecord | null = $state(null);
-
-	$effect(() => {
-		if (form?.success) {
-			toast.success('Game checked out successfully!');
-			selectedGame = null;
-		}
-		if (form?.conflict) {
-			toast.error(form.message || 'This game was just checked out by another station.');
-		}
-	});
 
 	function handleSearch(term: string) {
 		const url = new URL(window.location.href);
@@ -139,7 +129,20 @@
 		<section class="checkout-form-section" aria-label="Checkout form">
 			<h2>Checking out: {selectedGameTitle}</h2>
 
-			<form method="POST" action="?/checkout" use:enhance>
+			<form method="POST" action="?/checkout" use:enhance={() => {
+				return async ({ result, update }) => {
+					if (result.type === 'success') {
+						toast.success('Game checked out successfully!');
+						selectedGame = null;
+					} else if (result.type === 'failure') {
+						const data = (result as any).data;
+						if (data?.conflict) {
+							toast.error(data.message || 'This game was just checked out by another station.');
+						}
+					}
+					await update({ reset: false });
+				};
+			}} novalidate>
 				<input type="hidden" name="gameId" value={selectedGame.id} />
 				<input type="hidden" name="gameVersion" value={selectedGame.version} />
 

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -29,7 +29,7 @@ test.describe('CSV Import & Export', () => {
 			await fileInput.setInputFiles(tmpFile);
 
 			// Wait for the validation form to submit and the confirmation dialog to appear
-			const dialog = page.locator('dialog.confirm-dialog');
+			const dialog = page.locator('dialog.confirm-dialog[aria-label="Import CSV"]');
 			await expect(dialog).toBeVisible({ timeout: 10_000 });
 
 			// Verify dialog content
@@ -48,7 +48,7 @@ test.describe('CSV Import & Export', () => {
 
 			// Verify the imported games appear in the game list
 			await expect(page.locator('.game-card', { hasText: 'Dominion' })).toBeVisible();
-			await expect(page.locator('.game-card', { hasText: 'Root' })).toBeVisible();
+			await expect(page.locator('.game-card', { hasText: 'Root' }).first()).toBeVisible();
 		} finally {
 			if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
 		}
@@ -75,7 +75,7 @@ test.describe('CSV Import & Export', () => {
 			await expect(errorItems).not.toHaveCount(0);
 
 			// Confirmation dialog should NOT appear
-			const dialog = page.locator('dialog.confirm-dialog');
+			const dialog = page.locator('dialog.confirm-dialog[aria-label="Import CSV"]');
 			await expect(dialog).not.toBeVisible();
 		} finally {
 			if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
@@ -94,7 +94,7 @@ test.describe('CSV Import & Export', () => {
 			await fileInput.setInputFiles(tmpFile);
 
 			// Wait for confirmation dialog
-			const dialog = page.locator('dialog.confirm-dialog');
+			const dialog = page.locator('dialog.confirm-dialog[aria-label="Import CSV"]');
 			await expect(dialog).toBeVisible({ timeout: 10_000 });
 			await expect(dialog.locator('.dialog-title')).toHaveText('Import CSV');
 

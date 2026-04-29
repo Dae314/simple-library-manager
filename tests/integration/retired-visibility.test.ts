@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Retired Games Visibility', () => {
 	test('retired game disappears from checkout page', async ({ page }) => {
@@ -59,10 +59,13 @@ test.describe('Retired Games Visibility', () => {
 		// Go to management, filter by "retired" status to find Splendor
 		await page.goto('/management/games');
 		await page.locator('#filter-status').selectOption('retired');
+		await page.waitForURL(/status=retired/);
 		await expect(page.locator('.game-card', { hasText: 'Splendor' })).toBeVisible();
 
 		// Restore Splendor
 		await page.locator('button[aria-label="Restore Splendor"]').click();
+		// Wait for the restore action to complete
+		await expect(page.getByText('Restored')).toBeVisible();
 
 		// Go to checkout — Splendor should be visible again
 		await page.goto('/checkout');

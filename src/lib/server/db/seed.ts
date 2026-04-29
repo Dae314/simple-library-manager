@@ -1,6 +1,6 @@
 import { count } from 'drizzle-orm';
 import { db } from './index.js';
-import { games, conventionConfig } from './schema.js';
+import { games, conventionConfig, idTypes } from './schema.js';
 
 const SEED_GAMES = [
 	{ title: 'Catan', bggId: 13, gameType: 'standard' },
@@ -41,6 +41,16 @@ export async function seed(): Promise<void> {
 	const [configResult] = await db.select({ value: count() }).from(conventionConfig);
 	if (configResult.value === 0) {
 		await db.insert(conventionConfig).values({});
+	}
+
+	// Seed default ID types
+	const [idTypeResult] = await db.select({ value: count() }).from(idTypes);
+	if (idTypeResult.value === 0) {
+		await db.insert(idTypes).values([
+			{ name: "Driver's License" },
+			{ name: 'Student ID' }
+		]);
+		console.log('Seeded 2 default ID types');
 	}
 
 	console.log(`Seeded ${rows.length} example games`);

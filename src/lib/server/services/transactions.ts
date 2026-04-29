@@ -190,6 +190,19 @@ export const transactionService = {
 				.orderBy(desc(transactions.createdAt))
 				.limit(1);
 
+			// Update checkin transaction with attendee info from checkout
+			if (checkoutTx) {
+				await tx
+					.update(transactions)
+					.set({
+						attendeeFirstName: checkoutTx.attendeeFirstName,
+						attendeeLastName: checkoutTx.attendeeLastName,
+						idType: checkoutTx.idType,
+						checkoutWeight: checkoutTx.checkoutWeight
+					})
+					.where(eq(transactions.id, transaction.id));
+			}
+
 			// Compare weights if we have a checkout weight
 			let weightWarning: WeightWarning | undefined;
 			if (checkoutTx?.checkoutWeight != null) {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Catalog Page', () => {
 	test('displays all seed games with titles and copy numbers', async ({ page }) => {

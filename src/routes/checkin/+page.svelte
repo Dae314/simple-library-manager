@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { enhance } from '$app/forms';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { enhance, applyAction, deserialize } from '$app/forms';
 	import toast from 'svelte-hot-french-toast';
 	import SearchFilter from '$lib/components/SearchFilter.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
@@ -58,22 +58,7 @@
 	let selectedGame: CheckedOutGame | null = $state(null);
 	let weightWarning: WeightWarningData | null = $state(null);
 	let showPlayAndTakeDialog = $state(false);
-	let pendingFormEl: HTMLFormElement | null = $state(null);
-
-	$effect(() => {
-		if (form?.success && form?.weightWarning) {
-			weightWarning = form.weightWarning;
-			toast.success('Game checked in successfully!');
-			selectedGame = null;
-		} else if (form?.success) {
-			toast.success('Game checked in successfully!');
-			selectedGame = null;
-			weightWarning = null;
-		}
-		if (form?.conflict) {
-			toast.error(form.message || 'This game is no longer checked out.');
-		}
-	});
+	let pendingFormElement: HTMLFormElement | null = $state(null);
 
 	function handleSearch(term: string) {
 		const url = new URL(window.location.href);
@@ -124,25 +109,38 @@
 		return parts.join(' ') || 'Unknown';
 	}
 
-	function handleCheckinSubmit(e: SubmitEvent) {
-		if (selectedGame?.gameType === 'play_and_take') {
-			e.preventDefault();
-			pendingFormEl = e.target as HTMLFormElement;
-			showPlayAndTakeDialog = true;
-		}
-		// For non play_and_take, let the form submit normally
-	}
-
 	function confirmPlayAndTake(takes: boolean) {
 		showPlayAndTakeDialog = false;
-		if (pendingFormEl) {
+		if (pendingFormElement) {
 			// Set the hidden field value before submitting
-			const hiddenInput = pendingFormEl.querySelector('input[name="attendeeTakesGame"]') as HTMLInputElement;
+			const hiddenInput = pendingFormElement.querySelector('input[name="attendeeTakesGame"]') as HTMLInputElement;
 			if (hiddenInput) {
 				hiddenInput.value = takes ? 'true' : 'false';
 			}
-			pendingFormEl.requestSubmit();
-			pendingFormEl = null;
+			// Submit the form directly via fetch to bypass the use:enhance SubmitFunction
+			const formData = new FormData(pendingFormElement);
+			const action = pendingFormElement.action;
+			pendingFormElement = null;
+
+			fetch(action, {
+				method: 'POST',
+				body: formData,
+				headers: { 'x-sveltekit-action': 'true' }
+			}).then(async (response) => {
+				const result = deserialize(await response.text());
+				if (result.type === 'success') {
+					const data = (result as any).data;
+					if (data?.weightWarning) {
+						weightWarning = data.weightWarning;
+					} else {
+						weightWarning = null;
+					}
+					toast.success('Game checked in successfully!');
+					selectedGame = null;
+				}
+				await applyAction(result);
+				await invalidateAll();
+			});
 		}
 	}
 
@@ -226,7 +224,32 @@
 				</div>
 			{/if}
 
-			<form method="POST" action="?/checkin" use:enhance onsubmit={handleCheckinSubmit}>
+			<form method="POST" action="?/checkin" use:enhance={({ formElement, formData, cancel }) => {
+				if (selectedGame?.gameType === 'play_and_take') {
+					cancel();
+					pendingFormElement = formElement;
+					showPlayAndTakeDialog = true;
+					return;
+				}
+				return async ({ result, update }) => {
+					if (result.type === 'success') {
+						const data = (result as any).data;
+						if (data?.weightWarning) {
+							weightWarning = data.weightWarning;
+						} else {
+							weightWarning = null;
+						}
+						toast.success('Game checked in successfully!');
+						selectedGame = null;
+					} else if (result.type === 'failure') {
+						const data = (result as any).data;
+						if (data?.conflict) {
+							toast.error(data.message || 'This game is no longer checked out.');
+						}
+					}
+					await update({ reset: false });
+				};
+			}} novalidate>
 				<input type="hidden" name="gameId" value={selectedGame.id} />
 				<input type="hidden" name="attendeeTakesGame" value="false" />
 

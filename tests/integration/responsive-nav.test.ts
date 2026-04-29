@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Responsive Navigation', () => {
 	test.describe('Desktop viewport (1280×720)', () => {
