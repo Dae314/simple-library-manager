@@ -28,7 +28,6 @@ export const actions: Actions = {
 
 		try {
 			await gameService.create(validation.data!);
-			redirect(303, '/management');
 		} catch (err: unknown) {
 			if (isDuplicateKeyError(err)) {
 				return fail(409, {
@@ -38,5 +37,7 @@ export const actions: Actions = {
 			}
 			return fail(500, { error: getUserFriendlyDbMessage(err), values });
 		}
+
+		redirect(303, '/management');
 	}
 };

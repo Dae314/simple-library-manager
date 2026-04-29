@@ -43,7 +43,6 @@ export const actions: Actions = {
 
 		try {
 			await gameService.update(id, validation.data!);
-			redirect(303, '/management');
 		} catch (err: unknown) {
 			if (isDuplicateKeyError(err)) {
 				return fail(409, {
@@ -54,6 +53,8 @@ export const actions: Actions = {
 			const message = getUserFriendlyDbMessage(err);
 			return fail(500, { error: message, values });
 		}
+
+		redirect(303, '/management');
 	},
 
 	toggleStatus: async ({ request, params }) => {
