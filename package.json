@@ -25,6 +25,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@types/papaparse": "^5.5.2",
     "@types/pg": "^8.11.0",
+    "@types/ws": "^8.5.0",
     "drizzle-kit": "^0.31.10",
     "svelte": "^5.0.0",
     "svelte-check": "^4.4.6",
@@ -37,7 +38,8 @@
     "fast-check": "^4.0.0",
     "papaparse": "^5.5.3",
     "pg": "^8.13.0",
-    "svelte-hot-french-toast": "^4.0.0"
+    "svelte-hot-french-toast": "^4.0.0",
+    "ws": "^8.18.0"
   },
   "type": "module"
 }

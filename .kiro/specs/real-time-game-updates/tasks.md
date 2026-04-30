@@ -6,21 +6,21 @@ This plan implements WebSocket-based real-time update propagation for the Board 
 
 ## Tasks
 
-- [ ] 1. Install dependencies and set up server-side core modules
-  - [ ] 1.1 Add `ws` and `@types/ws` dependencies
+- [x] 1. Install dependencies and set up server-side core modules
+  - [x] 1.1 Add `ws` and `@types/ws` dependencies
     - Add `ws` (^8.18.0) to `dependencies` in `package.json`
     - Add `@types/ws` (^8.5.0) to `devDependencies` in `package.json`
     - Run `npm install`
     - _Requirements: 1.1, 1.2_
 
-  - [ ] 1.2 Create event types module (`src/lib/server/ws/events.ts`)
+  - [x] 1.2 Create event types module (`src/lib/server/ws/events.ts`)
     - Define `EventType` union type with all 10 event types: `game_created`, `game_updated`, `game_checked_out`, `game_checked_in`, `game_retired`, `game_restored`, `games_imported`, `games_batch_changed`, `transaction_created`, `full_resync`
     - Define `GameEventMessage`, `BatchGameEventMessage`, `TransactionEventMessage`, `FullResyncMessage` interfaces
     - Define `EventMessage` discriminated union type
     - Export all types
     - _Requirements: 2.2, 2.3, 3.1_
 
-  - [ ] 1.3 Create Connection Manager (`src/lib/server/ws/connection-manager.ts`)
+  - [x] 1.3 Create Connection Manager (`src/lib/server/ws/connection-manager.ts`)
     - Implement `ConnectionManager` with a `Set<WebSocket>` for tracking connections
     - Implement `addConnection(ws)`, `removeConnection(ws)`, `broadcast(event)`, `getConnectionCount()`
     - In `broadcast()`, iterate the set, skip and remove connections with `readyState !== WebSocket.OPEN`, call `ws.send(JSON.stringify(event))` for each open connection
@@ -28,28 +28,28 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Export a singleton `connectionManager` instance
     - _Requirements: 1.2, 1.3, 2.1, 3.1, 7.1, 7.4_
 
-  - [ ] 1.4 Write property tests for Connection Manager and event messages (`tests/properties/websocket.prop.test.ts`)
+  - [x] 1.4 Write property tests for Connection Manager and event messages (`tests/properties/websocket.prop.test.ts`)
     - **Property 1: Connection Manager add/remove consistency** — Generate random sequences of add/remove operations on mock WebSocket objects. Assert that `getConnectionCount()` equals the number of added-but-not-removed connections. _Validates: Requirements 1.2, 1.3_
     - **Property 3: Broadcast reaches all active connections** — Generate N mock WebSocket connections (0–100) with `readyState === OPEN`. Register all with the Connection Manager, broadcast an event, assert exactly N `send()` calls. _Validates: Requirements 2.1, 3.1_
     - **Property 4: Event message serialization round-trip** — Generate arbitrary valid `EventMessage` objects (all 4 variants) using custom arbitraries. Assert `JSON.parse(JSON.stringify(event))` deep-equals the original. _Validates: Requirements 2.2, 2.3, 3.1_
     - Run `npm run test` to verify these properties pass
 
-  - [ ] 1.5 Create broadcast helper functions (`src/lib/server/ws/broadcast.ts`)
+  - [x] 1.5 Create broadcast helper functions (`src/lib/server/ws/broadcast.ts`)
     - Implement `broadcastGameEvent(type, gameId)` — constructs a `GameEventMessage` and calls `connectionManager.broadcast()`
     - Implement `broadcastBatchGameEvent(gameIds)` — constructs a `BatchGameEventMessage`
     - Implement `broadcastTransactionEvent(transactionId, gameId)` — constructs a `TransactionEventMessage`
     - Implement `broadcastFullResync()` — constructs a `FullResyncMessage`
     - _Requirements: 2.1, 2.3, 2.4, 3.1, 8.1_
 
-- [ ] 2. Implement server-side WebSocket setup and entry points
-  - [ ] 2.1 Create WebSocket setup module (`src/lib/server/ws/setup.ts`)
+- [x] 2. Implement server-side WebSocket setup and entry points
+  - [x] 2.1 Create WebSocket setup module (`src/lib/server/ws/setup.ts`)
     - Implement `setupWebSocketServer(wss: WebSocketServer): void`
     - On `connection` event, register the new WebSocket with the Connection Manager
     - Set up `close` and `error` handlers to remove connections from the Connection Manager
     - Implement ping/pong heartbeat: ping every 30s, close connection if no pong received within 30s
     - _Requirements: 1.2, 1.3, 7.2_
 
-  - [ ] 2.2 Create production server entry point (`server.js`)
+  - [x] 2.2 Create production server entry point (`server.js`)
     - Import `WebSocketServer` from `ws`
     - Import `server` from `./build/index.js` (the adapter-node generated entry point)
     - Access the underlying HTTP server via `server.server`
@@ -61,7 +61,7 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Listen for `sveltekit:shutdown` process event to close all WebSocket connections with code 1001 and close the WSS
     - _Requirements: 1.1, 1.2, 7.3_
 
-  - [ ] 2.3 Create Vite dev plugin (`src/lib/server/ws/vite-plugin.ts`)
+  - [x] 2.3 Create Vite dev plugin (`src/lib/server/ws/vite-plugin.ts`)
     - Export `webSocketPlugin()` returning a Vite `Plugin`
     - In `configureServer(server)`, create `WebSocketServer` with `{ noServer: true }`
     - Listen for `upgrade` events on `server.httpServer`, filter by `/ws` pathname
@@ -70,17 +70,17 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Call `setupWebSocketServer(wss)`
     - _Requirements: 1.1_
 
-  - [ ] 2.4 Register Vite plugin in `vite.config.ts`
+  - [x] 2.4 Register Vite plugin in `vite.config.ts`
     - Import `webSocketPlugin` from `./src/lib/server/ws/vite-plugin.js`
     - Add `webSocketPlugin()` to the `plugins` array alongside `sveltekit()`
     - _Requirements: 1.1_
 
-  - [ ] 2.5 Update Dockerfile to use `server.js` entry point
+  - [x] 2.5 Update Dockerfile to use `server.js` entry point
     - Add `COPY --from=builder /app/server.js ./server.js` in the production stage
     - Change `CMD ["node", "build"]` to `CMD ["node", "server.js"]`
     - _Requirements: 1.1_
 
-- [ ] 3. Checkpoint — Verify server-side WebSocket infrastructure
+- [x] 3. Checkpoint — Verify server-side WebSocket infrastructure
   - Run `npm run test` to verify all property tests pass
   - Run `npm run build` to verify the build succeeds
   - Ensure all tests pass, ask the user if questions arise.

@@ -1,6 +1,7 @@
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { db } from '$lib/server/db/index.js';
 import { seed } from '$lib/server/db/seed.js';
+import { initWebSocket } from '$lib/server/ws/setup.js';
 
 try {
 	await migrate(db, { migrationsFolder: './drizzle/migrations' });
@@ -11,3 +12,5 @@ try {
 	console.error('Database startup failed:', error);
 	throw error;
 }
+
+initWebSocket();
