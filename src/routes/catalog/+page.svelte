@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { getContext } from 'svelte';
 	import SearchFilter from '$lib/components/SearchFilter.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import GameCard from '$lib/components/GameCard.svelte';
+	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
+
+	const wsClient: { connected: boolean } = getContext('ws');
 
 	type GameRecord = {
 		id: number;
@@ -79,7 +83,7 @@
 	}
 </script>
 
-<h1>Catalog</h1>
+<h1>Catalog <ConnectionIndicator connected={wsClient.connected} /></h1>
 
 <div class="filter-bar">
 	<div class="search-field">

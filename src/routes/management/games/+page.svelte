@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
+	import { getContext } from 'svelte';
 	import FilterPanel from '$lib/components/FilterPanel.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import GameCard from '$lib/components/GameCard.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import toast from 'svelte-hot-french-toast';
+
+	const wsClient: { connected: boolean } = getContext('ws');
 
 	type GameRecord = {
 		id: number;
@@ -232,7 +236,7 @@
 	<div class="page-header">
 		<div class="header-left">
 			<a href="/management" class="back-link" aria-label="Back to management">&larr; Management</a>
-			<h1>Games</h1>
+			<h1>Games <ConnectionIndicator connected={wsClient.connected} /></h1>
 		</div>
 		<div class="header-actions">
 			<a href="/management/games/new" class="btn btn-primary">+ Add Game</a>

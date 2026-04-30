@@ -85,8 +85,8 @@ This plan implements WebSocket-based real-time update propagation for the Board 
   - Run `npm run build` to verify the build succeeds
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 4. Implement client-side WebSocket module, event handling, and their property tests
-  - [ ] 4.1 Create WebSocket client module (`src/lib/stores/websocket.svelte.ts`)
+- [x] 4. Implement client-side WebSocket module, event handling, and their property tests
+  - [x] 4.1 Create WebSocket client module (`src/lib/stores/websocket.svelte.ts`)
     - Use Svelte 5 runes (`$state()`) for reactive `connected` status
     - Implement `connect()`: construct WebSocket URL from `window.location` using `/ws` path (`wss:` for HTTPS, `ws:` for HTTP)
     - Implement `disconnect()`: close the WebSocket connection and clear timers
@@ -98,7 +98,7 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Handle errors gracefully: invalid JSON logged and ignored, unknown event types ignored
     - _Requirements: 1.1, 1.4, 1.5, 4.4_
 
-  - [ ] 4.2 Implement event handler with page classification (`src/lib/stores/websocket.svelte.ts`)
+  - [x] 4.2 Implement event handler with page classification (`src/lib/stores/websocket.svelte.ts`)
     - Define `LIVE_UPDATE_PAGES` array: `/checkout`, `/checkin`, `/catalog`, `/management/games`, `/management/transactions`
     - Define `STATIC_PAGES` array: `/`, `/statistics`, `/management/config`, `/management/backup`, `/management/games/new`
     - Implement `handleEvent(event, pathname, currentEditGameId?)` that returns an action descriptor: `'invalidate'`, `'reload'`, `'conflict'`, or `'ignore'`
@@ -109,14 +109,14 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Export `handleEvent` for testability
     - _Requirements: 4.1, 4.2, 4.3, 4.6, 9.1, 9.5_
 
-  - [ ] 4.3 Implement debounce utility for `invalidateAll` calls
+  - [x] 4.3 Implement debounce utility for `invalidateAll` calls
     - Create a debounce mechanism (300ms window) that coalesces multiple incoming events into a single `invalidateAll()` call
     - Each incoming event resets the timer
     - When the timer fires, a single `invalidateAll()` call is made
     - Export the debounce function for testability
     - _Requirements: 4.5_
 
-  - [ ] 4.4 Write property tests for client-side logic (`tests/properties/websocket.prop.test.ts`)
+  - [x] 4.4 Write property tests for client-side logic (`tests/properties/websocket.prop.test.ts`)
     - **Property 2: Reconnection delay calculation** — Generate arbitrary non-negative integers for attempt counts using `fc.nat()`. Assert that `calculateReconnectDelay(attempts)` equals `min(1000 * 2^attempts, 30000)`, is always ≥ 1000ms, and never exceeds 30000ms. _Validates: Requirements 1.4_
     - **Property 5: Live_Update_Pages trigger data reload on any event** — Generate combinations of event types × Live_Update_Page pathnames. Assert `handleEvent()` returns `'invalidate'` (excluding edit page with matching gameId). _Validates: Requirements 4.1, 4.2, 4.3_
     - **Property 6: Static_Pages ignore all events** — Generate combinations of non-full_resync event types × Static_Page pathnames. Assert `handleEvent()` returns `'ignore'`. _Validates: Requirements 4.6, 5.5, 6.4_
@@ -125,8 +125,8 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - **Property 9: Edit page conflict detection based on gameId match** — Generate pairs of (currentGameId, eventGameId) using `fc.nat()`. When IDs match: assert `handleEvent()` returns `'conflict'`. When IDs differ: assert `handleEvent()` returns `'invalidate'`. _Validates: Requirements 9.1, 9.5_
     - Run `npm run test` to verify all properties pass
 
-- [ ] 5. Implement Connection Indicator and page-level integration
-  - [ ] 5.1 Create ConnectionIndicator component (`src/lib/components/ConnectionIndicator.svelte`)
+- [x] 5. Implement Connection Indicator and page-level integration
+  - [x] 5.1 Create ConnectionIndicator component (`src/lib/components/ConnectionIndicator.svelte`)
     - Accept `connected` boolean prop via `$props()`
     - Render a small dot: green when connected, red/amber when disconnected
     - Include `role="status"` and `aria-live="polite"` for accessibility
@@ -134,14 +134,14 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Style with scoped CSS, keep it small and unobtrusive
     - _Requirements: 6.1, 6.2, 6.3_
 
-  - [ ] 5.2 Integrate WebSocket into root layout (`src/routes/+layout.svelte`)
+  - [x] 5.2 Integrate WebSocket into root layout (`src/routes/+layout.svelte`)
     - Import the WebSocket client module
     - Initialize the WebSocket connection on mount using `$effect()`
     - Provide `connected` state and event handling via Svelte context so child pages can access it
     - Clean up on unmount by calling `disconnect()`
     - _Requirements: 1.1, 1.4_
 
-  - [ ] 5.3 Add ConnectionIndicator to all Live_Update_Pages
+  - [x] 5.3 Add ConnectionIndicator to all Live_Update_Pages
     - Import `ConnectionIndicator` and get WebSocket context in each Live_Update_Page:
       - `src/routes/checkout/+page.svelte`
       - `src/routes/checkin/+page.svelte`
@@ -153,7 +153,7 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Ensure Static_Pages do NOT render the indicator
     - _Requirements: 6.1, 6.2, 6.4_
 
-- [ ] 6. Checkpoint — Verify client-side WebSocket, indicator, and all property tests
+- [x] 6. Checkpoint — Verify client-side WebSocket, indicator, and all property tests
   - Run `npm run test` to verify all property tests pass
   - Ensure all tests pass, ask the user if questions arise.
 

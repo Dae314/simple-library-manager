@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
+	import { getContext } from 'svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import FilterPanel from '$lib/components/FilterPanel.svelte';
+	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import toast from 'svelte-hot-french-toast';
 	import { formatDateTime, formatWeight } from '$lib/utils/formatting.js';
+
+	const wsClient: { connected: boolean } = getContext('ws');
 
 	type TransactionWithGame = {
 		id: number;
@@ -104,7 +108,7 @@
 
 <div class="transactions-page">
 	<div class="page-header">
-		<h1>Transaction Log</h1>
+		<h1>Transaction Log <ConnectionIndicator connected={wsClient.connected} /></h1>
 		<a href="/management" class="btn btn-secondary">← Back to Management</a>
 	</div>
 

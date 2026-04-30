@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { getContext } from 'svelte';
 	import toast from 'svelte-hot-french-toast';
 	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
+	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
+
+	const wsClient: { connected: boolean } = getContext('ws');
 
 	type GameRecord = {
 		id: number;
@@ -33,7 +37,7 @@
 </script>
 
 <div class="edit-game-page">
-	<h1>Edit Game</h1>
+	<h1>Edit Game <ConnectionIndicator connected={wsClient.connected} /></h1>
 
 	<div class="game-header">
 		<div class="game-identity">

@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
+	import { getContext } from 'svelte';
 	import toast from 'svelte-hot-french-toast';
 	import SearchFilter from '$lib/components/SearchFilter.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import GameCard from '$lib/components/GameCard.svelte';
+	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
+
+	const wsClient: { connected: boolean } = getContext('ws');
 
 	type GameRecord = {
 		id: number;
@@ -80,7 +84,7 @@
 	const selectedGameTitle = $derived(selectedGame ? gameDisplayTitle(selectedGame) : '');
 </script>
 
-<h1>Checkout</h1>
+<h1>Checkout <ConnectionIndicator connected={wsClient.connected} /></h1>
 
 <div class="checkout-layout">
 	<section class="game-list-section">
