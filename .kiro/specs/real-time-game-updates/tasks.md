@@ -220,8 +220,8 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - This is handled in the event handler logic (task 4.2) but ensure it is wired up in the layout-level WebSocket integration
     - _Requirements: 8.2_
 
-- [ ] 9. Write Playwright E2E integration tests for real-time updates
-  - [ ] 9.1 Write E2E test: WebSocket connection lifecycle and checkout broadcasting (`tests/integration/realtime-checkout.test.ts`)
+- [x] 9. Write Playwright E2E integration tests for real-time updates
+  - [x] 9.1 Write E2E test: WebSocket connection lifecycle and checkout broadcasting (`tests/integration/realtime-checkout.test.ts`)
     - Open two browser tabs on the checkout page
     - Verify both tabs establish a WebSocket connection (connection indicator shows live)
     - Create a game via `helpers.createGame()`
@@ -229,14 +229,14 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Verify tab 2 automatically reflects the game as checked out without manual refresh
     - _Requirements: 1.1, 2.1, 2.4, 4.1, 6.1_
 
-  - [ ] 9.2 Write E2E test: checkin broadcasting across tabs (`tests/integration/realtime-checkin.test.ts`)
+  - [x] 9.2 Write E2E test: checkin broadcasting across tabs (`tests/integration/realtime-checkin.test.ts`)
     - Create and check out a game via helpers
     - Open two browser tabs on the checkin page
     - Check in the game on tab 1
     - Verify tab 2 automatically reflects the game as available without manual refresh
     - _Requirements: 2.1, 2.4, 4.1_
 
-  - [ ] 9.3 Write E2E test: game management changes propagate to catalog and management pages (`tests/integration/realtime-management.test.ts`)
+  - [x] 9.3 Write E2E test: game management changes propagate to catalog and management pages (`tests/integration/realtime-management.test.ts`)
     - Open tab 1 on `/management/games` and tab 2 on `/catalog`
     - Create a new game via the management UI on tab 1
     - Verify the new game appears on tab 2's catalog without manual refresh
@@ -244,7 +244,7 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Verify the updated title appears on tab 2 without manual refresh
     - _Requirements: 2.1, 2.2, 2.4, 4.1_
 
-  - [ ] 9.4 Write E2E test: edit page conflict warning (`tests/integration/realtime-conflict.test.ts`)
+  - [x] 9.4 Write E2E test: edit page conflict warning (`tests/integration/realtime-conflict.test.ts`)
     - Create a game via helpers
     - Open tab 1 on `/management/games/[id]` (edit page)
     - Modify the game from tab 2 (e.g., update title via the management UI or test API)
@@ -253,19 +253,19 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Verify the "Dismiss" button hides the warning
     - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
-  - [ ] 9.5 Write E2E test: static pages do not react to events (`tests/integration/realtime-static.test.ts`)
+  - [x] 9.5 Write E2E test: static pages do not react to events (`tests/integration/realtime-static.test.ts`)
     - Open tab 1 on `/statistics` (a Static_Page)
     - Create and check out a game from tab 2
     - Verify tab 1 does NOT show a connection indicator
     - Verify tab 1's content does not change (no automatic refresh)
     - _Requirements: 4.6, 5.5, 6.4_
 
-  - [ ] 9.6 Write E2E test: connection indicator visibility (`tests/integration/realtime-indicator.test.ts`)
+  - [x] 9.6 Write E2E test: connection indicator visibility (`tests/integration/realtime-indicator.test.ts`)
     - Navigate to each Live_Update_Page and verify the connection indicator is visible and shows "live" state
     - Navigate to each Static_Page and verify the connection indicator is NOT present
     - _Requirements: 6.1, 6.2, 6.4_
 
-  - [ ] 9.7 Run full E2E test suite
+  - [x] 9.7 Run full E2E test suite
     - Run `npm run test:e2e` to execute all integration tests against the Dockerized app
     - Verify all new real-time tests pass alongside existing E2E tests
     - Ensure all tests pass, ask the user if questions arise.

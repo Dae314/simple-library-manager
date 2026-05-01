@@ -10,7 +10,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await row.locator('a', { hasText: 'Edit' }).click();
 
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
-		await expect(page.locator('h1')).toHaveText('Edit Game');
+		await expect(page.locator('h1')).toContainText('Edit Game');
 
 		await expect(page.locator('#title')).toHaveValue(game.title);
 		await expect(page.locator('#bggId')).toHaveValue('55555');

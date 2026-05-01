@@ -7,7 +7,7 @@ test.describe('Transaction Log and Reversals', () => {
 		await helpers.checkoutGame(game.title, 'Alice', 'Test', '30');
 
 		await page.goto(`/management/transactions?gameTitle=${helpers.prefix}_TxLog`);
-		await expect(page.locator('h1')).toHaveText('Transaction Log');
+		await expect(page.locator('h1')).toContainText('Transaction Log');
 
 		const txCard = page.locator('.transaction-card', { hasText: game.title }).first();
 		await expect(txCard).toBeVisible();

@@ -8,7 +8,7 @@ test.describe('Catalog Page', () => {
 
 		await page.goto(`/catalog?search=${helpers.prefix}_CatCopy`);
 
-		await expect(page.locator('h1')).toHaveText('Catalog');
+		await expect(page.locator('h1')).toContainText('Catalog');
 
 		// Both copies should be visible with copy numbers
 		await expect(

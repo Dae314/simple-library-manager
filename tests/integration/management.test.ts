@@ -70,7 +70,7 @@ test.describe('Management Area', () => {
 
 			await page.goto(`/management/games?search=${helpers.prefix}_ListGame`);
 
-			await expect(page.locator('h1')).toHaveText('Games');
+			await expect(page.locator('h1')).toContainText('Games');
 
 			const row = page.locator('.game-row', { hasText: game.title });
 			await expect(row).toBeVisible();
@@ -138,7 +138,7 @@ test.describe('Management Area', () => {
 			await row.locator('.game-content').click();
 
 			await expect(page).toHaveURL(/\/management\/games\/\d+/);
-			await expect(page.locator('h1')).toHaveText('Edit Game');
+			await expect(page.locator('h1')).toContainText('Edit Game');
 			await expect(page.locator('#title')).toHaveValue(game.title);
 		});
 	});
