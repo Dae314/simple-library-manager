@@ -172,12 +172,16 @@ export function createWebSocketClient() {
 
 			ws.onopen = () => {
 				connected = true;
+				const wasReconnect = reconnectAttempts > 0;
 				reconnectAttempts = 0;
 
-				// On reconnection, sync state
-				invalidateAll().catch((err) => {
-					console.warn('[ws] invalidateAll on reconnect failed:', err);
-				});
+				// On reconnection, sync state — but only for live-update pages
+				const pathname = getPathname?.() ?? window.location.pathname;
+				if (!isStaticPage(pathname)) {
+					invalidateAll().catch((err) => {
+						console.warn('[ws] invalidateAll on reconnect failed:', err);
+					});
+				}
 			};
 
 			ws.onclose = () => {

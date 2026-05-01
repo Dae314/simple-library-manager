@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
 	import toast from 'svelte-hot-french-toast';
 
 	type ConventionConfig = {
@@ -101,7 +100,6 @@
 						id="weightTolerance"
 						name="weightTolerance"
 						type="number"
-						min="0.01"
 						step="any"
 						value={configValues.weightTolerance}
 					/>

@@ -23,7 +23,7 @@ export const actions: Actions = {
 		const weightUnit = formData.get('weightUnit')?.toString() ?? 'oz';
 		const version = parseInt(formData.get('version')?.toString() ?? '1', 10);
 
-		const weightTolerance = rawTolerance ? parseFloat(rawTolerance) : undefined;
+		const weightTolerance = rawTolerance !== undefined && rawTolerance !== '' ? parseFloat(rawTolerance) : undefined;
 
 		try {
 			await configService.update(
