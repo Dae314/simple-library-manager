@@ -1,6 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
 import { backupService } from '$lib/server/services/backup.js';
+import { broadcastFullResync } from '$lib/server/ws/broadcast.js';
 
 export const load: PageServerLoad = async () => {
 	return {};
@@ -17,6 +18,7 @@ export const actions: Actions = {
 
 		try {
 			await backupService.importDatabase(file);
+			broadcastFullResync();
 			return { success: true };
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Unknown error';

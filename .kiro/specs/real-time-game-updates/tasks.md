@@ -157,52 +157,52 @@ This plan implements WebSocket-based real-time update propagation for the Board 
   - Run `npm run test` to verify all property tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Integrate broadcasting into all form actions
-  - [ ] 7.1 Add broadcasting to checkout action (`src/routes/checkout/+page.server.ts`)
+- [x] 7. Integrate broadcasting into all form actions
+  - [x] 7.1 Add broadcasting to checkout action (`src/routes/checkout/+page.server.ts`)
     - After `transactionService.checkout()` succeeds, call `broadcastGameEvent('game_checked_out', gameId)` and `broadcastTransactionEvent(transactionId, gameId)`
     - Requires the checkout service to return the transaction ID — adjust the return value or extract it
     - _Requirements: 2.1, 2.4, 3.1, 3.2_
 
-  - [ ] 7.2 Add broadcasting to checkin action (`src/routes/checkin/+page.server.ts`)
+  - [x] 7.2 Add broadcasting to checkin action (`src/routes/checkin/+page.server.ts`)
     - After `transactionService.checkin()` succeeds, call `broadcastGameEvent('game_checked_in', gameId)` and `broadcastTransactionEvent(transactionId, gameId)`
     - _Requirements: 2.1, 2.4, 3.1, 3.2_
 
-  - [ ] 7.3 Add broadcasting to game creation action (`src/routes/management/games/new/+page.server.ts`)
+  - [x] 7.3 Add broadcasting to game creation action (`src/routes/management/games/new/+page.server.ts`)
     - After `gameService.create()` succeeds, call `broadcastGameEvent('game_created', createdGame.id)`
     - _Requirements: 2.1, 2.2, 2.4_
 
-  - [ ] 7.4 Add broadcasting to game update action (`src/routes/management/games/[id]/+page.server.ts`)
+  - [x] 7.4 Add broadcasting to game update action (`src/routes/management/games/[id]/+page.server.ts`)
     - After `gameService.update()` succeeds, call `broadcastGameEvent('game_updated', id)`
     - _Requirements: 2.1, 2.2, 2.4_
 
-  - [ ] 7.5 Add broadcasting to game toggleStatus action (`src/routes/management/games/[id]/+page.server.ts`)
+  - [x] 7.5 Add broadcasting to game toggleStatus action (`src/routes/management/games/[id]/+page.server.ts`)
     - After `gameService.toggleStatus()` succeeds, call `broadcastGameEvent('game_updated', id)` and `broadcastTransactionEvent(transactionId, id)`
     - _Requirements: 2.1, 2.4, 3.1, 3.2_
 
-  - [ ] 7.6 Add broadcasting to bulk retire action (`src/routes/management/games/+page.server.ts`)
+  - [x] 7.6 Add broadcasting to bulk retire action (`src/routes/management/games/+page.server.ts`)
     - After `gameService.retire()` succeeds, call `broadcastBatchGameEvent(ids)`
     - _Requirements: 2.3, 2.4_
 
-  - [ ] 7.7 Add broadcasting to game restore action (`src/routes/management/games/+page.server.ts`)
+  - [x] 7.7 Add broadcasting to game restore action (`src/routes/management/games/+page.server.ts`)
     - After `gameService.restore()` succeeds, call `broadcastGameEvent('game_restored', id)`
     - _Requirements: 2.1, 2.4_
 
-  - [ ] 7.8 Add broadcasting to CSV import action (`src/routes/management/games/+page.server.ts`)
+  - [x] 7.8 Add broadcasting to CSV import action (`src/routes/management/games/+page.server.ts`)
     - After `csvService.importGames()` succeeds, call `broadcastBatchGameEvent(importedGameIds)`
     - May need to adjust `csvService.importGames()` to return the list of created game IDs
     - _Requirements: 2.3, 2.4_
 
-  - [ ] 7.9 Add broadcasting to transaction reversal actions (`src/routes/management/transactions/+page.server.ts`)
+  - [x] 7.9 Add broadcasting to transaction reversal actions (`src/routes/management/transactions/+page.server.ts`)
     - After `transactionService.reverseCheckout()` succeeds, call `broadcastGameEvent('game_checked_in', gameId)` and `broadcastTransactionEvent(transactionId, gameId)`
     - After `transactionService.reverseCheckin()` succeeds, call `broadcastGameEvent('game_checked_out', gameId)` and `broadcastTransactionEvent(transactionId, gameId)`
     - _Requirements: 2.1, 2.4, 3.1, 3.2_
 
-  - [ ] 7.10 Add broadcasting to backup restore action (`src/routes/management/backup/+page.server.ts`)
+  - [x] 7.10 Add broadcasting to backup restore action (`src/routes/management/backup/+page.server.ts`)
     - After `backupService.importDatabase()` succeeds, call `broadcastFullResync()`
     - _Requirements: 8.1_
 
-- [ ] 8. Implement edit page conflict warning and backup restore warning
-  - [ ] 8.1 Add conflict warning to game edit page (`src/routes/management/games/[id]/+page.svelte`)
+- [x] 8. Implement edit page conflict warning and backup restore warning
+  - [x] 8.1 Add conflict warning to game edit page (`src/routes/management/games/[id]/+page.svelte`)
     - Track the current game ID from `data.game.id`
     - Listen for WebSocket events where `gameId` matches the current game
     - When a matching event arrives, display a warning banner: "This game was modified by another station. Your form data may be stale."
@@ -211,11 +211,11 @@ This plan implements WebSocket-based real-time update propagation for the Board 
     - Use `role="alert"` for accessibility
     - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
-  - [ ] 8.2 Update backup restore confirmation dialog warning text (`src/routes/management/backup/+page.svelte`)
+  - [x] 8.2 Update backup restore confirmation dialog warning text (`src/routes/management/backup/+page.svelte`)
     - In the `ConfirmDialog` for database restore, add warning text advising the user to "ensure all librarians stop their activities until the restore is complete"
     - _Requirements: 8.3_
 
-  - [ ] 8.3 Implement full resync handling on the client
+  - [x] 8.3 Implement full resync handling on the client
     - When a `full_resync` event is received, call `window.location.reload()` on all pages (both Live_Update_Pages and Static_Pages)
     - This is handled in the event handler logic (task 4.2) but ensure it is wired up in the layout-level WebSocket integration
     - _Requirements: 8.2_

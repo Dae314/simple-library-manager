@@ -409,7 +409,7 @@ export const gameService = {
 		id: number,
 		newStatus: 'available' | 'checked_out',
 		version: number
-	): Promise<GameRecord> {
+	): Promise<GameRecord & { transactionId: number }> {
 		return await db.transaction(async (tx) => {
 			// Optimistic locking: update only if version matches
 			const [updated] = await tx
@@ -433,14 +433,14 @@ export const gameService = {
 
 			// Create corrective transaction
 			const txType = newStatus === 'available' ? 'checkin' : 'checkout';
-			await tx.insert(transactions).values({
+			const [correctionTx] = await tx.insert(transactions).values({
 				gameId: id,
 				type: txType,
 				note: `Manual status override to "${newStatus}"`,
 				isCorrection: true
-			});
+			}).returning();
 
-			return updated;
+			return { ...updated, transactionId: correctionTx.id };
 		});
 	}
 };

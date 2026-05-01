@@ -2,6 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { transactionService } from '$lib/server/services/transactions.js';
 import type { TransactionFilters } from '$lib/server/services/transactions.js';
 import { fail } from '@sveltejs/kit';
+import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const gameTitle = url.searchParams.get('gameTitle') || '';
@@ -46,7 +47,9 @@ export const actions: Actions = {
 		}
 
 		try {
-			await transactionService.reverseCheckout(transactionId);
+			const result = await transactionService.reverseCheckout(transactionId);
+			broadcastGameEvent('game_checked_in', result.gameId);
+			broadcastTransactionEvent(result.correctionTransactionId, result.gameId);
 			return { success: true, action: 'reverseCheckout' };
 		} catch (e: any) {
 			const message = e?.message || 'Failed to reverse checkout';
@@ -66,7 +69,9 @@ export const actions: Actions = {
 		}
 
 		try {
-			await transactionService.reverseCheckin(transactionId);
+			const result = await transactionService.reverseCheckin(transactionId);
+			broadcastGameEvent('game_checked_out', result.gameId);
+			broadcastTransactionEvent(result.correctionTransactionId, result.gameId);
 			return { success: true, action: 'reverseCheckin' };
 		} catch (e: any) {
 			const message = e?.message || 'Failed to reverse checkin';

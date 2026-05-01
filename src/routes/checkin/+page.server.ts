@@ -5,6 +5,7 @@ import { transactionService } from '$lib/server/services/transactions.js';
 import { configService } from '$lib/server/services/config.js';
 import { validateCheckinInput } from '$lib/server/validation.js';
 import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
+import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || undefined;
@@ -49,6 +50,9 @@ export const actions: Actions = {
 
 		try {
 			const result = await transactionService.checkin(validation.data!);
+
+			broadcastGameEvent('game_checked_in', validation.data!.gameId);
+			broadcastTransactionEvent(result.transaction.id, validation.data!.gameId);
 
 			// Get config for weight unit in warning display
 			const config = await configService.get();

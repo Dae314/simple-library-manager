@@ -5,6 +5,7 @@ import { transactionService } from '$lib/server/services/transactions.js';
 import { configService } from '$lib/server/services/config.js';
 import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 import { validateCheckoutInput } from '$lib/server/validation.js';
+import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || undefined;
@@ -57,7 +58,9 @@ export const actions: Actions = {
 		}
 
 		try {
-			await transactionService.checkout(validation.data!);
+			const transaction = await transactionService.checkout(validation.data!);
+			broadcastGameEvent('game_checked_out', transaction.gameId);
+			broadcastTransactionEvent(transaction.id, transaction.gameId);
 			return { success: true };
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : String(err);

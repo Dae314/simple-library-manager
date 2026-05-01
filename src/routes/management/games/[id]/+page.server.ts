@@ -3,6 +3,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { gameService } from '$lib/server/services/games.js';
 import { validateGameInput } from '$lib/server/validation.js';
 import { isDuplicateKeyError, getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
+import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const id = parseInt(params.id, 10);
@@ -43,6 +44,7 @@ export const actions: Actions = {
 
 		try {
 			await gameService.update(id, validation.data!);
+			broadcastGameEvent('game_updated', id);
 		} catch (err: unknown) {
 			if (isDuplicateKeyError(err)) {
 				return fail(409, {
@@ -70,7 +72,9 @@ export const actions: Actions = {
 		}
 
 		try {
-			await gameService.toggleStatus(id, newStatus, version);
+			const result = await gameService.toggleStatus(id, newStatus, version);
+			broadcastGameEvent('game_updated', id);
+			broadcastTransactionEvent(result.transactionId, id);
 			return { toggleSuccess: true };
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : String(err);

@@ -57,7 +57,7 @@ export const csvService = {
 	 * Validates all rows first — if any errors exist, nothing is imported.
 	 * Copy numbers are auto-generated per BGG_ID within a transaction.
 	 */
-	async importGames(fileContent: string): Promise<{ created: number }> {
+	async importGames(fileContent: string): Promise<{ created: number; gameIds: number[] }> {
 		const parsed = Papa.parse<Record<string, string>>(fileContent, {
 			header: true,
 			skipEmptyLines: true,
@@ -76,6 +76,7 @@ export const csvService = {
 
 		return await db.transaction(async (tx) => {
 			let created = 0;
+			const gameIds: number[] = [];
 
 			for (const row of result.rows) {
 				const [maxResult] = await tx
@@ -86,19 +87,20 @@ export const csvService = {
 				let nextCopyNumber = (maxResult?.maxCopy ?? 0) + 1;
 
 				for (let c = 0; c < row.copyCount; c++) {
-					await tx.insert(games).values({
+					const [inserted] = await tx.insert(games).values({
 						title: row.title,
 						bggId: row.bggId,
 						copyNumber: nextCopyNumber,
 						status: 'available',
 						gameType: 'standard'
-					});
+					}).returning({ id: games.id });
+					gameIds.push(inserted.id);
 					nextCopyNumber++;
 					created++;
 				}
 			}
 
-			return { created };
+			return { created, gameIds };
 		});
 	},
 

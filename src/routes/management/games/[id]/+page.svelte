@@ -5,8 +5,9 @@
 	import toast from 'svelte-hot-french-toast';
 	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
+	import type { EventMessage } from '$lib/server/ws/events.js';
 
-	const wsClient: { connected: boolean } = getContext('ws');
+	const wsClient: ReturnType<typeof import('$lib/stores/websocket.svelte.js').createWebSocketClient> = getContext('ws');
 
 	type GameRecord = {
 		id: number;
@@ -29,6 +30,29 @@
 		} | null;
 	} = $props();
 
+	let showConflictWarning = $state(false);
+
+	$effect(() => {
+		wsClient.setGetCurrentEditGameId(() => data.game.id);
+		wsClient.setOnConflict((_event: EventMessage) => {
+			showConflictWarning = true;
+		});
+
+		return () => {
+			wsClient.setGetCurrentEditGameId(() => undefined);
+			wsClient.setOnConflict(() => {});
+		};
+	});
+
+	function handleReload() {
+		showConflictWarning = false;
+		invalidateAll();
+	}
+
+	function handleDismiss() {
+		showConflictWarning = false;
+	}
+
 	const statusLabel = $derived(data.game.status === 'available' ? 'Available' : 'Checked Out');
 	const statusColor = $derived(data.game.status === 'available' ? 'status-available' : 'status-checked-out');
 	const toggleTarget = $derived(data.game.status === 'available' ? 'checked_out' : 'available');
@@ -38,6 +62,16 @@
 
 <div class="edit-game-page">
 	<h1>Edit Game <ConnectionIndicator connected={wsClient.connected} /></h1>
+
+	{#if showConflictWarning}
+		<div class="conflict-warning" role="alert">
+			<p class="conflict-text">This game was modified by another station. Your form data may be stale.</p>
+			<div class="conflict-actions">
+				<button class="btn-reload" onclick={handleReload}>Reload</button>
+				<button class="btn-dismiss" onclick={handleDismiss}>Dismiss</button>
+			</div>
+		</div>
+	{/if}
 
 	<div class="game-header">
 		<div class="game-identity">
@@ -356,5 +390,57 @@
 
 	.btn-toggle.status-checked-out:hover {
 		background-color: #34d399;
+	}
+
+	.conflict-warning {
+		background-color: #fef3c7;
+		border: 1px solid #f59e0b;
+		border-radius: 6px;
+		padding: 0.75rem 1rem;
+		margin-bottom: 1rem;
+	}
+
+	.conflict-text {
+		font-size: 0.85rem;
+		color: #92400e;
+		margin-bottom: 0.5rem;
+		line-height: 1.4;
+	}
+
+	.conflict-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.btn-reload {
+		padding: 0.35rem 0.75rem;
+		background-color: #f59e0b;
+		color: #fff;
+		border: none;
+		border-radius: 4px;
+		font-size: 0.8rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color 0.15s;
+	}
+
+	.btn-reload:hover {
+		background-color: #d97706;
+	}
+
+	.btn-dismiss {
+		padding: 0.35rem 0.75rem;
+		background-color: transparent;
+		color: #92400e;
+		border: 1px solid #d97706;
+		border-radius: 4px;
+		font-size: 0.8rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color 0.15s;
+	}
+
+	.btn-dismiss:hover {
+		background-color: #fde68a;
 	}
 </style>

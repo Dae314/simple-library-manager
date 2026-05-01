@@ -92,7 +92,7 @@
 	open={showImportDialog}
 	title="Restore Database"
 	message="Are you sure you want to restore the database from this backup? All current data will be replaced."
-	warning="This action cannot be undone. Make sure you have a current backup before proceeding."
+	warning="This action cannot be undone. Make sure you have a current backup before proceeding. Please ensure all librarians stop their activities until the restore is complete."
 	confirmLabel="Restore"
 	cancelLabel="Cancel"
 	onCancel={() => (showImportDialog = false)}

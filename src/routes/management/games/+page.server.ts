@@ -4,6 +4,7 @@ import type { GameStatus, GameType, GameFilters, SortParams } from '$lib/server/
 import { csvService } from '$lib/server/services/csv.js';
 import { fail } from '@sveltejs/kit';
 import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
+import { broadcastBatchGameEvent, broadcastGameEvent } from '$lib/server/ws/broadcast.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || '';
@@ -87,6 +88,7 @@ export const actions: Actions = {
 
 		try {
 			await gameService.retire(ids);
+			broadcastBatchGameEvent(ids);
 			return { success: true, action: 'retire', count: ids.length };
 		} catch (e) {
 			return fail(500, { error: getUserFriendlyDbMessage(e) });
@@ -103,6 +105,7 @@ export const actions: Actions = {
 
 		try {
 			await gameService.restore(id);
+			broadcastGameEvent('game_restored', id);
 			return { success: true, action: 'restore' };
 		} catch (e) {
 			return fail(500, { error: getUserFriendlyDbMessage(e) });
@@ -132,6 +135,7 @@ export const actions: Actions = {
 		// Import
 		try {
 			const result = await csvService.importGames(fileContent);
+			broadcastBatchGameEvent(result.gameIds);
 			return { success: true, action: 'csvImport', csvImported: result.created };
 		} catch (e) {
 			return fail(500, { csvError: `Import failed: ${getUserFriendlyDbMessage(e)}` });

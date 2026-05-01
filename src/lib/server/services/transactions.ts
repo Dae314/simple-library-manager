@@ -231,8 +231,8 @@ export const transactionService = {
 	/**
 	 * Reverse a checkout: change game status back to "available" and create a corrective checkin.
 	 */
-	async reverseCheckout(transactionId: number): Promise<void> {
-		await db.transaction(async (tx) => {
+	async reverseCheckout(transactionId: number): Promise<{ gameId: number; correctionTransactionId: number }> {
+		return await db.transaction(async (tx) => {
 			// Find the original checkout transaction
 			const [originalTx] = await tx
 				.select()
@@ -269,21 +269,23 @@ export const transactionService = {
 				.where(eq(games.id, originalTx.gameId));
 
 			// Create corrective checkin transaction
-			await tx.insert(transactions).values({
+			const [correctionTx] = await tx.insert(transactions).values({
 				gameId: originalTx.gameId,
 				type: 'checkin',
 				note: 'Error correction: checkout reversed',
 				isCorrection: true,
 				relatedTransactionId: transactionId
-			});
+			}).returning();
+
+			return { gameId: originalTx.gameId, correctionTransactionId: correctionTx.id };
 		});
 	},
 
 	/**
 	 * Reverse a checkin: change game status back to "checked_out" and create a corrective checkout.
 	 */
-	async reverseCheckin(transactionId: number): Promise<void> {
-		await db.transaction(async (tx) => {
+	async reverseCheckin(transactionId: number): Promise<{ gameId: number; correctionTransactionId: number }> {
+		return await db.transaction(async (tx) => {
 			// Find the original checkin transaction
 			const [originalTx] = await tx
 				.select()
@@ -320,13 +322,15 @@ export const transactionService = {
 				.where(eq(games.id, originalTx.gameId));
 
 			// Create corrective checkout transaction
-			await tx.insert(transactions).values({
+			const [correctionTx] = await tx.insert(transactions).values({
 				gameId: originalTx.gameId,
 				type: 'checkout',
 				note: 'Error correction: checkin reversed',
 				isCorrection: true,
 				relatedTransactionId: transactionId
-			});
+			}).returning();
+
+			return { gameId: originalTx.gameId, correctionTransactionId: correctionTx.id };
 		});
 	},
 

@@ -3,6 +3,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { gameService } from '$lib/server/services/games.js';
 import { validateGameInput } from '$lib/server/validation.js';
 import { isDuplicateKeyError, getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
+import { broadcastGameEvent } from '$lib/server/ws/broadcast.js';
 
 export const actions: Actions = {
 	default: async ({ request }) => {
@@ -27,7 +28,8 @@ export const actions: Actions = {
 		}
 
 		try {
-			await gameService.create(validation.data!);
+			const createdGame = await gameService.create(validation.data!);
+			broadcastGameEvent('game_created', createdGame.id);
 		} catch (err: unknown) {
 			if (isDuplicateKeyError(err)) {
 				return fail(409, {
