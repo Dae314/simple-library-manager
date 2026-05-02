@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
 	import { getContext } from 'svelte';
 	import SortableTable from '$lib/components/SortableTable.svelte';
 	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
@@ -62,6 +63,19 @@
 		summary: { add: number; modify: number; delete: number };
 	} | null = $state(null);
 	let csvFileForImport: File | null = $state(null);
+	let confirmPassword = $state('');
+	let csvImportDialogEl: HTMLDialogElement | undefined = $state();
+
+	let isPasswordSet = $derived($page.data.isPasswordSet);
+
+	$effect(() => {
+		if (!csvImportDialogEl) return;
+		if (showCsvImportDialog && !csvImportDialogEl.open) {
+			csvImportDialogEl.showModal();
+		} else if (!showCsvImportDialog && csvImportDialogEl.open) {
+			csvImportDialogEl.close();
+		}
+	});
 
 	const columns = [
 		{ key: 'select', label: 'Select', srOnly: true },
@@ -468,40 +482,92 @@
 	<input type="file" name="csvFile" accept=".csv" />
 </form>
 
-<!-- CSV Import Confirm Dialog -->
-<ConfirmDialog
-	open={showCsvImportDialog}
-	title="Import CSV"
-	message={csvValidationResult?.valid
-		? (() => {
-			const s = csvValidationResult!.summary;
-			const parts: string[] = [];
-			if (s.add > 0) parts.push(`${s.add} game(s) to add`);
-			if (s.modify > 0) parts.push(`${s.modify} game(s) to modify`);
-			if (s.delete > 0) parts.push(`${s.delete} game(s) to retire`);
-			return `CSV validated successfully. ${parts.join(', ')}. Proceed?`;
-		})()
-		: ''}
-	warning={csvValidationResult?.summary?.delete
-		? `${csvValidationResult.summary.delete} game(s) will be retired (soft-deleted). This can be undone by restoring them individually.`
-		: ''}
-	confirmLabel="Import"
-	cancelLabel="Cancel"
-	onCancel={() => { showCsvImportDialog = false; csvValidationResult = null; csvFileForImport = null; }}
-	onConfirm={() => {
-		showCsvImportDialog = false;
-		const importForm = document.getElementById('csv-import-form') as HTMLFormElement;
-		if (importForm && csvFileForImport) {
-			const dt = new DataTransfer();
-			dt.items.add(csvFileForImport);
-			const fileInput = importForm.querySelector('input[name="csvFile"]') as HTMLInputElement;
-			if (fileInput) {
-				fileInput.files = dt.files;
-				importForm.requestSubmit();
-			}
+<!-- CSV Import Confirm Dialog (custom dialog to support password field) -->
+<dialog
+	bind:this={csvImportDialogEl}
+	class="confirm-dialog"
+	aria-label="Import CSV"
+	onkeydown={(e) => {
+		if (e.key === 'Escape') {
+			e.preventDefault();
+			showCsvImportDialog = false;
+			csvValidationResult = null;
+			csvFileForImport = null;
+			confirmPassword = '';
 		}
 	}}
-/>
+	onclick={(e) => {
+		const rect = csvImportDialogEl?.getBoundingClientRect();
+		if (!rect) return;
+		const clickedInside =
+			e.clientX >= rect.left &&
+			e.clientX <= rect.right &&
+			e.clientY >= rect.top &&
+			e.clientY <= rect.bottom;
+		if (!clickedInside) {
+			showCsvImportDialog = false;
+			csvValidationResult = null;
+			csvFileForImport = null;
+			confirmPassword = '';
+		}
+	}}
+>
+	<div class="dialog-content">
+		<h2 class="dialog-title">Import CSV</h2>
+		<p class="dialog-message">
+			{#if csvValidationResult?.valid}
+				{@const s = csvValidationResult.summary}
+				{@const parts = [
+					...(s.add > 0 ? [`${s.add} game(s) to add`] : []),
+					...(s.modify > 0 ? [`${s.modify} game(s) to modify`] : []),
+					...(s.delete > 0 ? [`${s.delete} game(s) to retire`] : [])
+				]}
+				CSV validated successfully. {parts.join(', ')}. Proceed?
+			{/if}
+		</p>
+		{#if csvValidationResult?.summary?.delete}
+			<p class="dialog-warning">{csvValidationResult.summary.delete} game(s) will be retired (soft-deleted). This can be undone by restoring them individually.</p>
+		{/if}
+
+		{#if isPasswordSet}
+			<div class="dialog-password-field">
+				<label for="csv-import-confirm-password">Enter your password to confirm</label>
+				<input
+					id="csv-import-confirm-password"
+					type="password"
+					autocomplete="current-password"
+					bind:value={confirmPassword}
+				/>
+			</div>
+		{/if}
+
+		<div class="dialog-actions">
+			<button class="btn-cancel" onclick={() => { showCsvImportDialog = false; csvValidationResult = null; csvFileForImport = null; confirmPassword = ''; }}>Cancel</button>
+			<button
+				class="btn-confirm"
+				disabled={isPasswordSet && !confirmPassword}
+				onclick={() => {
+					showCsvImportDialog = false;
+					const importForm = document.getElementById('csv-import-form') as HTMLFormElement;
+					if (importForm && csvFileForImport) {
+						const dt = new DataTransfer();
+						dt.items.add(csvFileForImport);
+						const fileInput = importForm.querySelector('input[name="csvFile"]') as HTMLInputElement;
+						if (fileInput) {
+							fileInput.files = dt.files;
+						}
+						const passwordInput = importForm.querySelector('input[name="confirmPassword"]') as HTMLInputElement;
+						if (passwordInput) {
+							passwordInput.value = confirmPassword;
+						}
+						importForm.requestSubmit();
+					}
+					confirmPassword = '';
+				}}
+			>Import</button>
+		</div>
+	</div>
+</dialog>
 
 <!-- CSV Import Form (hidden) -->
 <form
@@ -538,6 +604,7 @@
 	}}
 >
 	<input type="file" name="csvFile" accept=".csv" />
+	<input type="hidden" name="confirmPassword" />
 </form>
 
 <style>
@@ -784,6 +851,120 @@
 
 	.hidden-form {
 		display: none;
+	}
+
+	/* Custom CSV import confirmation dialog styles */
+	.confirm-dialog {
+		border: none;
+		border-radius: 8px;
+		padding: 0;
+		max-width: 28rem;
+		width: 90vw;
+		margin: auto;
+		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+	}
+
+	.confirm-dialog::backdrop {
+		background-color: rgba(0, 0, 0, 0.45);
+	}
+
+	.dialog-content {
+		padding: 1.5rem;
+	}
+
+	.dialog-title {
+		font-size: 1.1rem;
+		font-weight: 700;
+		margin-bottom: 0.5rem;
+		color: #111827;
+	}
+
+	.dialog-message {
+		font-size: 0.9rem;
+		color: #4b5563;
+		margin-bottom: 0.75rem;
+		line-height: 1.5;
+	}
+
+	.dialog-warning {
+		font-size: 0.85rem;
+		color: #92400e;
+		background-color: #fef3c7;
+		border: 1px solid #f59e0b;
+		border-radius: 4px;
+		padding: 0.5rem 0.75rem;
+		margin-bottom: 0.75rem;
+		line-height: 1.4;
+	}
+
+	.dialog-password-field {
+		margin-bottom: 0.75rem;
+	}
+
+	.dialog-password-field label {
+		display: block;
+		font-size: 0.85rem;
+		font-weight: 500;
+		color: #374151;
+		margin-bottom: 0.25rem;
+	}
+
+	.dialog-password-field input {
+		width: 100%;
+		padding: 0.5rem 0.6rem;
+		border: 1px solid #d1d5db;
+		border-radius: 6px;
+		font-size: 0.9rem;
+		outline: none;
+		transition: border-color 0.15s;
+		box-sizing: border-box;
+	}
+
+	.dialog-password-field input:focus {
+		border-color: #6366f1;
+		box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+	}
+
+	.dialog-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 0.5rem;
+		margin-top: 1rem;
+	}
+
+	.btn-cancel,
+	.btn-confirm {
+		padding: 0.45rem 1rem;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		border: 1px solid transparent;
+		transition: background-color 0.15s;
+	}
+
+	.btn-cancel {
+		background-color: #f3f4f6;
+		color: #374151;
+		border-color: #d1d5db;
+	}
+
+	.btn-cancel:hover {
+		background-color: #e5e7eb;
+	}
+
+	.btn-confirm {
+		background-color: #ef4444;
+		color: #fff;
+	}
+
+	.btn-confirm:hover:not(:disabled) {
+		background-color: #dc2626;
+	}
+
+	.btn-confirm:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 
 	@media (max-width: 640px) {

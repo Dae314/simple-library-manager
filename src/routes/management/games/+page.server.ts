@@ -5,6 +5,8 @@ import { csvService } from '$lib/server/services/csv.js';
 import { fail } from '@sveltejs/kit';
 import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 import { broadcastBatchGameEvent, broadcastGameEvent } from '$lib/server/ws/broadcast.js';
+import { configService } from '$lib/server/services/config.js';
+import { authService } from '$lib/server/services/auth.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || '';
@@ -121,6 +123,19 @@ export const actions: Actions = {
 
 		if (!file || file.size === 0) {
 			return fail(400, { csvError: 'Please select a CSV file to import' });
+		}
+
+		// Password confirmation check when password is set
+		const passwordHash = await configService.getPasswordHash();
+		if (passwordHash) {
+			const confirmPassword = formData.get('confirmPassword')?.toString() ?? '';
+			if (!confirmPassword) {
+				return fail(400, { csvError: 'Password confirmation is required' });
+			}
+			const isValid = await authService.verifyPassword(confirmPassword, passwordHash);
+			if (!isValid) {
+				return fail(400, { csvError: 'Incorrect password' });
+			}
 		}
 
 		const fileContent = await file.text();

@@ -103,68 +103,68 @@ Add optional password protection to all management routes (`/management/**`) and
     - Set `password_hash` to `null` where `id = 1`; do NOT increment `version`
     - _Requirements: 10.2_
 
-- [ ] 6. Management layout auth gate
-  - [ ] 6.1 Create `src/routes/management/+layout.server.ts`
+- [x] 6. Management layout auth gate
+  - [x] 6.1 Create `src/routes/management/+layout.server.ts`
     - Load function: read `passwordHash` via `configService.getPasswordHash()`, check session cookie via `authService.verifySessionCookie()`, return `{ isPasswordSet, isAuthenticated }`
     - Add `login` action: parse password from form, apply rate limit delay, verify password against hash, on success create session cookie and reset rate limit, on failure record failed attempt and return error
     - _Requirements: 2.1, 4.1, 4.2, 4.3, 4.4, 8.1, 8.2, 8.3_
 
-  - [ ] 6.2 Create `src/routes/management/+layout.svelte`
+  - [x] 6.2 Create `src/routes/management/+layout.svelte`
     - Accept `data` with `isAuthenticated` and `isPasswordSet` from layout server
     - If `isAuthenticated`, render `{@render children()}`
     - If not authenticated, render an inline password form that POSTs to `?/login`
     - Display error message from form action on failed login
     - _Requirements: 4.1, 4.2, 4.3_
 
-- [ ] 7. Config page password management forms
-  - [ ] 7.1 Add `setPassword`, `changePassword`, `removePassword` actions to `src/routes/management/config/+page.server.ts`
+- [x] 7. Config page password management forms
+  - [x] 7.1 Add `setPassword`, `changePassword`, `removePassword` actions to `src/routes/management/config/+page.server.ts`
     - `setPassword`: validate input, hash password, store via `configService.setPassword()`, create session cookie
     - `changePassword`: verify current password, validate new password input, hash and store via `configService.changePassword()`
     - `removePassword`: verify current password, call `configService.removePassword()`
     - All actions use `authService` for hashing/verification and return appropriate `fail()` responses on error
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 6.1, 6.2, 6.3, 6.4, 6.5, 10.1, 10.2, 10.3_
 
-  - [ ] 7.2 Update `src/routes/management/config/+page.svelte` with password management section
+  - [x] 7.2 Update `src/routes/management/config/+page.svelte` with password management section
     - Access `isPasswordSet` from `$page.data` (propagated from management layout)
     - When no password set: render "Set Password" form with password + confirmation fields
     - When password set: render "Change Password" form (current + new + confirmation) and "Remove Password" form (current password)
     - Display field-level validation errors and toast messages following existing patterns
     - _Requirements: 2.2, 6.1, 10.1_
 
-- [ ] 8. Backup page changes
-  - [ ] 8.1 Update `src/routes/management/backup/+page.server.ts`
+- [x] 8. Backup page changes
+  - [x] 8.1 Update `src/routes/management/backup/+page.server.ts`
     - Add password confirmation check to the `import` action: when password is set, require and verify `confirmPassword` field
     - Return `fail(400, { error: 'Incorrect password' })` if confirmation fails
     - _Requirements: 7.2, 7.4_
 
-  - [ ] 8.2 Update `src/routes/management/backup/+page.svelte`
+  - [x] 8.2 Update `src/routes/management/backup/+page.svelte`
     - Add a warning message in the import section about password hash replacement during restore
     - Add a note that the password reset script can be used if access is lost after restore
     - Add a password confirmation field to the restore confirmation dialog (only visible when `isPasswordSet` is true via `$page.data`)
     - _Requirements: 7.2, 11.1, 11.2_
 
-- [ ] 9. Games page changes
-  - [ ] 9.1 Update `src/routes/management/games/+page.server.ts`
+- [x] 9. Games page changes
+  - [x] 9.1 Update `src/routes/management/games/+page.server.ts`
     - Add password confirmation check to the `csvImport` action: when password is set, require and verify `confirmPassword` field
     - Return `fail(400, { csvError: 'Incorrect password' })` if confirmation fails
     - _Requirements: 7.3, 7.4_
 
-  - [ ] 9.2 Update `src/routes/management/games/+page.svelte`
+  - [x] 9.2 Update `src/routes/management/games/+page.svelte`
     - Add a password confirmation field to the CSV import confirmation dialog (only visible when `isPasswordSet` is true via `$page.data`)
     - Include the password field value in the hidden CSV import form submission
     - _Requirements: 7.3_
 
-- [ ] 10. Backup export endpoint auth check
+- [x] 10. Backup export endpoint auth check
   - Update `src/routes/api/backup/export/+server.ts`
   - Read password hash via `configService.getPasswordHash()`
   - If password is set, verify session cookie from request; return 401 JSON response if not authenticated
   - _Requirements: 4.5_
 
-- [ ] 11. Checkpoint — Ensure all tests pass
+- [x] 11. Checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 12. Password reset script and env config
-  - [ ] 12.1 Create `scripts/reset-password.js`
+- [x] 12. Password reset script and env config
+  - [x] 12.1 Create `scripts/reset-password.js`
     - Standalone Node.js ESM script using `pg` client
     - Read `DATABASE_URL` from environment
     - Connect to PostgreSQL, run `UPDATE convention_config SET password_hash = NULL WHERE id = 1`
@@ -172,12 +172,12 @@ Add optional password protection to all management routes (`/management/**`) and
     - Print error to stderr and exit with code 1 on failure
     - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
-  - [ ] 12.2 Update `.env.example` with `AUTH_SECRET`
+  - [x] 12.2 Update `.env.example` with `AUTH_SECRET`
     - Add `AUTH_SECRET=` with a comment explaining it's optional and used for session persistence across restarts
     - _Requirements: 5.1_
 
-- [ ] 13. E2E integration tests
-  - [ ] 13.1 Write Playwright E2E tests in `tests/integration/password-protection.test.ts`
+- [-] 13. E2E integration tests
+  - [-] 13.1 Write Playwright E2E tests in `tests/integration/password-protection.test.ts`
     - Test no-password access: management pages accessible without auth prompt
     - Test set password flow: set password from config page, verify session created
     - Test auth gate: clear cookies, visit management page, verify auth gate appears
