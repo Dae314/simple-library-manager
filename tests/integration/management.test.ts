@@ -42,7 +42,7 @@ test.describe('Management Area', () => {
 			await page.selectOption('#gameType', 'standard');
 			await page.click('button:has-text("Add Game")');
 
-			await expect(page).toHaveURL(/\/management$/);
+			await expect(page).toHaveURL(/\/management\/games$/);
 
 			// Verify the new game appears in the game list
 			await page.goto(`/management/games?search=${title}`);

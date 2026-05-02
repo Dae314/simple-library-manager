@@ -6,10 +6,9 @@
 	import SearchFilter from '$lib/components/SearchFilter.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import GameCard from '$lib/components/GameCard.svelte';
-	import WeightWarning from '$lib/components/WeightWarning.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
-	import { formatDuration } from '$lib/utils/formatting';
+	import { formatDuration, formatWeight } from '$lib/utils/formatting';
 
 	const wsClient: { connected: boolean } = getContext('ws');
 
@@ -36,18 +35,11 @@
 		pageSize: number;
 	};
 
-	type WeightWarningData = {
-		checkoutWeight: number;
-		checkinWeight: number;
-		difference: number;
-		tolerance: number;
-		weightUnit: string;
-	};
-
 	let { data, form }: {
 		data: {
 			games: PaginatedResult;
 			weightUnit: string;
+			weightTolerance: number;
 		};
 		form: {
 			errors?: Record<string, string>;
@@ -56,12 +48,11 @@
 			success?: boolean;
 			conflict?: boolean;
 			message?: string;
-			weightWarning?: WeightWarningData;
 		} | null;
 	} = $props();
 
 	let selectedGame: CheckedOutGame | null = $state(null);
-	let weightWarning: WeightWarningData | null = $state(null);
+	let checkinWeightInput: string = $state('');
 	let showPlayAndTakeDialog = $state(false);
 	let pendingFormElement: HTMLFormElement | null = $state(null);
 
@@ -106,7 +97,7 @@
 
 	function selectGame(game: CheckedOutGame) {
 		selectedGame = game;
-		weightWarning = null;
+		checkinWeightInput = '';
 	}
 
 	function cancelSelection() {
@@ -149,14 +140,9 @@
 			}).then(async (response) => {
 				const result = deserialize(await response.text());
 				if (result.type === 'success') {
-					const data = (result as any).data;
-					if (data?.weightWarning) {
-						weightWarning = data.weightWarning;
-					} else {
-						weightWarning = null;
-					}
 					toast.success('Game checked in successfully!');
 					selectedGame = null;
+					checkinWeightInput = '';
 				}
 				await applyAction(result);
 				await invalidateAll();
@@ -165,21 +151,25 @@
 	}
 
 	const selectedGameTitle = $derived(selectedGame ? gameDisplayTitle(selectedGame) : '');
+
+	const liveWeightWarning = $derived.by(() => {
+		if (!selectedGame?.checkoutWeight) return null;
+		const checkinWeight = parseFloat(checkinWeightInput);
+		if (!checkinWeightInput || isNaN(checkinWeight) || checkinWeight <= 0) return null;
+		const difference = Math.abs(checkinWeight - selectedGame.checkoutWeight);
+		if (difference > data.weightTolerance) {
+			return {
+				checkoutWeight: selectedGame.checkoutWeight,
+				checkinWeight,
+				difference,
+				tolerance: data.weightTolerance
+			};
+		}
+		return null;
+	});
 </script>
 
 <h1>Check In <ConnectionIndicator connected={wsClient.connected} /></h1>
-
-{#if weightWarning}
-	<div class="weight-warning-container">
-		<WeightWarning
-			checkoutWeight={weightWarning.checkoutWeight}
-			checkinWeight={weightWarning.checkinWeight}
-			tolerance={weightWarning.tolerance}
-			weightUnit={weightWarning.weightUnit}
-			onDismiss={() => { weightWarning = null; }}
-		/>
-	</div>
-{/if}
 
 <div class="checkin-layout">
 	<section class="game-list-section">
@@ -208,6 +198,9 @@
 							<div class="game-checkout-info">
 								<span class="attendee-name">{attendeeName(game)}</span>
 								<span class="checkout-duration">{getCheckoutDuration(game)}</span>
+								{#if game.checkoutWeight != null}
+									<span class="checkout-weight">{formatWeight(game.checkoutWeight, data.weightUnit)}</span>
+								{/if}
 							</div>
 							<button
 								class="btn-checkin"
@@ -254,14 +247,9 @@
 				}
 				return async ({ result, update }) => {
 					if (result.type === 'success') {
-						const data = (result as any).data;
-						if (data?.weightWarning) {
-							weightWarning = data.weightWarning;
-						} else {
-							weightWarning = null;
-						}
 						toast.success('Game checked in successfully!');
 						selectedGame = null;
+						checkinWeightInput = '';
 					} else if (result.type === 'failure') {
 						const data = (result as any).data;
 						if (data?.conflict) {
@@ -286,9 +274,23 @@
 						min="0.1"
 						required
 						value={form?.values?.checkinWeight ?? ''}
+						oninput={(e) => { checkinWeightInput = (e.target as HTMLInputElement).value; }}
 					/>
 					{#if form?.errors?.checkinWeight}
 						<span class="field-error">{form.errors.checkinWeight}</span>
+					{/if}
+					{#if liveWeightWarning}
+						<div class="inline-weight-warning" role="alert">
+							<strong>⚠ Weight Discrepancy</strong>
+							<span>
+								Checkout: {formatWeight(liveWeightWarning.checkoutWeight, data.weightUnit)} ·
+								Entered: {formatWeight(liveWeightWarning.checkinWeight, data.weightUnit)}
+							</span>
+							<span>
+								Difference: {formatWeight(liveWeightWarning.difference, data.weightUnit)}
+								(tolerance: {formatWeight(liveWeightWarning.tolerance, data.weightUnit)})
+							</span>
+						</div>
 					{/if}
 				</div>
 
@@ -324,8 +326,9 @@
 		color: #111827;
 	}
 
-	.weight-warning-container {
-		margin-bottom: 1rem;
+	.checkout-weight {
+		color: #6b7280;
+		font-style: italic;
 	}
 
 	.checkin-layout {
@@ -473,6 +476,23 @@
 		font-size: 0.8rem;
 		color: #ef4444;
 		margin-top: 0.2rem;
+	}
+
+	.inline-weight-warning {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		margin-top: 0.4rem;
+		padding: 0.5rem 0.65rem;
+		background-color: #fef3c7;
+		border: 1px solid #f59e0b;
+		border-radius: 6px;
+		font-size: 0.8rem;
+		color: #92400e;
+	}
+
+	.inline-weight-warning strong {
+		font-size: 0.82rem;
 	}
 
 	.form-actions {

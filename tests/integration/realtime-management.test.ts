@@ -30,8 +30,8 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 			await tab1.selectOption('#gameType', 'standard');
 			await tab1.click('button:has-text("Add Game")');
 
-			// Wait for redirect back to management
-			await expect(tab1).toHaveURL(/\/management$/, { timeout: 10_000 });
+			// Wait for redirect back to management games list
+			await expect(tab1).toHaveURL(/\/management\/games$/, { timeout: 10_000 });
 
 			// Verify the new game appears on tab 2's catalog without manual refresh
 			await expect(
@@ -69,7 +69,7 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 			// Edit the game title
 			await tab1.locator('#title').fill(newTitle);
 			await tab1.click('button:has-text("Save Changes")');
-			await expect(tab1).toHaveURL(/\/management$/, { timeout: 10_000 });
+			await expect(tab1).toHaveURL(/\/management\/games$/, { timeout: 10_000 });
 
 			// Verify the updated title appears on tab 2 without manual refresh
 			// The old title should disappear and the new title should appear

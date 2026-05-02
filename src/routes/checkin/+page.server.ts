@@ -19,7 +19,8 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	return {
 		games,
-		weightUnit: config.weightUnit
+		weightUnit: config.weightUnit,
+		weightTolerance: config.weightTolerance
 	};
 };
 

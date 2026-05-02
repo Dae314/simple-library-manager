@@ -26,7 +26,7 @@ test.describe('Real-Time: Edit Page Conflict Warning', () => {
 			// Edit the game title on tab 2 and save
 			await tab2.locator('#title').fill(`${helpers.prefix}_RTConflict_Modified`);
 			await tab2.click('button:has-text("Save Changes")');
-			await expect(tab2).toHaveURL(/\/management$/, { timeout: 10_000 });
+			await expect(tab2).toHaveURL(/\/management\/games$/, { timeout: 10_000 });
 
 			// Verify tab 1 displays the conflict warning banner
 			const conflictWarning = tab1.locator('.conflict-warning');
@@ -59,7 +59,7 @@ test.describe('Real-Time: Edit Page Conflict Warning', () => {
 			const modifiedTitle = `${helpers.prefix}_RTReload_Updated`;
 			await tab2.locator('#title').fill(modifiedTitle);
 			await tab2.click('button:has-text("Save Changes")');
-			await expect(tab2).toHaveURL(/\/management$/, { timeout: 10_000 });
+			await expect(tab2).toHaveURL(/\/management\/games$/, { timeout: 10_000 });
 
 			// Wait for conflict warning on tab 1
 			const conflictWarning = tab1.locator('.conflict-warning');
@@ -101,7 +101,7 @@ test.describe('Real-Time: Edit Page Conflict Warning', () => {
 			await expect(tab2.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
 			await tab2.locator('#title').fill(`${helpers.prefix}_RTDismiss_Remote`);
 			await tab2.click('button:has-text("Save Changes")');
-			await expect(tab2).toHaveURL(/\/management$/, { timeout: 10_000 });
+			await expect(tab2).toHaveURL(/\/management\/games$/, { timeout: 10_000 });
 
 			// Wait for conflict warning on tab 1
 			const conflictWarning = tab1.locator('.conflict-warning');

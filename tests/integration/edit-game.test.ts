@@ -34,7 +34,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await page.locator('#title').fill(newTitle);
 		await page.click('button:has-text("Save Changes")');
 
-		await expect(page).toHaveURL(/\/management$/);
+		await expect(page).toHaveURL(/\/management\/games$/);
 
 		await page.goto(`/management/games?search=${newTitle}`);
 		await expect(page.locator('.game-card', { hasText: newTitle })).toBeVisible();
@@ -52,7 +52,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await page.locator('#bggId').fill('88888');
 		await page.click('button:has-text("Save Changes")');
 
-		await expect(page).toHaveURL(/\/management$/);
+		await expect(page).toHaveURL(/\/management\/games$/);
 	});
 
 	test('edit validation: empty title shows error', async ({ page, helpers }) => {

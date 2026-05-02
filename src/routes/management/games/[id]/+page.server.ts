@@ -56,7 +56,7 @@ export const actions: Actions = {
 			return fail(500, { error: message, values });
 		}
 
-		redirect(303, '/management');
+		redirect(303, '/management/games');
 	},
 
 	toggleStatus: async ({ request, params }) => {

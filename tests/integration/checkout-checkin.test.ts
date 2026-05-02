@@ -63,13 +63,15 @@ test.describe('Checkout → Checkin Flow', () => {
 		await expect(checkinForm).toBeVisible();
 
 		await checkinForm.locator('#checkinWeight').fill('30.0');
+
+		// Warning should appear inline while entering weight, before submission
+		const weightWarning = checkinForm.locator('.inline-weight-warning');
+		await expect(weightWarning).toBeVisible();
+		await expect(weightWarning).toContainText('Weight Discrepancy');
+
 		await checkinForm.getByRole('button', { name: 'Confirm Check In' }).click();
 
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
-
-		const weightWarning = page.locator('.weight-warning');
-		await expect(weightWarning).toBeVisible();
-		await expect(weightWarning).toContainText('Weight Discrepancy Detected');
 	});
 
 	test('validation errors appear when submitting checkout without required fields', async ({ page, helpers }) => {
