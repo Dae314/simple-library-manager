@@ -456,6 +456,44 @@ export const gameService = {
 	},
 
 	/**
+	 * Get the last recorded weight for each of the given game IDs.
+	 * Looks at the most recent non-correction transaction that has a weight value
+	 * (checkin_weight preferred, falls back to checkout_weight).
+	 * Returns a map of gameId → weight.
+	 */
+	async getLastWeights(gameIds: number[]): Promise<Record<number, number>> {
+		if (gameIds.length === 0) return {};
+
+		const rows = await db
+			.select({
+				gameId: transactions.gameId,
+				checkoutWeight: transactions.checkoutWeight,
+				checkinWeight: transactions.checkinWeight
+			})
+			.from(transactions)
+			.where(
+				and(
+					inArray(transactions.gameId, gameIds),
+					eq(transactions.isCorrection, false),
+					sql`(${transactions.checkinWeight} IS NOT NULL OR ${transactions.checkoutWeight} IS NOT NULL)`
+				)
+			)
+			.orderBy(desc(transactions.createdAt));
+
+		// Pick the first (most recent) weight per game
+		const result: Record<number, number> = {};
+		for (const row of rows) {
+			if (result[row.gameId] !== undefined) continue;
+			const weight = row.checkinWeight ?? row.checkoutWeight;
+			if (weight != null) {
+				result[row.gameId] = weight;
+			}
+		}
+
+		return result;
+	},
+
+	/**
 	 * Toggle a game's status between "available" and "checked_out" with optimistic locking.
 	 * Creates a corrective transaction in the transaction log.
 	 */

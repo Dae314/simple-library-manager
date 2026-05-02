@@ -33,6 +33,7 @@
 			games: PaginatedResult;
 			idTypes: string[];
 			weightUnit: string;
+			lastWeights: Record<number, number>;
 		};
 		form: {
 			errors?: Record<string, string>;
@@ -44,6 +45,7 @@
 	} = $props();
 
 	let selectedGame: GameRecord | null = $state(null);
+	let prefillWeight: string = $state('');
 
 	// Re-sync selectedGame with fresh data after invalidateAll so the version
 	// field stays current and the selection isn't lost when the list updates.
@@ -86,10 +88,13 @@
 
 	function selectGame(game: GameRecord) {
 		selectedGame = game;
+		const lastWeight = data.lastWeights[game.id];
+		prefillWeight = lastWeight != null ? String(lastWeight) : '';
 	}
 
 	function cancelSelection() {
 		selectedGame = null;
+		prefillWeight = '';
 	}
 
 	function gameDisplayTitle(game: GameRecord): string {
@@ -219,7 +224,7 @@
 						step="0.1"
 						min="0.1"
 						required
-						value={form?.values?.checkoutWeight ?? ''}
+						value={form?.values?.checkoutWeight ?? prefillWeight}
 					/>
 					{#if form?.errors?.checkoutWeight}
 						<span class="field-error">{form.errors.checkoutWeight}</span>

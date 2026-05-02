@@ -18,10 +18,16 @@ export const load: PageServerLoad = async ({ url }) => {
 		configService.get()
 	]);
 
+	// Look up the last recorded weight for each game on this page.
+	// For an available game, the most recent checkin weight is the best reference.
+	const gameIds = games.items.map((g) => g.id);
+	const lastWeights = gameIds.length > 0 ? await gameService.getLastWeights(gameIds) : {};
+
 	return {
 		games,
 		idTypes,
-		weightUnit: config.weightUnit
+		weightUnit: config.weightUnit,
+		lastWeights
 	};
 };
 
