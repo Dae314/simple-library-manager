@@ -56,6 +56,7 @@
 	let checkinWeightInput: string = $state('');
 	let showPlayAndTakeDialog = $state(false);
 	let pendingFormElement: HTMLFormElement | null = $state(null);
+	let weightClientError: string = $state('');
 
 	$effect(() => {
 		const items = data.games.items;
@@ -122,6 +123,7 @@
 	function selectGame(game: CheckedOutGame) {
 		selectedGame = game;
 		checkinWeightInput = '';
+		weightClientError = '';
 	}
 
 	function cancelSelection() {
@@ -257,6 +259,15 @@
 			{/if}
 
 			<form method="POST" action="?/checkin" use:enhance={({ formElement, formData, cancel }) => {
+				const rawWeight = formData.get('checkinWeight')?.toString() ?? '';
+				const parsedWeight = parseFloat(rawWeight);
+				if (!rawWeight || isNaN(parsedWeight) || parsedWeight <= 0) {
+					cancel();
+					weightClientError = 'Please enter a valid positive weight';
+					return;
+				}
+				weightClientError = '';
+
 				if (selectedGame?.gameType === 'play_and_take') {
 					cancel();
 					pendingFormElement = formElement;
@@ -297,9 +308,11 @@
 						min="0.1"
 						required
 						value={form?.values?.checkinWeight ?? ''}
-						oninput={(e) => { checkinWeightInput = (e.target as HTMLInputElement).value; }}
+						oninput={(e) => { checkinWeightInput = (e.target as HTMLInputElement).value; weightClientError = ''; }}
 					/>
-					{#if form?.errors?.checkinWeight}
+					{#if weightClientError}
+						<span class="field-error">{weightClientError}</span>
+					{:else if form?.errors?.checkinWeight}
 						<span class="field-error">{form.errors.checkinWeight}</span>
 					{/if}
 					{#if liveWeightWarning}
