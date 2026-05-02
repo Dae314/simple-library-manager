@@ -79,6 +79,7 @@
 		padding: 0;
 		max-width: 28rem;
 		width: 90vw;
+		margin: auto;
 		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
 	}
 
