@@ -521,6 +521,43 @@ export const gameService = {
 	},
 
 	/**
+	 * Get the count of transactions associated with a game.
+	 * Returns 0 if the game has no transactions.
+	 */
+	async getTransactionCount(gameId: number): Promise<number> {
+		const [result] = await db
+			.select({ count: count() })
+			.from(transactions)
+			.where(eq(transactions.gameId, gameId));
+		return result?.count ?? 0;
+	},
+
+	/**
+	 * Permanently delete a game and all its associated transactions.
+	 * The game must not be checked out. All operations run in a single
+	 * database transaction for atomicity.
+	 */
+	async delete(id: number): Promise<void> {
+		await db.transaction(async (tx) => {
+			const [game] = await tx
+				.select({ id: games.id, status: games.status })
+				.from(games)
+				.where(eq(games.id, id));
+
+			if (!game) {
+				throw new Error('Game not found');
+			}
+
+			if (game.status === 'checked_out') {
+				throw new Error('Cannot delete a checked-out game');
+			}
+
+			await tx.delete(transactions).where(eq(transactions.gameId, id));
+			await tx.delete(games).where(eq(games.id, id));
+		});
+	},
+
+	/**
 	 * Toggle a game's status between "available" and "checked_out" with optimistic locking.
 	 * Creates a corrective transaction in the transaction log.
 	 */

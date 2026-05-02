@@ -4,6 +4,8 @@ import { gameService } from '$lib/server/services/games.js';
 import { validateGameInput } from '$lib/server/validation.js';
 import { isDuplicateKeyError, getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
+import { configService } from '$lib/server/services/config.js';
+import { authService } from '$lib/server/services/auth.js';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const id = parseInt(params.id, 10);
@@ -16,7 +18,9 @@ export const load: PageServerLoad = async ({ params }) => {
 		error(404, 'Game not found');
 	}
 
-	return { game };
+	const transactionCount = await gameService.getTransactionCount(id);
+
+	return { game, transactionCount };
 };
 
 export const actions: Actions = {
@@ -85,5 +89,38 @@ export const actions: Actions = {
 			}
 			return fail(500, { toggleError: 'Failed to toggle status. Please try again.' });
 		}
+	},
+
+	delete: async ({ request, params }) => {
+		const id = parseInt(params.id, 10);
+
+		const passwordHash = await configService.getPasswordHash();
+		if (passwordHash) {
+			const formData = await request.formData();
+			const confirmPassword = formData.get('confirmPassword')?.toString() ?? '';
+			if (!confirmPassword) {
+				return fail(400, { deleteError: 'Password confirmation is required' });
+			}
+			const isValid = await authService.verifyPassword(confirmPassword, passwordHash);
+			if (!isValid) {
+				return fail(400, { deleteError: 'Incorrect password' });
+			}
+		}
+
+		try {
+			await gameService.delete(id);
+			broadcastGameEvent('game_deleted', id);
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Failed to delete game';
+			if (message.includes('not found')) {
+				return fail(404, { deleteError: 'Game not found' });
+			}
+			if (message.includes('checked-out')) {
+				return fail(400, { deleteError: 'Cannot delete a checked-out game. Check it in first.' });
+			}
+			return fail(500, { deleteError: message });
+		}
+
+		redirect(303, '/management/games?deleted=1');
 	}
 };

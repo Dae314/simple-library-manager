@@ -488,6 +488,51 @@ test.describe('Password Protection', () => {
 		});
 	});
 
+	test.describe('Game deletion confirmation', () => {
+		test('game deletion dialog requires password confirmation when password is set', async ({ page, helpers }) => {
+			// Create a game to test with
+			const game = await helpers.createGame(`${helpers.prefix}_DeletePwdTest`);
+
+			// Set password
+			await page.goto('/management/config');
+			await setPasswordViaUI(page, TEST_PASSWORD);
+
+			// Navigate to the game detail page
+			await page.goto(`/management/games/${game.id}`);
+
+			// Click the delete button
+			await page.getByRole('button', { name: 'Delete Game' }).click();
+
+			// The dialog should show a password confirmation field
+			const dialog = page.locator('dialog[aria-label="Delete Game"]');
+			await expect(dialog).toBeVisible();
+			await expect(dialog.locator('#delete-confirm-password')).toBeVisible();
+			await expect(dialog.getByText('Enter your password to confirm')).toBeVisible();
+
+			// The Delete (confirm) button should be disabled when password field is empty
+			await expect(dialog.locator('.btn-dialog-confirm')).toBeDisabled();
+
+			// Clean up: close dialog and remove password
+			await dialog.locator('.btn-dialog-cancel').click();
+			await page.goto('/management/config');
+			await removePasswordViaUI(page, TEST_PASSWORD);
+		});
+
+		test('game deletion dialog has no password field when no password is set', async ({ page, helpers }) => {
+			const game = await helpers.createGame(`${helpers.prefix}_DeleteNoPwdTest`);
+
+			await page.goto(`/management/games/${game.id}`);
+
+			await page.getByRole('button', { name: 'Delete Game' }).click();
+
+			const dialog = page.locator('dialog[aria-label="Delete Game"]');
+			await expect(dialog).toBeVisible();
+
+			// Should NOT have a password field
+			await expect(dialog.locator('#delete-confirm-password')).not.toBeVisible();
+		});
+	});
+
 	test.describe('Backup export protection', () => {
 		test('unauthenticated export returns 401 when password is set', async ({ page, context, request }) => {
 			// Set password via UI

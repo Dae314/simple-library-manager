@@ -2,7 +2,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
-	import { getContext } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 	import SortableTable from '$lib/components/SortableTable.svelte';
 	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -67,6 +67,14 @@
 	let csvImportDialogEl: HTMLDialogElement | undefined = $state();
 
 	let isPasswordSet = $derived($page.data.isPasswordSet);
+
+	// Show success toast after game deletion redirect (?deleted=1)
+	onMount(() => {
+		if ($page.url.searchParams.get('deleted') === '1') {
+			toast.success('Game deleted successfully');
+			goto($page.url.pathname, { replaceState: true });
+		}
+	});
 
 	$effect(() => {
 		if (!csvImportDialogEl) return;

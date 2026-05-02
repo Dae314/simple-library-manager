@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { getContext } from 'svelte';
 	import toast from 'svelte-hot-french-toast';
 	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
@@ -21,13 +22,14 @@
 	};
 
 	let { data, form }: {
-		data: { game: GameRecord };
+		data: { game: GameRecord; transactionCount: number };
 		form: {
 			errors?: Record<string, string>;
 			error?: string;
 			values?: Record<string, string>;
 			toggleError?: string;
 			toggleSuccess?: boolean;
+			deleteError?: string;
 		} | null;
 	} = $props();
 
@@ -70,6 +72,71 @@
 	const effectiveTitle = $derived(localTitle ?? form?.values?.title ?? data.game.title);
 	const effectiveBggId = $derived(localBggId ?? form?.values?.bggId ?? String(data.game.bggId));
 	const currentGameType = $derived(localGameType ?? form?.values?.gameType ?? data.game.gameType);
+
+	// Delete dialog state
+	let showDeleteDialog = $state(false);
+	let confirmPassword = $state('');
+	let deleteDialogEl: HTMLDialogElement | undefined = $state();
+	let isPasswordSet = $derived($page.data.isPasswordSet);
+	const isCheckedOut = $derived(data.game.status === 'checked_out');
+
+	$effect(() => {
+		if (!deleteDialogEl) return;
+		if (showDeleteDialog && !deleteDialogEl.open) {
+			deleteDialogEl.showModal();
+		} else if (!showDeleteDialog && deleteDialogEl.open) {
+			deleteDialogEl.close();
+		}
+	});
+
+	$effect(() => {
+		if (form?.deleteError) {
+			toast.error(form.deleteError);
+		}
+	});
+
+	function openDeleteDialog() {
+		confirmPassword = '';
+		showDeleteDialog = true;
+	}
+
+	function cancelDeleteDialog() {
+		showDeleteDialog = false;
+		confirmPassword = '';
+	}
+
+	function handleDeleteDialogKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			e.preventDefault();
+			cancelDeleteDialog();
+		}
+	}
+
+	function handleDeleteDialogClick(e: MouseEvent) {
+		const rect = deleteDialogEl?.getBoundingClientRect();
+		if (!rect) return;
+		const clickedInside =
+			e.clientX >= rect.left &&
+			e.clientX <= rect.right &&
+			e.clientY >= rect.top &&
+			e.clientY <= rect.bottom;
+		if (!clickedInside) {
+			cancelDeleteDialog();
+		}
+	}
+
+	function confirmDelete() {
+		showDeleteDialog = false;
+		const deleteForm = document.getElementById('delete-form') as HTMLFormElement;
+		if (deleteForm) {
+			const passwordInput = deleteForm.querySelector('input[name="confirmPassword"]') as HTMLInputElement;
+			if (passwordInput) {
+				passwordInput.value = confirmPassword;
+			}
+			deleteForm.requestSubmit();
+		}
+		confirmPassword = '';
+	}
 </script>
 
 <div class="edit-game-page">
@@ -202,7 +269,87 @@
 			</button>
 		</form>
 	</section>
+
+	<hr class="divider" />
+
+	<section class="danger-section">
+		<h2>Danger Zone</h2>
+		{#if isCheckedOut}
+			<p class="danger-description">This game must be checked in before it can be deleted.</p>
+		{:else}
+			<p class="danger-description">Permanently delete this game and all its transaction history. This action cannot be undone.</p>
+		{/if}
+		<button
+			class="btn-delete"
+			onclick={openDeleteDialog}
+			disabled={isCheckedOut}
+		>
+			Delete Game
+		</button>
+	</section>
 </div>
+
+<!-- Delete confirmation dialog -->
+<dialog
+	bind:this={deleteDialogEl}
+	class="confirm-dialog"
+	aria-label="Delete Game"
+	onkeydown={handleDeleteDialogKeydown}
+	onclick={handleDeleteDialogClick}
+>
+	<div class="dialog-content">
+		<h2 class="dialog-title">Delete Game</h2>
+		<p class="dialog-message">Are you sure you want to permanently delete <strong>{data.game.title}</strong>? This action cannot be undone.</p>
+
+		{#if data.transactionCount > 0}
+			<p class="dialog-warning">This game has {data.transactionCount} transaction{data.transactionCount === 1 ? '' : 's'} that will also be permanently deleted.</p>
+		{:else}
+			<p class="dialog-info">This game has no associated transactions.</p>
+		{/if}
+
+		{#if isPasswordSet}
+			<div class="dialog-password-field">
+				<label for="delete-confirm-password">Enter your password to confirm</label>
+				<input
+					id="delete-confirm-password"
+					type="password"
+					autocomplete="current-password"
+					bind:value={confirmPassword}
+				/>
+			</div>
+		{/if}
+
+		<div class="dialog-actions">
+			<button class="btn-dialog-cancel" onclick={cancelDeleteDialog}>Cancel</button>
+			<button
+				class="btn-dialog-confirm"
+				onclick={confirmDelete}
+				disabled={isPasswordSet && !confirmPassword}
+			>Delete</button>
+		</div>
+	</div>
+</dialog>
+
+<!-- Hidden delete form -->
+<form
+	id="delete-form"
+	method="POST"
+	action="?/delete"
+	class="hidden-form"
+	use:enhance={() => {
+		return async ({ result, update }) => {
+			if (result.type === 'failure') {
+				const data = (result as any).data;
+				if (data?.deleteError) {
+					toast.error(data.deleteError);
+				}
+			}
+			await update({ reset: false });
+		};
+	}}
+>
+	<input type="hidden" name="confirmPassword" />
+</form>
 
 <style>
 	.edit-game-page {
@@ -458,5 +605,166 @@
 
 	.btn-dismiss:hover {
 		background-color: #fde68a;
+	}
+
+	/* Danger Zone section */
+	.danger-section h2 {
+		font-size: 1.1rem;
+		font-weight: 600;
+		margin-bottom: 0.35rem;
+		color: #991b1b;
+	}
+
+	.danger-description {
+		font-size: 0.85rem;
+		color: #6b7280;
+		margin-bottom: 0.75rem;
+	}
+
+	.btn-delete {
+		padding: 0.5rem 1rem;
+		background-color: #ef4444;
+		color: #fff;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color 0.15s;
+	}
+
+	.btn-delete:hover:not(:disabled) {
+		background-color: #dc2626;
+	}
+
+	.btn-delete:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	/* Hidden delete form */
+	.hidden-form {
+		display: none;
+	}
+
+	/* Delete confirmation dialog */
+	.confirm-dialog {
+		border: none;
+		border-radius: 8px;
+		padding: 0;
+		max-width: 28rem;
+		width: 90vw;
+		margin: auto;
+		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+	}
+
+	.confirm-dialog::backdrop {
+		background-color: rgba(0, 0, 0, 0.45);
+	}
+
+	.dialog-content {
+		padding: 1.5rem;
+	}
+
+	.dialog-title {
+		font-size: 1.1rem;
+		font-weight: 700;
+		margin-bottom: 0.5rem;
+		color: #111827;
+	}
+
+	.dialog-message {
+		font-size: 0.9rem;
+		color: #4b5563;
+		margin-bottom: 0.75rem;
+		line-height: 1.5;
+	}
+
+	.dialog-warning {
+		font-size: 0.85rem;
+		color: #92400e;
+		background-color: #fef3c7;
+		border: 1px solid #f59e0b;
+		border-radius: 4px;
+		padding: 0.5rem 0.75rem;
+		margin-bottom: 0.75rem;
+		line-height: 1.4;
+	}
+
+	.dialog-info {
+		font-size: 0.85rem;
+		color: #6b7280;
+		margin-bottom: 0.75rem;
+		line-height: 1.4;
+	}
+
+	.dialog-password-field {
+		margin-bottom: 0.75rem;
+	}
+
+	.dialog-password-field label {
+		display: block;
+		font-size: 0.85rem;
+		font-weight: 500;
+		color: #374151;
+		margin-bottom: 0.25rem;
+	}
+
+	.dialog-password-field input {
+		width: 100%;
+		padding: 0.5rem 0.6rem;
+		border: 1px solid #d1d5db;
+		border-radius: 6px;
+		font-size: 0.9rem;
+		outline: none;
+		transition: border-color 0.15s;
+		box-sizing: border-box;
+	}
+
+	.dialog-password-field input:focus {
+		border-color: #6366f1;
+		box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+	}
+
+	.dialog-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 0.5rem;
+		margin-top: 1rem;
+	}
+
+	.btn-dialog-cancel,
+	.btn-dialog-confirm {
+		padding: 0.45rem 1rem;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		border: 1px solid transparent;
+		transition: background-color 0.15s;
+	}
+
+	.btn-dialog-cancel {
+		background-color: #f3f4f6;
+		color: #374151;
+		border-color: #d1d5db;
+	}
+
+	.btn-dialog-cancel:hover {
+		background-color: #e5e7eb;
+	}
+
+	.btn-dialog-confirm {
+		background-color: #ef4444;
+		color: #fff;
+	}
+
+	.btn-dialog-confirm:hover:not(:disabled) {
+		background-color: #dc2626;
+	}
+
+	.btn-dialog-confirm:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 </style>

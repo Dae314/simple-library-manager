@@ -1,6 +1,7 @@
 export type EventType =
 	| 'game_created'
 	| 'game_updated'
+	| 'game_deleted'
 	| 'game_checked_out'
 	| 'game_checked_in'
 	| 'game_retired'
