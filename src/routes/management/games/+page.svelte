@@ -76,6 +76,7 @@
 		{ key: 'search', label: 'Search', type: 'text' as const, placeholder: 'Search by title...' },
 		{
 			key: 'status', label: 'Status', type: 'select' as const,
+			placeholder: 'Non-Retired',
 			options: [
 				{ value: 'available', label: 'Available' },
 				{ value: 'checked_out', label: 'Checked Out' },

@@ -121,7 +121,7 @@
 							value={localFilterValues[filter.key] ?? ''}
 							onchange={(e) => handleFilterInput(filter.key, (e.target as HTMLSelectElement).value)}
 						>
-							<option value="">{filter.label}: All</option>
+							<option value="">{filter.label}: {filter.placeholder ?? 'All'}</option>
 							{#each filter.options ?? [] as opt (opt.value)}
 								<option value={opt.value}>{opt.label}</option>
 							{/each}

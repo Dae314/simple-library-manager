@@ -63,7 +63,7 @@
 						value={values[filter.key] ?? ''}
 						onchange={(e) => handleSelectChange(filter.key, e)}
 					>
-						<option value="">All</option>
+						<option value="">{filter.placeholder ?? 'All'}</option>
 						{#each filter.options ?? [] as opt (opt.value)}
 							<option value={opt.value}>{opt.label}</option>
 						{/each}
