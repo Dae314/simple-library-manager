@@ -46,8 +46,15 @@
 			filters: FilterValues;
 			sortField: string;
 			sortDir: string;
+			weightUnit: string;
 		};
 	} = $props();
+
+	let expandedTxId: number | null = $state(null);
+
+	function toggleExpand(txId: number) {
+		expandedTxId = expandedTxId === txId ? null : txId;
+	}
 
 	const columns = [
 		{ key: 'time', label: 'Time', sortField: 'created_at' },
@@ -150,7 +157,15 @@
 		onPageSizeChange={handlePageSizeChange}
 	>
 		{#snippet row(tx)}
-			<tr>
+			<tr
+				class="expandable-row"
+				class:expanded={expandedTxId === tx.id}
+				onclick={() => toggleExpand(tx.id)}
+				role="button"
+				tabindex="0"
+				onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(tx.id); } }}
+				aria-expanded={expandedTxId === tx.id}
+			>
 				<td class="timestamp">{formatDateTime(tx.createdAt)}</td>
 				<td>
 					<span class="game-title">{tx.gameTitle}</span>
@@ -168,46 +183,108 @@
 					<span class="details-text">
 						{txDetails(tx)}
 						{#if tx.note}
-							<span class="note" title={tx.note}>📝 {tx.note}</span>
+							<span class="note-indicator">📝</span>
 						{/if}
 					</span>
 				</td>
-				<td>
+				<td onclick={(e) => e.stopPropagation()}>
 					{#if !tx.isCorrection}
-						{#if tx.type === 'checkout'}
-							<form method="POST" action="?/reverseCheckout" use:enhance={() => {
-								return async ({ result, update }) => {
-									if (result.type === 'success') {
-										toast.success('Checkout reversed successfully');
-									} else if (result.type === 'failure') {
-										const msg = (result.data as any)?.error || 'Failed to reverse checkout';
-										toast.error(msg);
-									}
-									await update();
-								};
-							}}>
-								<input type="hidden" name="transactionId" value={tx.id} />
-								<button type="submit" class="btn-reverse">Reverse</button>
-							</form>
-						{:else if tx.type === 'checkin'}
-							<form method="POST" action="?/reverseCheckin" use:enhance={() => {
-								return async ({ result, update }) => {
-									if (result.type === 'success') {
-										toast.success('Checkin reversed successfully');
-									} else if (result.type === 'failure') {
-										const msg = (result.data as any)?.error || 'Failed to reverse checkin';
-										toast.error(msg);
-									}
-									await update();
-								};
-							}}>
-								<input type="hidden" name="transactionId" value={tx.id} />
-								<button type="submit" class="btn-reverse">Reverse</button>
-							</form>
+							{#if tx.type === 'checkout'}
+								<form method="POST" action="?/reverseCheckout" use:enhance={() => {
+									return async ({ result, update }) => {
+										if (result.type === 'success') {
+											toast.success('Checkout reversed successfully');
+										} else if (result.type === 'failure') {
+											const msg = (result.data as any)?.error || 'Failed to reverse checkout';
+											toast.error(msg);
+										}
+										await update();
+									};
+								}}>
+									<input type="hidden" name="transactionId" value={tx.id} />
+									<button type="submit" class="btn-reverse">Reverse</button>
+								</form>
+							{:else if tx.type === 'checkin'}
+								<form method="POST" action="?/reverseCheckin" use:enhance={() => {
+									return async ({ result, update }) => {
+										if (result.type === 'success') {
+											toast.success('Checkin reversed successfully');
+										} else if (result.type === 'failure') {
+											const msg = (result.data as any)?.error || 'Failed to reverse checkin';
+											toast.error(msg);
+										}
+										await update();
+									};
+								}}>
+									<input type="hidden" name="transactionId" value={tx.id} />
+									<button type="submit" class="btn-reverse">Reverse</button>
+								</form>
+							{/if}
 						{/if}
-					{/if}
 				</td>
 			</tr>
+			{#if expandedTxId === tx.id}
+				<tr class="detail-row">
+					<td colspan={columns.length}>
+						<div class="detail-panel">
+							<div class="detail-grid">
+								<div class="detail-item">
+									<span class="detail-label">Transaction ID</span>
+									<span class="detail-value">#{tx.id}</span>
+								</div>
+								<div class="detail-item">
+									<span class="detail-label">Game</span>
+									<span class="detail-value">{tx.gameTitle}</span>
+								</div>
+								<div class="detail-item">
+									<span class="detail-label">Type</span>
+									<span class="detail-value">{tx.type === 'checkout' ? 'Checkout' : 'Checkin'}{tx.isCorrection ? ' (Correction)' : ''}</span>
+								</div>
+								<div class="detail-item">
+									<span class="detail-label">Time</span>
+									<span class="detail-value">{formatDateTime(tx.createdAt)}</span>
+								</div>
+								{#if tx.attendeeFirstName || tx.attendeeLastName}
+									<div class="detail-item">
+										<span class="detail-label">Attendee</span>
+										<span class="detail-value">{attendeeName(tx)}</span>
+									</div>
+								{/if}
+								{#if tx.idType}
+									<div class="detail-item">
+										<span class="detail-label">ID Type</span>
+										<span class="detail-value">{tx.idType}</span>
+									</div>
+								{/if}
+								{#if tx.checkoutWeight != null}
+									<div class="detail-item">
+										<span class="detail-label">Checkout Weight</span>
+										<span class="detail-value">{formatWeight(tx.checkoutWeight, data.weightUnit)}</span>
+									</div>
+								{/if}
+								{#if tx.checkinWeight != null}
+									<div class="detail-item">
+										<span class="detail-label">Checkin Weight</span>
+										<span class="detail-value">{formatWeight(tx.checkinWeight, data.weightUnit)}</span>
+									</div>
+								{/if}
+								{#if tx.relatedTransactionId}
+									<div class="detail-item">
+										<span class="detail-label">Related Transaction</span>
+										<span class="detail-value">#{tx.relatedTransactionId}</span>
+									</div>
+								{/if}
+							</div>
+							{#if tx.note}
+								<div class="detail-note">
+									<span class="detail-label">Note</span>
+									<p class="detail-note-text">{tx.note}</p>
+								</div>
+							{/if}
+						</div>
+					</td>
+				</tr>
+			{/if}
 		{/snippet}
 	</SortableTable>
 </div>
@@ -303,15 +380,74 @@
 		color: #4b5563;
 	}
 
-	.note {
-		display: block;
-		font-style: italic;
+	.note-indicator {
+		cursor: default;
+		margin-left: 0.25rem;
+	}
+
+	.expandable-row {
+		cursor: pointer;
+	}
+
+	.expandable-row:hover {
+		background-color: #f3f4f6;
+	}
+
+	.expandable-row.expanded {
+		background-color: #f0f0ff;
+	}
+
+	.detail-row {
+		background-color: #fafafe;
+	}
+
+	.detail-row:hover {
+		background-color: #fafafe !important;
+	}
+
+	.detail-panel {
+		padding: 0.75rem 1rem;
+		border-left: 3px solid #6366f1;
+		margin: 0.25rem 0;
+	}
+
+	.detail-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+		gap: 0.6rem 1.5rem;
+	}
+
+	.detail-item {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+	}
+
+	.detail-label {
+		font-size: 0.72rem;
+		font-weight: 600;
 		color: #6b7280;
-		font-size: 0.8rem;
-		max-width: 200px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.detail-value {
+		font-size: 0.85rem;
+		color: #111827;
+	}
+
+	.detail-note {
+		margin-top: 0.75rem;
+		padding-top: 0.6rem;
+		border-top: 1px solid #e5e7eb;
+	}
+
+	.detail-note-text {
+		margin: 0.25rem 0 0;
+		font-size: 0.85rem;
+		color: #374151;
+		white-space: pre-wrap;
+		word-break: break-word;
 	}
 
 	.btn-reverse {
