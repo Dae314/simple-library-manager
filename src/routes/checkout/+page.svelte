@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
-	import { getContext } from 'svelte';
+	import { getContext, untrack } from 'svelte';
 	import toast from 'svelte-hot-french-toast';
 	import SearchFilter from '$lib/components/SearchFilter.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
@@ -43,6 +43,21 @@
 	} = $props();
 
 	let selectedGame: GameRecord | null = $state(null);
+
+	// Re-sync selectedGame with fresh data after invalidateAll so the version
+	// field stays current and the selection isn't lost when the list updates.
+	// Uses untrack on selectedGame to avoid a read→write reactive loop.
+	$effect(() => {
+		// Track only data.games.items — this is the dependency we care about
+		const items = data.games.items;
+		const current = untrack(() => selectedGame);
+		if (current) {
+			const fresh = items.find((g) => g.id === current.id);
+			if (fresh) {
+				selectedGame = fresh;
+			}
+		}
+	});
 
 	function handleSearch(term: string) {
 		const url = new URL(window.location.href);
