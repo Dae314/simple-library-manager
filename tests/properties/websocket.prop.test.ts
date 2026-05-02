@@ -428,7 +428,7 @@ describe('Property 7: Debounce coalesces rapid events', () => {
 
 		fc.assert(
 			fc.property(
-				fc.nat({ min: 2, max: 50 }),
+				fc.integer({ min: 2, max: 50 }),
 				(n) => {
 					// Reset mock call count
 					(mockInvalidateAll as ReturnType<typeof vi.fn>).mockClear();

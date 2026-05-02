@@ -9,7 +9,7 @@ const config = {
 			out: 'build'
 		}),
 		csrf: {
-			checkOrigin: false
+			trustedOrigins: ['*']
 		}
 	}
 };

@@ -650,7 +650,8 @@ describe('Property 25: Mixed-action CSV batches', () => {
 					const idx = badIndex % validRows.length;
 					const rows = validRows.map((r) => ({ ...r }));
 					// Corrupt one row with an invalid action
-					rows[idx] = { ...rows[idx], action: 'invalid_action' };
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					rows[idx] = { ...rows[idx], action: 'invalid_action' } as any;
 					const result = validateCsvRows(rows);
 					expect(result.valid).toBe(false);
 					expect(result.rows).toEqual([]);
