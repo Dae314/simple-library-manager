@@ -118,7 +118,6 @@
 			</div>
 
 			<div class="form-actions">
-				<a href="/management" class="btn-cancel">Back</a>
 				<button type="submit" class="btn-submit">Save Configuration</button>
 			</div>
 		</form>
@@ -260,25 +259,6 @@
 		display: flex;
 		gap: 0.5rem;
 		margin-top: 1.25rem;
-	}
-
-	.btn-cancel {
-		flex: 1;
-		padding: 0.5rem;
-		background-color: #f3f4f6;
-		color: #374151;
-		border: 1px solid #d1d5db;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		font-weight: 500;
-		cursor: pointer;
-		text-align: center;
-		text-decoration: none;
-		transition: background-color 0.15s;
-	}
-
-	.btn-cancel:hover {
-		background-color: #e5e7eb;
 	}
 
 	.btn-submit {
