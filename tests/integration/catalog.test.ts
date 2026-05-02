@@ -12,10 +12,10 @@ test.describe('Catalog Page', () => {
 
 		// Both copies should be visible with copy numbers
 		await expect(
-			page.locator('.game-card', { hasText: `${helpers.prefix}_CatCopy (Copy #${g1.copyNumber})` })
+			helpers.tableRow(page, `${helpers.prefix}_CatCopy (Copy #${g1.copyNumber})`)
 		).toBeVisible();
 		await expect(
-			page.locator('.game-card', { hasText: `${helpers.prefix}_CatCopy (Copy #${g2.copyNumber})` })
+			helpers.tableRow(page, `${helpers.prefix}_CatCopy (Copy #${g2.copyNumber})`)
 		).toBeVisible();
 	});
 
@@ -24,10 +24,10 @@ test.describe('Catalog Page', () => {
 
 		await page.goto(`/catalog?search=${helpers.prefix}_StatusGame`);
 
-		const card = page.locator('.game-card', { hasText: `${helpers.prefix}_StatusGame` });
-		await expect(card).toBeVisible();
+		const row = helpers.tableRow(page, `${helpers.prefix}_StatusGame`);
+		await expect(row).toBeVisible();
 
-		const status = card.locator('.status-indicator');
+		const status = row.locator('.status-indicator');
 		await expect(status).toHaveText('Available');
 		await expect(status).toHaveClass(/available/);
 	});
@@ -39,14 +39,14 @@ test.describe('Catalog Page', () => {
 
 		await page.goto(`/catalog?search=${helpers.prefix}_`);
 
-		const stdCard = page.locator('.game-card', { hasText: `${helpers.prefix}_StdGame` });
-		await expect(stdCard.locator('.badge.standard')).toHaveText('Standard');
+		const stdRow = helpers.tableRow(page, `${helpers.prefix}_StdGame`);
+		await expect(stdRow.locator('.badge.standard')).toHaveText('Standard');
 
-		const pwCard = page.locator('.game-card', { hasText: `${helpers.prefix}_PwGame` });
-		await expect(pwCard.locator('.badge.play_and_win')).toHaveText('Play & Win');
+		const pwRow = helpers.tableRow(page, `${helpers.prefix}_PwGame`);
+		await expect(pwRow.locator('.badge.play_and_win')).toHaveText('Play & Win');
 
-		const ptCard = page.locator('.game-card', { hasText: `${helpers.prefix}_PtGame` });
-		await expect(ptCard.locator('.badge.play_and_take')).toHaveText('Play & Take');
+		const ptRow = helpers.tableRow(page, `${helpers.prefix}_PtGame`);
+		await expect(ptRow.locator('.badge.play_and_take')).toHaveText('Play & Take');
 	});
 
 	test('BGG links are present and correctly formatted', async ({ page, helpers }) => {
@@ -54,7 +54,7 @@ test.describe('Catalog Page', () => {
 
 		await page.goto(`/catalog?search=${helpers.prefix}_BggGame`);
 
-		const link = page.locator('.game-card', { hasText: `${helpers.prefix}_BggGame` }).locator('a.bgg-link');
+		const link = helpers.tableRow(page, `${helpers.prefix}_BggGame`).locator('a.bgg-link');
 		await expect(link).toHaveAttribute('href', 'https://boardgamegeek.com/boardgame/12345');
 		await expect(link).toHaveAttribute('target', '_blank');
 		await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
@@ -64,10 +64,10 @@ test.describe('Catalog Page', () => {
 		await helpers.createGame(`${helpers.prefix}_FilterStatus`);
 
 		await page.goto(`/catalog?search=${helpers.prefix}_FilterStatus&status=available`);
-		await expect(page.locator('.game-card', { hasText: `${helpers.prefix}_FilterStatus` })).toBeVisible();
+		await expect(helpers.tableRow(page, `${helpers.prefix}_FilterStatus`)).toBeVisible();
 
 		await page.goto(`/catalog?search=${helpers.prefix}_FilterStatus&status=checked_out`);
-		await expect(page.locator('.game-card', { hasText: `${helpers.prefix}_FilterStatus` })).toHaveCount(0);
+		await expect(helpers.tableRow(page, `${helpers.prefix}_FilterStatus`)).toHaveCount(0);
 	});
 
 	test('filter by game type shows only matching games', async ({ page, helpers }) => {
@@ -76,8 +76,8 @@ test.describe('Catalog Page', () => {
 
 		await page.goto(`/catalog?search=${helpers.prefix}_&gameType=play_and_win`);
 
-		await expect(page.locator('.game-card', { hasText: `${helpers.prefix}_PwOnly` })).toBeVisible();
-		await expect(page.locator('.game-card', { hasText: `${helpers.prefix}_StdOnly` })).toHaveCount(0);
+		await expect(helpers.tableRow(page, `${helpers.prefix}_PwOnly`)).toBeVisible();
+		await expect(helpers.tableRow(page, `${helpers.prefix}_StdOnly`)).toHaveCount(0);
 	});
 
 	test('title search filters to matching games', async ({ page, helpers }) => {
@@ -85,18 +85,22 @@ test.describe('Catalog Page', () => {
 		await helpers.createGame(`${helpers.prefix}_SearchMiss`);
 
 		await page.goto('/catalog');
-		await page.locator('input[type="search"]').fill(`${helpers.prefix}_SearchHit`);
-		await page.waitForURL(new RegExp(`search=${helpers.prefix}_SearchHit`), { timeout: 5000 });
+		const searchInput = page.locator('input[type="search"]');
+		await searchInput.click();
+		await searchInput.pressSequentially(`${helpers.prefix}_SearchHit`, { delay: 10 });
 
-		await expect(page.locator('.game-card', { hasText: `${helpers.prefix}_SearchHit` })).toBeVisible();
-		await expect(page.locator('.game-card', { hasText: `${helpers.prefix}_SearchMiss` })).toHaveCount(0);
+		// Wait for the debounced search to filter results
+		await expect(helpers.tableRow(page, `${helpers.prefix}_SearchMiss`)).toHaveCount(0, { timeout: 10_000 });
+		await expect(helpers.tableRow(page, `${helpers.prefix}_SearchHit`)).toBeVisible();
 	});
 
 	test('empty state when no games match search', async ({ page }) => {
 		await page.goto('/catalog');
-		await page.locator('input[type="search"]').fill('ZZZZZ_no_match_ever');
-		await page.waitForURL(/search=ZZZZZ_no_match_ever/, { timeout: 5000 });
+		const searchInput = page.locator('input[type="search"]');
+		await searchInput.click();
+		await searchInput.pressSequentially('ZZZZZ_no_match_ever', { delay: 10 });
 
+		await expect(page.locator('.empty-message')).toBeVisible({ timeout: 10_000 });
 		await expect(page.locator('.empty-message')).toHaveText('No games found matching your filters.');
 	});
 });

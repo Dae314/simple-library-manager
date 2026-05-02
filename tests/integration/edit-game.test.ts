@@ -6,7 +6,7 @@ test.describe('Edit Game and Status Toggle', () => {
 
 		await page.goto(`/management/games?search=${helpers.prefix}_EditNav`);
 
-		const row = page.locator('.game-row', { hasText: game.title });
+		const row = helpers.tableRow(page, game.title);
 		await row.locator('a', { hasText: 'Edit' }).click();
 
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
@@ -27,7 +27,7 @@ test.describe('Edit Game and Status Toggle', () => {
 
 		await page.goto(`/management/games?search=${helpers.prefix}_EditTitle`);
 
-		const row = page.locator('.game-row', { hasText: game.title });
+		const row = helpers.tableRow(page, game.title);
 		await row.locator('a', { hasText: 'Edit' }).click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
@@ -37,7 +37,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await expect(page).toHaveURL(/\/management\/games$/);
 
 		await page.goto(`/management/games?search=${newTitle}`);
-		await expect(page.locator('.game-card', { hasText: newTitle })).toBeVisible();
+		await expect(helpers.tableRow(page, newTitle)).toBeVisible();
 	});
 
 	test('edit BGG ID', async ({ page, helpers }) => {
@@ -45,7 +45,7 @@ test.describe('Edit Game and Status Toggle', () => {
 
 		await page.goto(`/management/games?search=${helpers.prefix}_EditBgg`);
 
-		const row = page.locator('.game-row', { hasText: game.title });
+		const row = helpers.tableRow(page, game.title);
 		await row.locator('a', { hasText: 'Edit' }).click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
@@ -60,7 +60,7 @@ test.describe('Edit Game and Status Toggle', () => {
 
 		await page.goto(`/management/games?search=${helpers.prefix}_EditVal`);
 
-		const row = page.locator('.game-row', { hasText: game.title });
+		const row = helpers.tableRow(page, game.title);
 		await row.locator('a', { hasText: 'Edit' }).click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
@@ -76,7 +76,7 @@ test.describe('Edit Game and Status Toggle', () => {
 
 		await page.goto(`/management/games?search=${helpers.prefix}_Toggle`);
 
-		const row = page.locator('.game-row', { hasText: game.title });
+		const row = helpers.tableRow(page, game.title);
 		await row.locator('a', { hasText: 'Edit' }).click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
@@ -93,7 +93,7 @@ test.describe('Edit Game and Status Toggle', () => {
 
 		await page.goto(`/management/games?search=${helpers.prefix}_ToggleTx`);
 
-		const row = page.locator('.game-row', { hasText: game.title });
+		const row = helpers.tableRow(page, game.title);
 		await row.locator('a', { hasText: 'Edit' }).click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
@@ -109,7 +109,7 @@ test.describe('Edit Game and Status Toggle', () => {
 
 		await page.goto(`/management/games?search=${helpers.prefix}_ToggleBack`);
 
-		const row = page.locator('.game-row', { hasText: game.title });
+		const row = helpers.tableRow(page, game.title);
 		await row.locator('a', { hasText: 'Edit' }).click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 

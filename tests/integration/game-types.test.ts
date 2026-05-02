@@ -7,9 +7,9 @@ test.describe('Play & Win and Play & Take Flows', () => {
 		await helpers.checkoutGame(game.title, 'Raffle', 'Tester', '15.0');
 
 		await page.goto('/checkin');
-		const checkinCard = page.locator('.game-card', { hasText: game.title }).first();
-		await expect(checkinCard).toBeVisible();
-		await checkinCard.getByRole('button', { name: 'Check In' }).click();
+		const checkinRow = helpers.tableRow(page, game.title).first();
+		await expect(checkinRow).toBeVisible();
+		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
 		const checkinForm = page.locator('section[aria-label="Check in form"]');
 		await expect(checkinForm).toBeVisible();
@@ -32,9 +32,9 @@ test.describe('Play & Win and Play & Take Flows', () => {
 		await helpers.checkoutGame(game.title, 'Take', 'Tester', '25.0');
 
 		await page.goto('/checkin');
-		const checkinCard = page.locator('.game-card', { hasText: game.title }).first();
-		await expect(checkinCard).toBeVisible();
-		await checkinCard.getByRole('button', { name: 'Check In' }).click();
+		const checkinRow = helpers.tableRow(page, game.title).first();
+		await expect(checkinRow).toBeVisible();
+		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
 		const checkinForm = page.locator('section[aria-label="Check in form"]');
 		await expect(checkinForm).toBeVisible();
@@ -53,7 +53,7 @@ test.describe('Play & Win and Play & Take Flows', () => {
 
 		// Game should no longer appear on checkout page (retired)
 		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-		await expect(page.locator('.game-card', { hasText: game.title })).toHaveCount(0);
+		await expect(helpers.tableRow(page, game.title)).toHaveCount(0);
 	});
 
 	test('play_and_take — attendee returns the game (normal checkin)', async ({ page, helpers }) => {
@@ -62,9 +62,9 @@ test.describe('Play & Win and Play & Take Flows', () => {
 		await helpers.checkoutGame(game.title, 'Return', 'Tester', '20.0');
 
 		await page.goto('/checkin');
-		const checkinCard = page.locator('.game-card', { hasText: game.title }).first();
-		await expect(checkinCard).toBeVisible();
-		await checkinCard.getByRole('button', { name: 'Check In' }).click();
+		const checkinRow = helpers.tableRow(page, game.title).first();
+		await expect(checkinRow).toBeVisible();
+		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
 		const checkinForm = page.locator('section[aria-label="Check in form"]');
 		await expect(checkinForm).toBeVisible();
@@ -83,6 +83,6 @@ test.describe('Play & Win and Play & Take Flows', () => {
 
 		// Game should still be available on checkout page
 		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-		await expect(page.locator('.game-card', { hasText: game.title })).toBeVisible();
+		await expect(helpers.tableRow(page, game.title)).toBeVisible();
 	});
 });

@@ -92,8 +92,8 @@ test.describe('Convention Configuration Page', () => {
 		const game = await helpers.createGame(`${helpers.prefix}_IdTypeTest`);
 
 		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-		const gameCard = page.locator('.game-card', { hasText: game.title }).first();
-		await gameCard.getByRole('button', { name: 'Checkout' }).click();
+		const gameRow = page.locator('tbody tr', { hasText: game.title }).first();
+		await gameRow.getByRole('button', { name: 'Checkout' }).click();
 
 		const checkoutForm = page.locator('section[aria-label="Checkout form"]');
 		await expect(checkoutForm).toBeVisible();

@@ -6,14 +6,23 @@ import { configService } from '$lib/server/services/config.js';
 import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 import { validateCheckoutInput } from '$lib/server/validation.js';
 import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
+import type { SortParams } from '$lib/server/services/games.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || undefined;
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
 	const pageSize = parseInt(url.searchParams.get('pageSize') || '20', 10);
+	const sortField = url.searchParams.get('sortField') || 'title';
+	const sortDir = url.searchParams.get('sortDir') || 'asc';
+
+	const validSortFields = ['title', 'game_type'] as const;
+	const sort: SortParams = {
+		field: validSortFields.includes(sortField as any) ? (sortField as SortParams['field']) : 'title',
+		direction: sortDir === 'desc' ? 'desc' : 'asc'
+	};
 
 	const [games, idTypes, config] = await Promise.all([
-		gameService.listAvailable(search, { page, pageSize }),
+		gameService.listAvailable(search, { page, pageSize }, sort),
 		configService.getIdTypes(),
 		configService.get()
 	]);
@@ -27,7 +36,9 @@ export const load: PageServerLoad = async ({ url }) => {
 		games,
 		idTypes,
 		weightUnit: config.weightUnit,
-		lastWeights
+		lastWeights,
+		sortField: sort.field,
+		sortDir: sort.direction
 	};
 };
 

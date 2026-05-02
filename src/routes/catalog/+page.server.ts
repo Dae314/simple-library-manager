@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { gameService } from '$lib/server/services/games.js';
-import type { GameStatus, GameType, GameFilters } from '$lib/server/services/games.js';
+import type { GameStatus, GameType, GameFilters, SortParams } from '$lib/server/services/games.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || undefined;
@@ -8,6 +8,8 @@ export const load: PageServerLoad = async ({ url }) => {
 	const gameType = url.searchParams.get('gameType') as GameType | null;
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
 	const pageSize = parseInt(url.searchParams.get('pageSize') || '20', 10);
+	const sortField = url.searchParams.get('sortField') || 'title';
+	const sortDir = url.searchParams.get('sortDir') || 'asc';
 
 	const filters: GameFilters = {
 		excludeStatus: 'retired'
@@ -23,12 +25,20 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters.titleSearch = search;
 	}
 
-	const games = await gameService.list(filters, { page, pageSize });
+	const validSortFields = ['title', 'bgg_id', 'status', 'game_type'] as const;
+	const sort: SortParams = {
+		field: validSortFields.includes(sortField as any) ? (sortField as SortParams['field']) : 'title',
+		direction: sortDir === 'desc' ? 'desc' : 'asc'
+	};
+
+	const games = await gameService.list(filters, { page, pageSize }, sort);
 
 	return {
 		games,
 		activeStatus: status || '',
 		activeGameType: gameType || '',
-		activeSearch: search || ''
+		activeSearch: search || '',
+		sortField: sort.field,
+		sortDir: sort.direction
 	};
 };

@@ -3,9 +3,8 @@
 	import { enhance } from '$app/forms';
 	import { getContext, untrack } from 'svelte';
 	import toast from 'svelte-hot-french-toast';
-	import SearchFilter from '$lib/components/SearchFilter.svelte';
-	import Pagination from '$lib/components/Pagination.svelte';
-	import GameCard from '$lib/components/GameCard.svelte';
+	import SortableTable from '$lib/components/SortableTable.svelte';
+	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 
 	const wsClient: { connected: boolean } = getContext('ws');
@@ -34,6 +33,8 @@
 			idTypes: string[];
 			weightUnit: string;
 			lastWeights: Record<number, number>;
+			sortField: string;
+			sortDir: string;
 		};
 		form: {
 			errors?: Record<string, string>;
@@ -47,11 +48,7 @@
 	let selectedGame: GameRecord | null = $state(null);
 	let prefillWeight: string = $state('');
 
-	// Re-sync selectedGame with fresh data after invalidateAll so the version
-	// field stays current and the selection isn't lost when the list updates.
-	// Uses untrack on selectedGame to avoid a read→write reactive loop.
 	$effect(() => {
-		// Track only data.games.items — this is the dependency we care about
 		const items = data.games.items;
 		const current = untrack(() => selectedGame);
 		if (current) {
@@ -62,15 +59,40 @@
 		}
 	});
 
-	function handleSearch(term: string) {
+	const columns = [
+		{ key: 'title', label: 'Title', sortField: 'title' },
+		{ key: 'type', label: 'Type', sortField: 'game_type' },
+		{ key: 'bggId', label: 'BGG' },
+		{ key: 'actions', label: 'Actions', srOnly: true }
+	];
+
+	const filters = [
+		{ key: 'search', label: 'Search', type: 'text' as const, placeholder: 'Search available games...' }
+	];
+
+	let filterValues = $derived({
+		search: new URL(typeof window !== 'undefined' ? window.location.href : 'http://localhost').searchParams.get('search') || ''
+	});
+
+	function updateUrl(params: Record<string, string>) {
 		const url = new URL(window.location.href);
-		if (term) {
-			url.searchParams.set('search', term);
-		} else {
-			url.searchParams.delete('search');
+		for (const [key, value] of Object.entries(params)) {
+			if (value) {
+				url.searchParams.set(key, value);
+			} else {
+				url.searchParams.delete(key);
+			}
 		}
 		url.searchParams.delete('page');
 		goto(url.toString(), { replaceState: true, keepFocus: true });
+	}
+
+	function handleFilterChange(values: Record<string, any>) {
+		updateUrl({ search: values.search ?? '' });
+	}
+
+	function handleSort(field: string, direction: 'asc' | 'desc') {
+		updateUrl({ sortField: field, sortDir: direction });
 	}
 
 	function handlePageChange(page: number) {
@@ -101,7 +123,6 @@
 		return game.totalCopies > 1 ? `${game.title} (Copy #${game.copyNumber})` : game.title;
 	}
 
-	// Used by GameCard for display title in the form header
 	const selectedGameTitle = $derived(selectedGame ? gameDisplayTitle(selectedGame) : '');
 </script>
 
@@ -109,27 +130,37 @@
 
 <div class="checkout-layout">
 	<section class="game-list-section">
-		<div class="search-bar">
-			<SearchFilter
-				value={new URL(typeof window !== 'undefined' ? window.location.href : 'http://localhost').searchParams.get('search') || ''}
-				placeholder="Search available games..."
-				onSearch={handleSearch}
-			/>
-		</div>
-
-		{#if data.games.items.length === 0}
-			<p class="empty-message">No available games found.</p>
-		{:else}
-			<div class="game-cards">
-				{#each data.games.items as game (game.id)}
-					<GameCard
-						title={game.title}
-						bggId={game.bggId}
-						copyNumber={game.copyNumber}
-						totalCopies={game.totalCopies}
-						gameType={game.gameType}
-						selected={selectedGame?.id === game.id}
-					>
+		<SortableTable
+			{columns}
+			items={data.games.items}
+			totalItems={data.games.total}
+			currentPage={data.games.page}
+			pageSize={data.games.pageSize}
+			sortField={data.sortField}
+			sortDirection={data.sortDir}
+			{filters}
+			{filterValues}
+			emptyMessage="No available games found."
+			onSort={handleSort}
+			onFilterChange={handleFilterChange}
+			onPageChange={handlePageChange}
+			onPageSizeChange={handlePageSizeChange}
+		>
+			{#snippet row(game)}
+				<tr class:selected-row={selectedGame?.id === game.id}>
+					<td>
+						<span class="game-title">{gameDisplayTitle(game)}</span>
+					</td>
+					<td><GameTypeBadge gameType={game.gameType} /></td>
+					<td>
+						<a
+							href="https://boardgamegeek.com/boardgame/{game.bggId}"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="bgg-link"
+						>#{game.bggId}</a>
+					</td>
+					<td>
 						<button
 							class="btn-checkout"
 							onclick={() => selectGame(game)}
@@ -137,18 +168,10 @@
 						>
 							Checkout
 						</button>
-					</GameCard>
-				{/each}
-			</div>
-		{/if}
-
-		<Pagination
-			totalItems={data.games.total}
-			currentPage={data.games.page}
-			pageSize={data.games.pageSize}
-			onPageChange={handlePageChange}
-			onPageSizeChange={handlePageSizeChange}
-		/>
+					</td>
+				</tr>
+			{/snippet}
+		</SortableTable>
 	</section>
 
 	{#if selectedGame}
@@ -264,31 +287,32 @@
 		min-width: 0;
 	}
 
-	.search-bar {
-		margin-bottom: 1rem;
+	.game-title {
+		font-weight: 600;
+		color: #111827;
 	}
 
-	.empty-message {
-		color: #6b7280;
-		font-size: 0.9rem;
-		padding: 2rem 0;
-		text-align: center;
+	.bgg-link {
+		font-size: 0.8rem;
+		color: #6366f1;
+		text-decoration: none;
 	}
 
-	.game-cards {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
+	.bgg-link:hover {
+		text-decoration: underline;
+	}
+
+	:global(.selected-row) {
+		background-color: #f5f3ff !important;
 	}
 
 	.btn-checkout {
-		padding: 0.4rem 0.9rem;
+		padding: 0.35rem 0.75rem;
 		background-color: #6366f1;
 		color: #fff;
 		border: none;
 		border-radius: 6px;
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 		font-weight: 500;
 		cursor: pointer;
 		white-space: nowrap;

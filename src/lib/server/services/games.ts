@@ -43,7 +43,7 @@ export interface PaginationParams {
 }
 
 export interface SortParams {
-	field: 'title' | 'bgg_id' | 'status' | 'game_type' | 'last_transaction_date';
+	field: 'title' | 'bgg_id' | 'status' | 'game_type' | 'last_transaction_date' | 'checkout_time' | 'attendee';
 	direction: 'asc' | 'desc';
 }
 
@@ -347,11 +347,12 @@ export const gameService = {
 	},
 
 	/**
-	 * List available games (excludes retired), with optional title search and pagination.
+	 * List available games (excludes retired), with optional title search, pagination, and sorting.
 	 */
 	async listAvailable(
 		search?: string,
-		pagination: PaginationParams = { page: 1, pageSize: 20 }
+		pagination: PaginationParams = { page: 1, pageSize: 20 },
+		sort?: SortParams
 	): Promise<PaginatedResult<GameRecord>> {
 		const conditions: SQL[] = [eq(games.status, 'available')];
 		if (search) {
@@ -365,6 +366,7 @@ export const gameService = {
 			.from(games)
 			.where(whereClause);
 
+		const orderBy = buildSortExpression(sort);
 		const items = await db
 			.select({
 				id: games.id,
@@ -380,7 +382,7 @@ export const gameService = {
 			})
 			.from(games)
 			.where(whereClause)
-			.orderBy(asc(games.title))
+			.orderBy(...orderBy)
 			.limit(pagination.pageSize)
 			.offset((pagination.page - 1) * pagination.pageSize);
 
@@ -392,7 +394,8 @@ export const gameService = {
 	 */
 	async listCheckedOut(
 		search?: string,
-		pagination: PaginationParams = { page: 1, pageSize: 20 }
+		pagination: PaginationParams = { page: 1, pageSize: 20 },
+		sort?: SortParams
 	): Promise<PaginatedResult<GameRecord & { attendeeFirstName?: string | null; attendeeLastName?: string | null; idType?: string | null; checkoutWeight?: number | null; checkoutAt?: Date | null }>> {
 		const conditions: SQL[] = [eq(games.status, 'checked_out')];
 
@@ -427,6 +430,30 @@ export const gameService = {
 
 		const total = countResult[0]?.total ?? 0;
 
+		// Build order clause based on sort params
+		let orderClause;
+		if (sort) {
+			const dir = sort.direction === 'desc' ? desc : asc;
+			switch (sort.field) {
+				case 'checkout_time':
+					orderClause = [dir(latestCheckout.createdAt)];
+					break;
+				case 'attendee':
+					orderClause = [dir(latestCheckout.attendeeLastName), dir(latestCheckout.attendeeFirstName)];
+					break;
+				case 'title':
+					orderClause = [dir(games.title)];
+					break;
+				case 'game_type':
+					orderClause = [dir(games.gameType)];
+					break;
+				default:
+					orderClause = [asc(games.title)];
+			}
+		} else {
+			orderClause = [asc(games.title)];
+		}
+
 		const items = await db
 			.select({
 				id: games.id,
@@ -448,7 +475,7 @@ export const gameService = {
 			.from(games)
 			.innerJoin(latestCheckout, eq(games.id, latestCheckout.gameId))
 			.where(whereClause)
-			.orderBy(asc(games.title))
+			.orderBy(...orderClause)
 			.limit(pagination.pageSize)
 			.offset((pagination.page - 1) * pagination.pageSize);
 

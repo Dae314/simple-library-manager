@@ -6,9 +6,9 @@ test.describe('Checkout → Checkin Flow', () => {
 
 		// --- Checkout ---
 		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-		const card = page.locator('.game-card', { hasText: game.title }).first();
-		await expect(card).toBeVisible();
-		await card.getByRole('button', { name: 'Checkout' }).click();
+		const row = helpers.tableRow(page, game.title).first();
+		await expect(row).toBeVisible();
+		await row.getByRole('button', { name: 'Checkout' }).click();
 
 		const checkoutForm = page.locator('section[aria-label="Checkout form"]');
 		await expect(checkoutForm).toBeVisible();
@@ -23,11 +23,11 @@ test.describe('Checkout → Checkin Flow', () => {
 
 		// --- Checkin ---
 		await page.goto('/checkin');
-		const checkinCard = page.locator('.game-card', { hasText: game.title }).first();
-		await expect(checkinCard).toBeVisible();
-		await expect(checkinCard.locator('.attendee-name')).toHaveText('Jane Doe');
+		const checkinRow = helpers.tableRow(page, game.title).first();
+		await expect(checkinRow).toBeVisible();
+		await expect(checkinRow).toContainText('Jane Doe');
 
-		await checkinCard.getByRole('button', { name: 'Check In' }).click();
+		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
 		const checkinForm = page.locator('section[aria-label="Check in form"]');
 		await expect(checkinForm).toBeVisible();
@@ -44,7 +44,7 @@ test.describe('Checkout → Checkin Flow', () => {
 		// Verify the game is back as available
 		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
 		await expect(
-			page.locator('.game-card', { hasText: game.title }).first()
+			helpers.tableRow(page, game.title).first()
 		).toBeVisible();
 	});
 
@@ -56,8 +56,8 @@ test.describe('Checkout → Checkin Flow', () => {
 
 		// Checkin with weight 30.0 (difference 2.5 > tolerance 0.5)
 		await page.goto('/checkin');
-		const checkinCard = page.locator('.game-card', { hasText: game.title }).first();
-		await checkinCard.getByRole('button', { name: 'Check In' }).click();
+		const checkinRow = helpers.tableRow(page, game.title).first();
+		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
 		const checkinForm = page.locator('section[aria-label="Check in form"]');
 		await expect(checkinForm).toBeVisible();
@@ -78,8 +78,8 @@ test.describe('Checkout → Checkin Flow', () => {
 		const game = await helpers.createGame(`${helpers.prefix}_Validate`);
 
 		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-		const card = page.locator('.game-card', { hasText: game.title }).first();
-		await card.getByRole('button', { name: 'Checkout' }).click();
+		const row = helpers.tableRow(page, game.title).first();
+		await row.getByRole('button', { name: 'Checkout' }).click();
 
 		const checkoutForm = page.locator('section[aria-label="Checkout form"]');
 		await expect(checkoutForm).toBeVisible();

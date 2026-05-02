@@ -22,9 +22,9 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 			).toBeVisible({ timeout: 10_000 });
 
 			// Librarian selects game A and starts filling the form
-			const cardA = librarian.locator('.game-card', { hasText: gameA.title }).first();
-			await expect(cardA).toBeVisible();
-			await cardA.getByRole('button', { name: 'Checkout' }).click();
+			const rowA = librarian.locator('tbody tr', { hasText: gameA.title }).first();
+			await expect(rowA).toBeVisible();
+			await rowA.getByRole('button', { name: 'Checkout' }).click();
 
 			const form = librarian.locator('section[aria-label="Checkout form"]');
 			await expect(form).toBeVisible();
@@ -35,9 +35,9 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 
 			// Other station checks out game B (triggers a WebSocket event to librarian)
 			await otherStation.goto(`/checkout?search=${encodeURIComponent(gameB.title)}`);
-			const cardB = otherStation.locator('.game-card', { hasText: gameB.title }).first();
-			await expect(cardB).toBeVisible();
-			await cardB.getByRole('button', { name: 'Checkout' }).click();
+			const rowB = otherStation.locator('tbody tr', { hasText: gameB.title }).first();
+			await expect(rowB).toBeVisible();
+			await rowB.getByRole('button', { name: 'Checkout' }).click();
 
 			const otherForm = otherStation.locator('section[aria-label="Checkout form"]');
 			await expect(otherForm).toBeVisible();
@@ -51,7 +51,7 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 			// Wait for the real-time update to propagate to the librarian's tab
 			// Game B should disappear from the librarian's game list
 			await expect(
-				librarian.locator('.game-card', { hasText: gameB.title })
+				librarian.locator('tbody tr', { hasText: gameB.title })
 			).not.toBeVisible({ timeout: 10_000 });
 
 			// Verify the librarian's form is still visible and inputs are preserved
@@ -60,9 +60,9 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 			await expect(form.locator('#attendeeLastName')).toHaveValue('InProgress');
 			await expect(form.locator('#checkoutWeight')).toHaveValue('22.5');
 
-			// Verify game A is still selected (card still highlighted)
+			// Verify game A is still visible in the table
 			await expect(
-				librarian.locator('.game-card', { hasText: gameA.title }).first()
+				librarian.locator('tbody tr', { hasText: gameA.title }).first()
 			).toBeVisible();
 
 			// Verify the librarian can still successfully submit the checkout
@@ -96,13 +96,13 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 			).toBeVisible({ timeout: 10_000 });
 
 			// Verify all three games are visible
-			await expect(librarian.locator('.game-card', { hasText: gameA.title }).first()).toBeVisible();
-			await expect(librarian.locator('.game-card', { hasText: gameB.title }).first()).toBeVisible();
-			await expect(librarian.locator('.game-card', { hasText: gameC.title }).first()).toBeVisible();
+			await expect(librarian.locator('tbody tr', { hasText: gameA.title }).first()).toBeVisible();
+			await expect(librarian.locator('tbody tr', { hasText: gameB.title }).first()).toBeVisible();
+			await expect(librarian.locator('tbody tr', { hasText: gameC.title }).first()).toBeVisible();
 
 			// Librarian selects game B (the middle one)
-			const cardB = librarian.locator('.game-card', { hasText: gameB.title }).first();
-			await cardB.getByRole('button', { name: 'Checkout' }).click();
+			const rowB = librarian.locator('tbody tr', { hasText: gameB.title }).first();
+			await rowB.getByRole('button', { name: 'Checkout' }).click();
 
 			const form = librarian.locator('section[aria-label="Checkout form"]');
 			await expect(form).toBeVisible();
@@ -110,9 +110,9 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 
 			// Other station checks out game A (triggers list update on librarian's tab)
 			await otherStation.goto(`/checkout?search=${encodeURIComponent(gameA.title)}`);
-			const otherCard = otherStation.locator('.game-card', { hasText: gameA.title }).first();
-			await expect(otherCard).toBeVisible();
-			await otherCard.getByRole('button', { name: 'Checkout' }).click();
+			const otherRow = otherStation.locator('tbody tr', { hasText: gameA.title }).first();
+			await expect(otherRow).toBeVisible();
+			await otherRow.getByRole('button', { name: 'Checkout' }).click();
 
 			const otherForm = otherStation.locator('section[aria-label="Checkout form"]');
 			await expect(otherForm).toBeVisible();
@@ -125,7 +125,7 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 
 			// Wait for game A to disappear from librarian's list
 			await expect(
-				librarian.locator('.game-card', { hasText: gameA.title })
+				librarian.locator('tbody tr', { hasText: gameA.title })
 			).not.toBeVisible({ timeout: 10_000 });
 
 			// Verify the form still shows game B (not shifted to game C or lost)
@@ -134,7 +134,7 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 
 			// Game B's checkout button should still be disabled (it's the selected game)
 			await expect(
-				librarian.locator('.game-card', { hasText: gameB.title }).first().getByRole('button', { name: 'Checkout' })
+				librarian.locator('tbody tr', { hasText: gameB.title }).first().getByRole('button', { name: 'Checkout' })
 			).toBeDisabled();
 		} finally {
 			await context1.close();
@@ -156,9 +156,9 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 
 		for (const game of [gameA, gameB]) {
 			await setupPage.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-			const card = setupPage.locator('.game-card', { hasText: game.title }).first();
-			await expect(card).toBeVisible();
-			await card.getByRole('button', { name: 'Checkout' }).click();
+			const row = setupPage.locator('tbody tr', { hasText: game.title }).first();
+			await expect(row).toBeVisible();
+			await row.getByRole('button', { name: 'Checkout' }).click();
 			const form = setupPage.locator('section[aria-label="Checkout form"]');
 			await expect(form).toBeVisible();
 			await form.locator('#attendeeFirstName').fill('Setup');
@@ -183,9 +183,9 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 			).toBeVisible({ timeout: 10_000 });
 
 			// Librarian selects game A and starts filling the checkin form
-			const cardA = librarian.locator('.game-card', { hasText: gameA.title }).first();
-			await expect(cardA).toBeVisible();
-			await cardA.getByRole('button', { name: 'Check In' }).click();
+			const rowA = librarian.locator('tbody tr', { hasText: gameA.title }).first();
+			await expect(rowA).toBeVisible();
+			await rowA.getByRole('button', { name: 'Check In' }).click();
 
 			const form = librarian.locator('section[aria-label="Check in form"]');
 			await expect(form).toBeVisible();
@@ -193,9 +193,9 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 
 			// Other station checks in game B
 			await otherStation.goto('/checkin');
-			const otherCard = otherStation.locator('.game-card', { hasText: gameB.title }).first();
-			await expect(otherCard).toBeVisible();
-			await otherCard.getByRole('button', { name: 'Check In' }).click();
+			const otherRow = otherStation.locator('tbody tr', { hasText: gameB.title }).first();
+			await expect(otherRow).toBeVisible();
+			await otherRow.getByRole('button', { name: 'Check In' }).click();
 
 			const otherForm = otherStation.locator('section[aria-label="Check in form"]');
 			await expect(otherForm).toBeVisible();
@@ -205,7 +205,7 @@ test.describe('Real-Time: Form Preservation During Live Updates', () => {
 
 			// Wait for game B to disappear from librarian's checkin list
 			await expect(
-				librarian.locator('.game-card', { hasText: gameB.title })
+				librarian.locator('tbody tr', { hasText: gameB.title })
 			).not.toBeVisible({ timeout: 10_000 });
 
 			// Verify the librarian's form is still visible with preserved input

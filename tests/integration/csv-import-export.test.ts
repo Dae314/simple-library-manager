@@ -70,15 +70,15 @@ test.describe('CSV Import & Export', () => {
 
 			// Verify game types were set correctly
 			await page.goto(`/management/games?search=${helpers.prefix}_CsvType`);
-			await expect(page.locator('.game-card', { hasText: titleA }).first()).toBeVisible();
-			await expect(page.locator('.game-card', { hasText: titleB }).first()).toBeVisible();
+			await expect(page.locator('tbody tr', { hasText: titleA }).first()).toBeVisible();
+			await expect(page.locator('tbody tr', { hasText: titleB }).first()).toBeVisible();
 
 			// Check game type badges
-			const cardA = page.locator('.game-card', { hasText: titleA }).first();
-			await expect(cardA.locator('.badge')).toContainText(/Play.*Win/i);
+			const rowA = page.locator('tbody tr', { hasText: titleA }).first();
+			await expect(rowA.locator('.badge')).toContainText(/Play.*Win/i);
 
-			const cardB = page.locator('.game-card', { hasText: titleB }).first();
-			await expect(cardB.locator('.badge')).toContainText(/Play.*Take/i);
+			const rowB = page.locator('tbody tr', { hasText: titleB }).first();
+			await expect(rowB.locator('.badge')).toContainText(/Play.*Take/i);
 		} finally {
 			if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
 		}
@@ -112,8 +112,8 @@ test.describe('CSV Import & Export', () => {
 			await expect(page.getByText('3 added')).toBeVisible();
 
 			await page.goto(`/management/games?search=${helpers.prefix}_CsvImp`);
-			await expect(page.locator('.game-card', { hasText: titleA }).first()).toBeVisible();
-			await expect(page.locator('.game-card', { hasText: titleB }).first()).toBeVisible();
+			await expect(page.locator('tbody tr', { hasText: titleA }).first()).toBeVisible();
+			await expect(page.locator('tbody tr', { hasText: titleB }).first()).toBeVisible();
 		} finally {
 			if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
 		}
@@ -147,9 +147,9 @@ test.describe('CSV Import & Export', () => {
 
 			// Verify the game type was changed
 			await page.goto(`/management/games?search=${helpers.prefix}_CsvMod`);
-			const card = page.locator('.game-card', { hasText: title }).first();
-			await expect(card).toBeVisible();
-			await expect(card.locator('.badge')).toContainText(/Play.*Win/i);
+			const row = page.locator('tbody tr', { hasText: title }).first();
+			await expect(row).toBeVisible();
+			await expect(row.locator('.badge')).toContainText(/Play.*Win/i);
 		} finally {
 			if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
 		}
@@ -185,7 +185,7 @@ test.describe('CSV Import & Export', () => {
 
 			// Verify the game is now retired
 			await page.goto(`/management/games?search=${helpers.prefix}_CsvDel&status=retired`);
-			await expect(page.locator('.game-card', { hasText: title }).first()).toBeVisible();
+			await expect(page.locator('tbody tr', { hasText: title }).first()).toBeVisible();
 		} finally {
 			if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
 		}
@@ -226,19 +226,19 @@ test.describe('CSV Import & Export', () => {
 
 			// Verify the add
 			await page.goto(`/management/games?search=${helpers.prefix}_CsvMix_Add`);
-			const addCard = page.locator('.game-card', { hasText: addTitle }).first();
-			await expect(addCard).toBeVisible();
-			await expect(addCard.locator('.badge')).toContainText(/Play.*Take/i);
+			const addRow = page.locator('tbody tr', { hasText: addTitle }).first();
+			await expect(addRow).toBeVisible();
+			await expect(addRow.locator('.badge')).toContainText(/Play.*Take/i);
 
 			// Verify the modify
 			await page.goto(`/management/games?search=${helpers.prefix}_CsvMix_Mod`);
-			const modCard = page.locator('.game-card', { hasText: modTitle }).first();
-			await expect(modCard).toBeVisible();
-			await expect(modCard.locator('.badge')).toContainText(/Play.*Win/i);
+			const modRow = page.locator('tbody tr', { hasText: modTitle }).first();
+			await expect(modRow).toBeVisible();
+			await expect(modRow.locator('.badge')).toContainText(/Play.*Win/i);
 
 			// Verify the delete (retired)
 			await page.goto(`/management/games?search=${helpers.prefix}_CsvMix_Del&status=retired`);
-			await expect(page.locator('.game-card', { hasText: delTitle }).first()).toBeVisible();
+			await expect(page.locator('tbody tr', { hasText: delTitle }).first()).toBeVisible();
 		} finally {
 			if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
 		}
@@ -338,7 +338,7 @@ test.describe('CSV Import & Export', () => {
 
 			await expect(dialog).not.toBeVisible();
 
-			await expect(page.locator('.game-card', { hasText: title })).not.toBeVisible();
+			await expect(page.locator('tbody tr', { hasText: title })).not.toBeVisible();
 		} finally {
 			if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
 		}

@@ -6,16 +6,16 @@ test.describe('Retired Games Visibility', () => {
 
 		// Verify visible on checkout
 		await page.goto(`/checkout?search=${game.title}`);
-		await expect(page.locator('.game-card', { hasText: game.title })).toBeVisible();
+		await expect(helpers.tableRow(page, game.title)).toBeVisible();
 
 		// Retire via management
 		await page.goto(`/management/games?search=${game.title}`);
 		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
-		await expect(page.locator('.status-indicator.retired').first()).toBeVisible();
+		await expect(page.getByText(`Retired "${game.title}"`)).toBeVisible();
 
 		// Should be gone from checkout
 		await page.goto(`/checkout?search=${game.title}`);
-		await expect(page.locator('.game-card', { hasText: game.title })).not.toBeVisible();
+		await expect(helpers.tableRow(page, game.title)).not.toBeVisible();
 	});
 
 	test('retired game disappears from checkin page', async ({ page, helpers }) => {
@@ -26,16 +26,16 @@ test.describe('Retired Games Visibility', () => {
 
 		// Verify visible on checkin
 		await page.goto('/checkin');
-		await expect(page.locator('.game-card', { hasText: game.title })).toBeVisible();
+		await expect(helpers.tableRow(page, game.title)).toBeVisible();
 
 		// Retire via management
 		await page.goto(`/management/games?search=${game.title}`);
 		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
-		await expect(page.locator('.status-indicator.retired').first()).toBeVisible();
+		await expect(page.getByText(`Retired "${game.title}"`)).toBeVisible();
 
 		// Should be gone from checkin
 		await page.goto('/checkin');
-		await expect(page.locator('.game-card', { hasText: game.title })).not.toBeVisible();
+		await expect(helpers.tableRow(page, game.title)).not.toBeVisible();
 	});
 
 	test('restoring a retired game makes it appear on checkout page again', async ({ page, helpers }) => {
@@ -44,31 +44,34 @@ test.describe('Retired Games Visibility', () => {
 		// Retire
 		await page.goto(`/management/games?search=${game.title}`);
 		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
-		await expect(page.locator('.status-indicator.retired').first()).toBeVisible();
+		await expect(page.getByText(`Retired "${game.title}"`)).toBeVisible();
 
 		// Verify NOT on checkout
 		await page.goto(`/checkout?search=${game.title}`);
-		await expect(page.locator('.game-card', { hasText: game.title })).not.toBeVisible();
+		await expect(helpers.tableRow(page, game.title)).not.toBeVisible();
 
-		// Restore
+		// Restore — need to filter by retired status to see the game
 		await page.goto(`/management/games?search=${game.title}&status=retired`);
-		await expect(page.locator('.game-card', { hasText: game.title })).toBeVisible();
+		await expect(helpers.tableRow(page, game.title)).toBeVisible();
 		await page.locator(`button[aria-label="Restore ${game.title}"]`).click();
 		await expect(page.getByText('Restored')).toBeVisible();
 
 		// Should be back on checkout
 		await page.goto(`/checkout?search=${game.title}`);
-		await expect(page.locator('.game-card', { hasText: game.title })).toBeVisible();
+		await expect(helpers.tableRow(page, game.title)).toBeVisible();
 	});
 
-	test('retired game still visible in management area', async ({ page, helpers }) => {
+	test('retired game still visible in management area with retired filter', async ({ page, helpers }) => {
 		const game = await helpers.createGame(`${helpers.prefix}_RetVis4`);
 
 		await page.goto(`/management/games?search=${game.title}`);
 
 		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
+		await expect(page.getByText(`Retired "${game.title}"`)).toBeVisible();
 
-		const row = page.locator('.game-row', { hasText: game.title });
+		// Game is hidden from default view, but visible with retired filter
+		await page.goto(`/management/games?search=${game.title}&status=retired`);
+		const row = helpers.tableRow(page, game.title);
 		await expect(row).toBeVisible();
 
 		const retiredBadge = row.locator('.status-indicator.retired');

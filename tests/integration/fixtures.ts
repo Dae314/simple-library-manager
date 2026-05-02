@@ -1,4 +1,4 @@
-import { test as base, expect, type Page, type APIRequestContext } from '@playwright/test';
+import { test as base, expect, type Page, type APIRequestContext, type Locator } from '@playwright/test';
 
 const BASE = 'http://localhost:8080';
 
@@ -43,6 +43,17 @@ async function apiDeleteGames(request: APIRequestContext, ids: number[]): Promis
 	}
 }
 
+// ── Locator helpers ────────────────────────────────────────────────────
+
+/**
+ * Locate a table row containing the given text.
+ * Works for the SortableTable-based pages (checkout, checkin, catalog,
+ * management games, management transactions).
+ */
+function tableRow(page: Page | Locator, text: string): Locator {
+	return ('locator' in page ? page : page).locator('tbody tr', { hasText: text });
+}
+
 // ── UI helpers ─────────────────────────────────────────────────────────
 
 async function uiCheckoutGame(
@@ -53,9 +64,9 @@ async function uiCheckoutGame(
 	weight: string
 ): Promise<void> {
 	await page.goto(`/checkout?search=${encodeURIComponent(gameName)}`);
-	const card = page.locator('.game-card', { hasText: gameName }).first();
-	await expect(card).toBeVisible();
-	await card.getByRole('button', { name: 'Checkout' }).click();
+	const row = tableRow(page, gameName).first();
+	await expect(row).toBeVisible();
+	await row.getByRole('button', { name: 'Checkout' }).click();
 
 	const form = page.locator('section[aria-label="Checkout form"]');
 	await expect(form).toBeVisible();
@@ -73,9 +84,9 @@ async function uiCheckinGame(
 	weight: string
 ): Promise<void> {
 	await page.goto('/checkin');
-	const card = page.locator('.game-card', { hasText: gameName }).first();
-	await expect(card).toBeVisible();
-	await card.getByRole('button', { name: 'Check In' }).click();
+	const row = tableRow(page, gameName).first();
+	await expect(row).toBeVisible();
+	await row.getByRole('button', { name: 'Check In' }).click();
 
 	const form = page.locator('section[aria-label="Check in form"]');
 	await expect(form).toBeVisible();
@@ -100,6 +111,8 @@ export const test = base.extend<{
 		checkoutGame: (gameName: string, firstName: string, lastName: string, weight: string) => Promise<void>;
 		/** Checkin a game through the UI */
 		checkinGame: (gameName: string, weight: string) => Promise<void>;
+		/** Locate a table row by text content on the given page or locator */
+		tableRow: (pageOrLocator: Page | Locator, text: string) => Locator;
 	};
 }>({
 	helpers: async ({ page, request }, use, testInfo) => {
@@ -122,6 +135,10 @@ export const test = base.extend<{
 
 			async checkinGame(gameName: string, weight: string) {
 				await uiCheckinGame(page, gameName, weight);
+			},
+
+			tableRow(pageOrLocator: Page | Locator, text: string): Locator {
+				return tableRow(pageOrLocator, text);
 			}
 		};
 

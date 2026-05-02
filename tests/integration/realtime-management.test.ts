@@ -20,7 +20,7 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 			await expect(tab2.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
 
 			// Verify the game does NOT exist on the catalog yet
-			await expect(tab2.locator('.game-card', { hasText: title })).not.toBeVisible();
+			await expect(tab2.locator('tbody tr', { hasText: title })).not.toBeVisible();
 
 			// Create a new game via the management UI on tab 1
 			await tab1.click('a[href="/management/games/new"]');
@@ -35,7 +35,7 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 
 			// Verify the new game appears on tab 2's catalog without manual refresh
 			await expect(
-				tab2.locator('.game-card', { hasText: title }).first()
+				tab2.locator('tbody tr', { hasText: title }).first()
 			).toBeVisible({ timeout: 10_000 });
 		} finally {
 			await context1.close();
@@ -56,13 +56,13 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 			// Tab 2: catalog page showing the game
 			await tab2.goto(`/catalog?search=${encodeURIComponent(helpers.prefix)}`);
 			await expect(tab2.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
-			await expect(tab2.locator('.game-card', { hasText: game.title }).first()).toBeVisible();
+			await expect(tab2.locator('tbody tr', { hasText: game.title }).first()).toBeVisible();
 
 			// Tab 1: navigate to the game's edit page
 			await tab1.goto(`/management/games?search=${encodeURIComponent(game.title)}`);
 			await expect(tab1.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
 
-			const row = tab1.locator('.game-row', { hasText: game.title });
+			const row = tab1.locator('tbody tr', { hasText: game.title });
 			await row.locator('a', { hasText: 'Edit' }).click();
 			await expect(tab1).toHaveURL(/\/management\/games\/\d+/);
 
@@ -74,7 +74,7 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 			// Verify the updated title appears on tab 2 without manual refresh
 			// The old title should disappear and the new title should appear
 			await expect(
-				tab2.locator('.game-card', { hasText: newTitle }).first()
+				tab2.locator('tbody tr', { hasText: newTitle }).first()
 			).toBeVisible({ timeout: 10_000 });
 		} finally {
 			await context1.close();

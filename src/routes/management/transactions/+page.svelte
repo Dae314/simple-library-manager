@@ -2,8 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { getContext } from 'svelte';
-	import Pagination from '$lib/components/Pagination.svelte';
-	import FilterPanel from '$lib/components/FilterPanel.svelte';
+	import SortableTable from '$lib/components/SortableTable.svelte';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import toast from 'svelte-hot-french-toast';
 	import { formatDateTime, formatWeight } from '$lib/utils/formatting.js';
@@ -45,19 +44,30 @@
 		data: {
 			transactions: PaginatedResult;
 			filters: FilterValues;
+			sortField: string;
+			sortDir: string;
 		};
 	} = $props();
+
+	const columns = [
+		{ key: 'time', label: 'Time', sortField: 'created_at' },
+		{ key: 'game', label: 'Game', sortField: 'game_title' },
+		{ key: 'type', label: 'Type', sortField: 'type' },
+		{ key: 'attendee', label: 'Attendee', sortField: 'attendee' },
+		{ key: 'details', label: 'Details' },
+		{ key: 'actions', label: 'Actions', srOnly: true }
+	];
 
 	const filterConfigs = [
 		{ key: 'gameTitle', label: 'Game Title', type: 'text' as const, placeholder: 'Search by game title...' },
 		{
-			key: 'type', label: 'Transaction Type', type: 'select' as const,
+			key: 'type', label: 'Type', type: 'select' as const,
 			options: [
 				{ value: 'checkout', label: 'Checkout' },
 				{ value: 'checkin', label: 'Checkin' }
 			]
 		},
-		{ key: 'attendeeName', label: 'Attendee Name', type: 'text' as const, placeholder: 'Search by attendee...' }
+		{ key: 'attendeeName', label: 'Attendee', type: 'text' as const, placeholder: 'Search by attendee...' }
 	];
 
 	let filterValues = $derived({
@@ -87,6 +97,10 @@
 		updateUrl(params);
 	}
 
+	function handleSort(field: string, direction: 'asc' | 'desc') {
+		updateUrl({ sortField: field, sortDir: direction });
+	}
+
 	function handlePageChange(page: number) {
 		const url = new URL(window.location.href);
 		url.searchParams.set('page', String(page));
@@ -104,6 +118,13 @@
 		const parts = [tx.attendeeFirstName, tx.attendeeLastName].filter(Boolean);
 		return parts.length > 0 ? parts.join(' ') : '';
 	}
+
+	function txDetails(tx: TransactionWithGame): string {
+		const parts: string[] = [];
+		if (tx.checkoutWeight != null) parts.push(`Out: ${formatWeight(tx.checkoutWeight)}`);
+		if (tx.checkinWeight != null) parts.push(`In: ${formatWeight(tx.checkinWeight)}`);
+		return parts.join(' · ');
+	}
 </script>
 
 <div class="transactions-page">
@@ -112,106 +133,88 @@
 		<a href="/management" class="btn btn-secondary">← Back to Management</a>
 	</div>
 
-	<FilterPanel
-		filters={filterConfigs}
-		values={filterValues}
-		onChange={handleFilterChange}
-	/>
-
-	{#if data.transactions.items.length === 0}
-		<p class="empty-message">No transactions found matching your filters.</p>
-	{:else}
-		<div class="transaction-list">
-			{#each data.transactions.items as tx (tx.id)}
-				<div class="transaction-card">
-					<div class="card-header">
-						<span class="game-title">{tx.gameTitle}</span>
-						<span class="type-badge" class:checkout={tx.type === 'checkout'} class:checkin={tx.type === 'checkin'}>
-							{tx.type === 'checkout' ? 'Checkout' : 'Checkin'}
-						</span>
-						{#if tx.isCorrection}
-							<span class="correction-badge">Correction</span>
-						{/if}
-					</div>
-
-					<div class="card-body">
-						<div class="card-details">
-							<span class="timestamp">{formatDateTime(tx.createdAt)}</span>
-							{#if attendeeName(tx)}
-								<span class="detail-item">
-									<span class="detail-label">Attendee:</span> {attendeeName(tx)}
-								</span>
-							{/if}
-							{#if tx.checkoutWeight != null}
-								<span class="detail-item">
-									<span class="detail-label">Checkout weight:</span> {formatWeight(tx.checkoutWeight)}
-								</span>
-							{/if}
-							{#if tx.checkinWeight != null}
-								<span class="detail-item">
-									<span class="detail-label">Checkin weight:</span> {formatWeight(tx.checkinWeight)}
-								</span>
-							{/if}
-							{#if tx.note}
-								<span class="detail-item note">
-									<span class="detail-label">Note:</span> {tx.note}
-								</span>
-							{/if}
-						</div>
-
-						{#if !tx.isCorrection}
-							<div class="card-actions">
-								{#if tx.type === 'checkout'}
-									<form method="POST" action="?/reverseCheckout" use:enhance={() => {
-										return async ({ result, update }) => {
-											if (result.type === 'success') {
-												toast.success('Checkout reversed successfully');
-											} else if (result.type === 'failure') {
-												const msg = (result.data as any)?.error || 'Failed to reverse checkout';
-												toast.error(msg);
-											}
-											await update();
-										};
-									}}>
-										<input type="hidden" name="transactionId" value={tx.id} />
-										<button type="submit" class="btn btn-reverse">Reverse Checkout</button>
-									</form>
-								{:else if tx.type === 'checkin'}
-									<form method="POST" action="?/reverseCheckin" use:enhance={() => {
-										return async ({ result, update }) => {
-											if (result.type === 'success') {
-												toast.success('Checkin reversed successfully');
-											} else if (result.type === 'failure') {
-												const msg = (result.data as any)?.error || 'Failed to reverse checkin';
-												toast.error(msg);
-											}
-											await update();
-										};
-									}}>
-										<input type="hidden" name="transactionId" value={tx.id} />
-										<button type="submit" class="btn btn-reverse">Reverse Checkin</button>
-									</form>
-								{/if}
-							</div>
-						{/if}
-					</div>
-				</div>
-			{/each}
-		</div>
-	{/if}
-
-	<Pagination
+	<SortableTable
+		{columns}
+		items={data.transactions.items}
 		totalItems={data.transactions.total}
 		currentPage={data.transactions.page}
 		pageSize={data.transactions.pageSize}
+		sortField={data.sortField}
+		sortDirection={data.sortDir}
+		filters={filterConfigs}
+		{filterValues}
+		emptyMessage="No transactions found matching your filters."
+		onSort={handleSort}
+		onFilterChange={handleFilterChange}
 		onPageChange={handlePageChange}
 		onPageSizeChange={handlePageSizeChange}
-	/>
+	>
+		{#snippet row(tx)}
+			<tr>
+				<td class="timestamp">{formatDateTime(tx.createdAt)}</td>
+				<td>
+					<span class="game-title">{tx.gameTitle}</span>
+				</td>
+				<td>
+					<span class="type-badge" class:checkout={tx.type === 'checkout'} class:checkin={tx.type === 'checkin'}>
+						{tx.type === 'checkout' ? 'Checkout' : 'Checkin'}
+					</span>
+					{#if tx.isCorrection}
+						<span class="correction-badge">Correction</span>
+					{/if}
+				</td>
+				<td>{attendeeName(tx)}</td>
+				<td>
+					<span class="details-text">
+						{txDetails(tx)}
+						{#if tx.note}
+							<span class="note" title={tx.note}>📝 {tx.note}</span>
+						{/if}
+					</span>
+				</td>
+				<td>
+					{#if !tx.isCorrection}
+						{#if tx.type === 'checkout'}
+							<form method="POST" action="?/reverseCheckout" use:enhance={() => {
+								return async ({ result, update }) => {
+									if (result.type === 'success') {
+										toast.success('Checkout reversed successfully');
+									} else if (result.type === 'failure') {
+										const msg = (result.data as any)?.error || 'Failed to reverse checkout';
+										toast.error(msg);
+									}
+									await update();
+								};
+							}}>
+								<input type="hidden" name="transactionId" value={tx.id} />
+								<button type="submit" class="btn-reverse">Reverse</button>
+							</form>
+						{:else if tx.type === 'checkin'}
+							<form method="POST" action="?/reverseCheckin" use:enhance={() => {
+								return async ({ result, update }) => {
+									if (result.type === 'success') {
+										toast.success('Checkin reversed successfully');
+									} else if (result.type === 'failure') {
+										const msg = (result.data as any)?.error || 'Failed to reverse checkin';
+										toast.error(msg);
+									}
+									await update();
+								};
+							}}>
+								<input type="hidden" name="transactionId" value={tx.id} />
+								<button type="submit" class="btn-reverse">Reverse</button>
+							</form>
+						{/if}
+					{/if}
+				</td>
+			</tr>
+		{/snippet}
+	</SortableTable>
 </div>
 
 <style>
 	.transactions-page {
-		max-width: 960px;
+		max-width: 1100px;
 		margin: 0 auto;
 	}
 
@@ -253,55 +256,15 @@
 		background-color: #e5e7eb;
 	}
 
-	.btn-reverse {
-		background-color: #fef3c7;
-		color: #92400e;
-		border: 1px solid #f59e0b;
-		padding: 0.3rem 0.7rem;
-		border-radius: 6px;
-		font-size: 0.8rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition: background-color 0.15s;
-	}
-
-	.btn-reverse:hover {
-		background-color: #fde68a;
-	}
-
-	.empty-message {
+	.timestamp {
 		color: #6b7280;
-		font-size: 0.9rem;
-		padding: 2rem 0;
-		text-align: center;
-	}
-
-	.transaction-list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		margin: 1rem 0;
-	}
-
-	.transaction-card {
-		border: 1px solid #e5e7eb;
-		border-radius: 8px;
-		padding: 0.75rem 1rem;
-		background: #fff;
-	}
-
-	.card-header {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-		margin-bottom: 0.4rem;
+		font-size: 0.82rem;
+		white-space: nowrap;
 	}
 
 	.game-title {
 		font-weight: 600;
 		color: #111827;
-		font-size: 0.95rem;
 	}
 
 	.type-badge {
@@ -332,66 +295,46 @@
 		font-weight: 600;
 		background-color: #fef3c7;
 		color: #92400e;
+		margin-left: 0.25rem;
 	}
 
-	.card-body {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 0.75rem;
-		flex-wrap: wrap;
-	}
-
-	.card-details {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem 1rem;
-		font-size: 0.85rem;
+	.details-text {
+		font-size: 0.82rem;
 		color: #4b5563;
 	}
 
-	.timestamp {
+	.note {
+		display: block;
+		font-style: italic;
 		color: #6b7280;
 		font-size: 0.8rem;
-	}
-
-	.detail-item {
+		max-width: 200px;
+		overflow: hidden;
+		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
-	.detail-item.note {
-		white-space: normal;
-		flex-basis: 100%;
-		font-style: italic;
-		color: #6b7280;
+	.btn-reverse {
+		background-color: #fef3c7;
+		color: #92400e;
+		border: 1px solid #f59e0b;
+		padding: 0.25rem 0.6rem;
+		border-radius: 6px;
+		font-size: 0.78rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color 0.15s;
+		white-space: nowrap;
 	}
 
-	.detail-label {
-		font-weight: 600;
-		color: #374151;
-	}
-
-	.card-actions {
-		flex-shrink: 0;
+	.btn-reverse:hover {
+		background-color: #fde68a;
 	}
 
 	@media (max-width: 640px) {
 		.page-header {
 			flex-direction: column;
 			align-items: flex-start;
-		}
-
-		.card-body {
-			flex-direction: column;
-		}
-
-		.card-actions {
-			width: 100%;
-		}
-
-		.btn-reverse {
-			width: 100%;
-			text-align: center;
 		}
 	}
 </style>

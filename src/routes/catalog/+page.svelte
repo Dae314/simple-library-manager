@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { getContext } from 'svelte';
-	import SearchFilter from '$lib/components/SearchFilter.svelte';
-	import Pagination from '$lib/components/Pagination.svelte';
-	import GameCard from '$lib/components/GameCard.svelte';
+	import SortableTable from '$lib/components/SortableTable.svelte';
+	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 
 	const wsClient: { connected: boolean } = getContext('ws');
@@ -32,8 +31,42 @@
 			activeStatus: string;
 			activeGameType: string;
 			activeSearch: string;
+			sortField: string;
+			sortDir: string;
 		};
 	} = $props();
+
+	const columns = [
+		{ key: 'title', label: 'Title', sortField: 'title' },
+		{ key: 'type', label: 'Type', sortField: 'game_type' },
+		{ key: 'status', label: 'Status', sortField: 'status' },
+		{ key: 'bggId', label: 'BGG', sortField: 'bgg_id' }
+	];
+
+	const filters = [
+		{ key: 'search', label: 'Search', type: 'text' as const, placeholder: 'Search by game title...' },
+		{
+			key: 'status', label: 'Status', type: 'select' as const,
+			options: [
+				{ value: 'available', label: 'Available' },
+				{ value: 'checked_out', label: 'Checked Out' }
+			]
+		},
+		{
+			key: 'gameType', label: 'Type', type: 'select' as const,
+			options: [
+				{ value: 'standard', label: 'Standard' },
+				{ value: 'play_and_win', label: 'Play & Win' },
+				{ value: 'play_and_take', label: 'Play & Take' }
+			]
+		}
+	];
+
+	let filterValues = $derived({
+		search: data.activeSearch,
+		status: data.activeStatus,
+		gameType: data.activeGameType
+	});
 
 	function updateUrl(params: Record<string, string>) {
 		const url = new URL(window.location.href);
@@ -48,18 +81,16 @@
 		goto(url.toString(), { replaceState: true, keepFocus: true });
 	}
 
-	function handleSearch(term: string) {
-		updateUrl({ search: term });
+	function handleFilterChange(values: Record<string, any>) {
+		const params: Record<string, string> = {};
+		for (const [key, value] of Object.entries(values)) {
+			params[key] = String(value ?? '');
+		}
+		updateUrl(params);
 	}
 
-	function handleStatusChange(e: Event) {
-		const value = (e.target as HTMLSelectElement).value;
-		updateUrl({ status: value });
-	}
-
-	function handleGameTypeChange(e: Event) {
-		const value = (e.target as HTMLSelectElement).value;
-		updateUrl({ gameType: value });
+	function handleSort(field: string, direction: 'asc' | 'desc') {
+		updateUrl({ sortField: field, sortDir: direction });
 	}
 
 	function handlePageChange(page: number) {
@@ -75,6 +106,10 @@
 		goto(url.toString(), { replaceState: true });
 	}
 
+	function gameDisplayTitle(game: GameRecord): string {
+		return game.totalCopies > 1 ? `${game.title} (Copy #${game.copyNumber})` : game.title;
+	}
+
 	function statusLabel(status: string): string {
 		switch (status) {
 			case 'available': return 'Available';
@@ -86,68 +121,44 @@
 
 <h1>Catalog <ConnectionIndicator connected={wsClient.connected} /></h1>
 
-<div class="filter-bar">
-	<div class="search-field">
-		<SearchFilter
-			value={data.activeSearch}
-			placeholder="Search by game title..."
-			onSearch={handleSearch}
-		/>
-	</div>
-
-	<div class="filter-selects">
-		<select
-			class="filter-select"
-			value={data.activeStatus}
-			onchange={handleStatusChange}
-			aria-label="Filter by status"
-		>
-			<option value="">All Statuses</option>
-			<option value="available">Available</option>
-			<option value="checked_out">Checked Out</option>
-		</select>
-
-		<select
-			class="filter-select"
-			value={data.activeGameType}
-			onchange={handleGameTypeChange}
-			aria-label="Filter by game type"
-		>
-			<option value="">All Types</option>
-			<option value="standard">Standard</option>
-			<option value="play_and_win">Play & Win</option>
-			<option value="play_and_take">Play & Take</option>
-		</select>
-	</div>
-</div>
-
-{#if data.games.items.length === 0}
-	<p class="empty-message">No games found matching your filters.</p>
-{:else}
-	<div class="game-cards">
-		{#each data.games.items as game (game.id)}
-			<GameCard
-				title={game.title}
-				bggId={game.bggId}
-				copyNumber={game.copyNumber}
-				totalCopies={game.totalCopies}
-				gameType={game.gameType}
-			>
-				<span class="status-indicator {game.status}">
-					{statusLabel(game.status)}
-				</span>
-			</GameCard>
-		{/each}
-	</div>
-{/if}
-
-<Pagination
+<SortableTable
+	{columns}
+	items={data.games.items}
 	totalItems={data.games.total}
 	currentPage={data.games.page}
 	pageSize={data.games.pageSize}
+	sortField={data.sortField}
+	sortDirection={data.sortDir}
+	{filters}
+	{filterValues}
+	emptyMessage="No games found matching your filters."
+	onSort={handleSort}
+	onFilterChange={handleFilterChange}
 	onPageChange={handlePageChange}
 	onPageSizeChange={handlePageSizeChange}
-/>
+>
+	{#snippet row(game)}
+		<tr>
+			<td>
+				<span class="game-title">{gameDisplayTitle(game)}</span>
+			</td>
+			<td><GameTypeBadge gameType={game.gameType} /></td>
+			<td>
+				<span class="status-indicator {game.status}">
+					{statusLabel(game.status)}
+				</span>
+			</td>
+			<td>
+				<a
+					href="https://boardgamegeek.com/boardgame/{game.bggId}"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="bgg-link"
+				>#{game.bggId}</a>
+			</td>
+		</tr>
+	{/snippet}
+</SortableTable>
 
 <style>
 	h1 {
@@ -157,54 +168,19 @@
 		color: #111827;
 	}
 
-	.filter-bar {
-		display: flex;
-		gap: 0.75rem;
-		align-items: flex-start;
-		margin-bottom: 1rem;
-		flex-wrap: wrap;
+	.game-title {
+		font-weight: 600;
+		color: #111827;
 	}
 
-	.search-field {
-		flex: 1;
-		min-width: 200px;
+	.bgg-link {
+		font-size: 0.8rem;
+		color: #6366f1;
+		text-decoration: none;
 	}
 
-	.filter-selects {
-		display: flex;
-		gap: 0.5rem;
-		flex-shrink: 0;
-	}
-
-	.filter-select {
-		padding: 0.45rem 0.6rem;
-		border: 1px solid #d1d5db;
-		border-radius: 6px;
-		font-size: 0.9rem;
-		color: #374151;
-		background: #fff;
-		outline: none;
-		cursor: pointer;
-		transition: border-color 0.15s;
-	}
-
-	.filter-select:focus {
-		border-color: #6366f1;
-		box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
-	}
-
-	.empty-message {
-		color: #6b7280;
-		font-size: 0.9rem;
-		padding: 2rem 0;
-		text-align: center;
-	}
-
-	.game-cards {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
+	.bgg-link:hover {
+		text-decoration: underline;
 	}
 
 	.status-indicator {
@@ -224,23 +200,5 @@
 	.status-indicator.checked_out {
 		background-color: #fee2e2;
 		color: #991b1b;
-	}
-
-	@media (max-width: 640px) {
-		.filter-bar {
-			flex-direction: column;
-		}
-
-		.search-field {
-			width: 100%;
-		}
-
-		.filter-selects {
-			width: 100%;
-		}
-
-		.filter-select {
-			flex: 1;
-		}
 	}
 </style>

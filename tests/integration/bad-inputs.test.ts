@@ -119,7 +119,7 @@ test.describe('Bad Input Handling', () => {
 			const game = await helpers.createGame(`${helpers.prefix}_EditEmpty`);
 
 			await page.goto(`/management/games?search=${helpers.prefix}_EditEmpty`);
-			const row = page.locator('.game-row', { hasText: game.title });
+			const row = helpers.tableRow(page, game.title);
 			await row.locator('a', { hasText: 'Edit' }).click();
 			await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
@@ -134,7 +134,7 @@ test.describe('Bad Input Handling', () => {
 			const game = await helpers.createGame(`${helpers.prefix}_EditBadBGG`);
 
 			await page.goto(`/management/games?search=${helpers.prefix}_EditBadBGG`);
-			const row = page.locator('.game-row', { hasText: game.title });
+			const row = helpers.tableRow(page, game.title);
 			await row.locator('a', { hasText: 'Edit' }).click();
 			await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
@@ -151,8 +151,8 @@ test.describe('Bad Input Handling', () => {
 			const game = await helpers.createGame(`${helpers.prefix}_NoFirst`);
 
 			await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-			const card = page.locator('.game-card', { hasText: game.title }).first();
-			await card.getByRole('button', { name: 'Checkout' }).click();
+			const row = helpers.tableRow(page, game.title).first();
+			await row.getByRole('button', { name: 'Checkout' }).click();
 
 			const form = page.locator('section[aria-label="Checkout form"]');
 			await expect(form).toBeVisible();
@@ -170,8 +170,8 @@ test.describe('Bad Input Handling', () => {
 			const game = await helpers.createGame(`${helpers.prefix}_NoLast`);
 
 			await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-			const card = page.locator('.game-card', { hasText: game.title }).first();
-			await card.getByRole('button', { name: 'Checkout' }).click();
+			const row = helpers.tableRow(page, game.title).first();
+			await row.getByRole('button', { name: 'Checkout' }).click();
 
 			const form = page.locator('section[aria-label="Checkout form"]');
 			await expect(form).toBeVisible();
@@ -189,8 +189,8 @@ test.describe('Bad Input Handling', () => {
 			const game = await helpers.createGame(`${helpers.prefix}_ZeroWt`);
 
 			await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-			const card = page.locator('.game-card', { hasText: game.title }).first();
-			await card.getByRole('button', { name: 'Checkout' }).click();
+			const row = helpers.tableRow(page, game.title).first();
+			await row.getByRole('button', { name: 'Checkout' }).click();
 
 			const form = page.locator('section[aria-label="Checkout form"]');
 			await expect(form).toBeVisible();
@@ -208,8 +208,8 @@ test.describe('Bad Input Handling', () => {
 			const game = await helpers.createGame(`${helpers.prefix}_NegWt`);
 
 			await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-			const card = page.locator('.game-card', { hasText: game.title }).first();
-			await card.getByRole('button', { name: 'Checkout' }).click();
+			const row = helpers.tableRow(page, game.title).first();
+			await row.getByRole('button', { name: 'Checkout' }).click();
 
 			const form = page.locator('section[aria-label="Checkout form"]');
 			await expect(form).toBeVisible();
@@ -230,8 +230,8 @@ test.describe('Bad Input Handling', () => {
 			await helpers.checkoutGame(game.title, 'Bob', 'Smith', '30');
 
 			await page.goto('/checkin');
-			const card = page.locator('.game-card', { hasText: game.title }).first();
-			await card.getByRole('button', { name: 'Check In' }).click();
+			const row = helpers.tableRow(page, game.title).first();
+			await row.getByRole('button', { name: 'Check In' }).click();
 
 			const form = page.locator('section[aria-label="Check in form"]');
 			await expect(form).toBeVisible();
@@ -247,8 +247,8 @@ test.describe('Bad Input Handling', () => {
 			await helpers.checkoutGame(game.title, 'Bob', 'Smith', '30');
 
 			await page.goto('/checkin');
-			const card = page.locator('.game-card', { hasText: game.title }).first();
-			await card.getByRole('button', { name: 'Check In' }).click();
+			const row = helpers.tableRow(page, game.title).first();
+			await row.getByRole('button', { name: 'Check In' }).click();
 
 			const form = page.locator('section[aria-label="Check in form"]');
 			await expect(form).toBeVisible();

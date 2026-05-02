@@ -34,13 +34,13 @@ test.describe('Real-Time: Checkout Broadcasting', () => {
 			await expect(tab2.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
 
 			// Verify the game is visible on both tabs
-			const card1 = tab1.locator('.game-card', { hasText: game.title }).first();
-			const card2 = tab2.locator('.game-card', { hasText: game.title }).first();
-			await expect(card1).toBeVisible();
-			await expect(card2).toBeVisible();
+			const row1 = tab1.locator('tbody tr', { hasText: game.title }).first();
+			const row2 = tab2.locator('tbody tr', { hasText: game.title }).first();
+			await expect(row1).toBeVisible();
+			await expect(row2).toBeVisible();
 
 			// Check out the game on tab 1
-			await card1.getByRole('button', { name: 'Checkout' }).click();
+			await row1.getByRole('button', { name: 'Checkout' }).click();
 
 			const checkoutForm = tab1.locator('section[aria-label="Checkout form"]');
 			await expect(checkoutForm).toBeVisible();
@@ -55,7 +55,7 @@ test.describe('Real-Time: Checkout Broadcasting', () => {
 			// Verify tab 2 automatically reflects the game as no longer available
 			// The game should disappear from the checkout page (only available games shown)
 			await expect(
-				tab2.locator('.game-card', { hasText: game.title })
+				tab2.locator('tbody tr', { hasText: game.title })
 			).not.toBeVisible({ timeout: 10_000 });
 		} finally {
 			await context1.close();

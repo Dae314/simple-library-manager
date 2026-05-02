@@ -30,9 +30,9 @@ test.describe('Real-Time: Static Pages Do Not React', () => {
 			await tab2.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
 			await expect(tab2.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
 
-			const card = tab2.locator('.game-card', { hasText: game.title }).first();
-			await expect(card).toBeVisible();
-			await card.getByRole('button', { name: 'Checkout' }).click();
+			const row = tab2.locator('tbody tr', { hasText: game.title }).first();
+			await expect(row).toBeVisible();
+			await row.getByRole('button', { name: 'Checkout' }).click();
 
 			const checkoutForm = tab2.locator('section[aria-label="Checkout form"]');
 			await expect(checkoutForm).toBeVisible();

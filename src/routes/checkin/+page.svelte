@@ -3,9 +3,8 @@
 	import { enhance, applyAction, deserialize } from '$app/forms';
 	import { getContext, untrack } from 'svelte';
 	import toast from 'svelte-hot-french-toast';
-	import SearchFilter from '$lib/components/SearchFilter.svelte';
-	import Pagination from '$lib/components/Pagination.svelte';
-	import GameCard from '$lib/components/GameCard.svelte';
+	import SortableTable from '$lib/components/SortableTable.svelte';
+	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import { formatDuration, formatWeight } from '$lib/utils/formatting';
@@ -40,6 +39,8 @@
 			games: PaginatedResult;
 			weightUnit: string;
 			weightTolerance: number;
+			sortField: string;
+			sortDir: string;
 		};
 		form: {
 			errors?: Record<string, string>;
@@ -56,11 +57,7 @@
 	let showPlayAndTakeDialog = $state(false);
 	let pendingFormElement: HTMLFormElement | null = $state(null);
 
-	// Re-sync selectedGame with fresh data after invalidateAll so the version
-	// field stays current and the selection isn't lost when the list updates.
-	// Uses untrack on selectedGame to avoid a read→write reactive loop.
 	$effect(() => {
-		// Track only data.games.items — this is the dependency we care about
 		const items = data.games.items;
 		const current = untrack(() => selectedGame);
 		if (current) {
@@ -71,15 +68,42 @@
 		}
 	});
 
-	function handleSearch(term: string) {
+	const columns = [
+		{ key: 'title', label: 'Title', sortField: 'title' },
+		{ key: 'type', label: 'Type', sortField: 'game_type' },
+		{ key: 'attendee', label: 'Attendee', sortField: 'attendee' },
+		{ key: 'checkoutTime', label: 'Checked Out', sortField: 'checkout_time' },
+		{ key: 'weight', label: 'Weight' },
+		{ key: 'actions', label: 'Actions', srOnly: true }
+	];
+
+	const filters = [
+		{ key: 'search', label: 'Search', type: 'text' as const, placeholder: 'Search by game title or attendee name...' }
+	];
+
+	let filterValues = $derived({
+		search: new URL(typeof window !== 'undefined' ? window.location.href : 'http://localhost').searchParams.get('search') || ''
+	});
+
+	function updateUrl(params: Record<string, string>) {
 		const url = new URL(window.location.href);
-		if (term) {
-			url.searchParams.set('search', term);
-		} else {
-			url.searchParams.delete('search');
+		for (const [key, value] of Object.entries(params)) {
+			if (value) {
+				url.searchParams.set(key, value);
+			} else {
+				url.searchParams.delete(key);
+			}
 		}
 		url.searchParams.delete('page');
 		goto(url.toString(), { replaceState: true, keepFocus: true });
+	}
+
+	function handleFilterChange(values: Record<string, any>) {
+		updateUrl({ search: values.search ?? '' });
+	}
+
+	function handleSort(field: string, direction: 'asc' | 'desc') {
+		updateUrl({ sortField: field, sortDir: direction });
 	}
 
 	function handlePageChange(page: number) {
@@ -123,12 +147,10 @@
 	function confirmPlayAndTake(takes: boolean) {
 		showPlayAndTakeDialog = false;
 		if (pendingFormElement) {
-			// Set the hidden field value before submitting
 			const hiddenInput = pendingFormElement.querySelector('input[name="attendeeTakesGame"]') as HTMLInputElement;
 			if (hiddenInput) {
 				hiddenInput.value = takes ? 'true' : 'false';
 			}
-			// Submit the form directly via fetch to bypass the use:enhance SubmitFunction
 			const formData = new FormData(pendingFormElement);
 			const action = pendingFormElement.action;
 			pendingFormElement = null;
@@ -173,55 +195,51 @@
 
 <div class="checkin-layout">
 	<section class="game-list-section">
-		<div class="search-bar">
-			<SearchFilter
-				value={new URL(typeof window !== 'undefined' ? window.location.href : 'http://localhost').searchParams.get('search') || ''}
-				placeholder="Search by game title or attendee name..."
-				onSearch={handleSearch}
-			/>
-		</div>
-
-		{#if data.games.items.length === 0}
-			<p class="empty-message">No checked-out games found.</p>
-		{:else}
-			<div class="game-cards">
-				{#each data.games.items as game (game.id)}
-					<GameCard
-						title={game.title}
-						bggId={game.bggId}
-						copyNumber={game.copyNumber}
-						totalCopies={game.totalCopies}
-						gameType={game.gameType}
-						selected={selectedGame?.id === game.id}
-					>
-						{#snippet children()}
-							<div class="game-checkout-info">
-								<span class="attendee-name">{attendeeName(game)}</span>
-								<span class="checkout-duration">{getCheckoutDuration(game)}</span>
-								{#if game.checkoutWeight != null}
-									<span class="checkout-weight">{formatWeight(game.checkoutWeight, data.weightUnit)}</span>
-								{/if}
-							</div>
-							<button
-								class="btn-checkin"
-								onclick={() => selectGame(game)}
-								disabled={selectedGame?.id === game.id}
-							>
-								Check In
-							</button>
-						{/snippet}
-					</GameCard>
-				{/each}
-			</div>
-		{/if}
-
-		<Pagination
+		<SortableTable
+			{columns}
+			items={data.games.items}
 			totalItems={data.games.total}
 			currentPage={data.games.page}
 			pageSize={data.games.pageSize}
+			sortField={data.sortField}
+			sortDirection={data.sortDir}
+			{filters}
+			{filterValues}
+			emptyMessage="No checked-out games found."
+			onSort={handleSort}
+			onFilterChange={handleFilterChange}
 			onPageChange={handlePageChange}
 			onPageSizeChange={handlePageSizeChange}
-		/>
+		>
+			{#snippet row(game)}
+				<tr class:selected-row={selectedGame?.id === game.id}>
+					<td>
+						<span class="game-title">{gameDisplayTitle(game)}</span>
+					</td>
+					<td><GameTypeBadge gameType={game.gameType} /></td>
+					<td>{attendeeName(game)}</td>
+					<td>
+						<span class="duration">{getCheckoutDuration(game)}</span>
+					</td>
+					<td>
+						{#if game.checkoutWeight != null}
+							{formatWeight(game.checkoutWeight, data.weightUnit)}
+						{:else}
+							—
+						{/if}
+					</td>
+					<td>
+						<button
+							class="btn-checkin"
+							onclick={() => selectGame(game)}
+							disabled={selectedGame?.id === game.id}
+						>
+							Check In
+						</button>
+					</td>
+				</tr>
+			{/snippet}
+		</SortableTable>
 	</section>
 
 	{#if selectedGame}
@@ -331,11 +349,6 @@
 		color: #111827;
 	}
 
-	.checkout-weight {
-		color: #6b7280;
-		font-style: italic;
-	}
-
 	.checkin-layout {
 		display: flex;
 		gap: 1.5rem;
@@ -347,49 +360,27 @@
 		min-width: 0;
 	}
 
-	.search-bar {
-		margin-bottom: 1rem;
+	.game-title {
+		font-weight: 600;
+		color: #111827;
 	}
 
-	.empty-message {
+	.duration {
 		color: #6b7280;
-		font-size: 0.9rem;
-		padding: 2rem 0;
-		text-align: center;
+		font-size: 0.85rem;
 	}
 
-	.game-cards {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
-	}
-
-	.game-checkout-info {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 0.15rem;
-		margin-right: 0.75rem;
-		font-size: 0.8rem;
-	}
-
-	.attendee-name {
-		color: #374151;
-		font-weight: 500;
-	}
-
-	.checkout-duration {
-		color: #6b7280;
+	:global(.selected-row) {
+		background-color: #f5f3ff !important;
 	}
 
 	.btn-checkin {
-		padding: 0.4rem 0.9rem;
+		padding: 0.35rem 0.75rem;
 		background-color: #10b981;
 		color: #fff;
 		border: none;
 		border-radius: 6px;
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 		font-weight: 500;
 		cursor: pointer;
 		white-space: nowrap;

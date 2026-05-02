@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { transactionService } from '$lib/server/services/transactions.js';
-import type { TransactionFilters } from '$lib/server/services/transactions.js';
+import type { TransactionFilters, TransactionSortParams } from '$lib/server/services/transactions.js';
 import { fail } from '@sveltejs/kit';
 import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
 
@@ -10,6 +10,8 @@ export const load: PageServerLoad = async ({ url }) => {
 	const attendeeName = url.searchParams.get('attendeeName') || '';
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
 	const pageSize = parseInt(url.searchParams.get('pageSize') || '20', 10);
+	const sortField = url.searchParams.get('sortField') || 'created_at';
+	const sortDir = url.searchParams.get('sortDir') || 'desc';
 
 	const filters: TransactionFilters = {};
 
@@ -23,7 +25,13 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters.attendeeName = attendeeName;
 	}
 
-	const transactions = await transactionService.list(filters, { page, pageSize });
+	const validSortFields = ['created_at', 'game_title', 'type', 'attendee'] as const;
+	const sort: TransactionSortParams = {
+		field: validSortFields.includes(sortField as any) ? (sortField as TransactionSortParams['field']) : 'created_at',
+		direction: sortDir === 'desc' ? 'desc' : 'asc'
+	};
+
+	const transactions = await transactionService.list(filters, { page, pageSize }, sort);
 
 	return {
 		transactions,
@@ -33,7 +41,9 @@ export const load: PageServerLoad = async ({ url }) => {
 			attendeeName,
 			page,
 			pageSize
-		}
+		},
+		sortField: sort.field,
+		sortDir: sort.direction
 	};
 };
 

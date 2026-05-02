@@ -1,6 +1,6 @@
 import { db } from '../db/index.js';
 import { games, transactions, conventionConfig } from '../db/schema.js';
-import { eq, and, sql, ilike, desc, count, type SQL } from 'drizzle-orm';
+import { eq, and, sql, ilike, desc, asc, count, type SQL } from 'drizzle-orm';
 import { shouldWarnWeight } from '../validation.js';
 import type { PaginationParams, PaginatedResult } from './games.js';
 
@@ -47,6 +47,11 @@ export interface TransactionFilters {
 	gameTitle?: string;
 	type?: 'checkout' | 'checkin';
 	attendeeName?: string;
+}
+
+export interface TransactionSortParams {
+	field: 'created_at' | 'game_title' | 'type' | 'attendee';
+	direction: 'asc' | 'desc';
 }
 
 export interface TransactionWithGame {
@@ -335,12 +340,13 @@ export const transactionService = {
 	},
 
 	/**
-	 * List transactions with filters and pagination.
-	 * Returns chronologically ordered (most recent first) results with game title.
+	 * List transactions with filters, pagination, and sorting.
+	 * Returns results with game title.
 	 */
 	async list(
 		filters: TransactionFilters = {},
-		pagination: PaginationParams = { page: 1, pageSize: 20 }
+		pagination: PaginationParams = { page: 1, pageSize: 20 },
+		sort?: TransactionSortParams
 	): Promise<PaginatedResult<TransactionWithGame>> {
 		const conditions: SQL[] = [];
 
@@ -368,6 +374,29 @@ export const transactionService = {
 			.innerJoin(games, eq(transactions.gameId, games.id))
 			.where(whereClause);
 
+		// Build order clause
+		let orderClause;
+		if (sort) {
+			const dir = sort.direction === 'desc' ? desc : asc;
+			switch (sort.field) {
+				case 'game_title':
+					orderClause = [dir(games.title)];
+					break;
+				case 'type':
+					orderClause = [dir(transactions.type)];
+					break;
+				case 'attendee':
+					orderClause = [dir(transactions.attendeeLastName), dir(transactions.attendeeFirstName)];
+					break;
+				case 'created_at':
+				default:
+					orderClause = [dir(transactions.createdAt)];
+					break;
+			}
+		} else {
+			orderClause = [desc(transactions.createdAt)];
+		}
+
 		// Fetch paginated results
 		const items = await db
 			.select({
@@ -388,7 +417,7 @@ export const transactionService = {
 			.from(transactions)
 			.innerJoin(games, eq(transactions.gameId, games.id))
 			.where(whereClause)
-			.orderBy(desc(transactions.createdAt))
+			.orderBy(...orderClause)
 			.limit(pagination.pageSize)
 			.offset((pagination.page - 1) * pagination.pageSize);
 

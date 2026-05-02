@@ -9,10 +9,10 @@ test.describe('Transaction Log and Reversals', () => {
 		await page.goto(`/management/transactions?gameTitle=${helpers.prefix}_TxLog`);
 		await expect(page.locator('h1')).toContainText('Transaction Log');
 
-		const txCard = page.locator('.transaction-card', { hasText: game.title }).first();
-		await expect(txCard).toBeVisible();
-		await expect(txCard.locator('.type-badge.checkout')).toHaveText('Checkout');
-		await expect(txCard.locator('.card-details')).toContainText('Alice Test');
+		const txRow = helpers.tableRow(page, game.title).first();
+		await expect(txRow).toBeVisible();
+		await expect(txRow.locator('.type-badge.checkout')).toHaveText('Checkout');
+		await expect(txRow).toContainText('Alice Test');
 	});
 
 	test('transaction log shows both checkout and checkin entries', async ({ page, helpers }) => {
@@ -23,11 +23,11 @@ test.describe('Transaction Log and Reversals', () => {
 
 		await page.goto(`/management/transactions?gameTitle=${helpers.prefix}_TxBoth`);
 
-		const cards = page.locator('.transaction-card', { hasText: game.title });
-		await expect(cards).toHaveCount(2);
+		const rows = helpers.tableRow(page, game.title);
+		await expect(rows).toHaveCount(2);
 
-		await expect(cards.locator('.type-badge.checkout')).toHaveCount(1);
-		await expect(cards.locator('.type-badge.checkin')).toHaveCount(1);
+		await expect(rows.locator('.type-badge.checkout')).toHaveCount(1);
+		await expect(rows.locator('.type-badge.checkin')).toHaveCount(1);
 	});
 
 	test('filter by transaction type', async ({ page, helpers }) => {
@@ -37,11 +37,14 @@ test.describe('Transaction Log and Reversals', () => {
 
 		await page.goto(`/management/transactions?gameTitle=${helpers.prefix}_TxFilter`);
 
+		// Wait for the table to load with data
+		await expect(helpers.tableRow(page, game.title).first()).toBeVisible();
+
 		const typeSelect = page.locator('#filter-type');
 		await typeSelect.selectOption('checkout');
-		await page.waitForURL(/type=checkout/);
+		await expect(page).toHaveURL(/type=checkout/, { timeout: 10_000 });
 
-		const typeBadges = page.locator('.transaction-list .type-badge');
+		const typeBadges = page.locator('tbody .type-badge');
 		const count = await typeBadges.count();
 		expect(count).toBeGreaterThan(0);
 		for (let i = 0; i < count; i++) {
@@ -57,10 +60,13 @@ test.describe('Transaction Log and Reversals', () => {
 		await page.goto('/management/transactions');
 
 		const gameTitleInput = page.locator('#filter-gameTitle');
-		await gameTitleInput.fill(game.title);
-		await page.waitForURL(new RegExp(`gameTitle=${encodeURIComponent(game.title).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+		await gameTitleInput.click();
+		await gameTitleInput.pressSequentially(game.title, { delay: 10 });
 
-		const gameTitles = page.locator('.transaction-list .game-title');
+		// Wait for the filtered results to appear (debounced search triggers navigation)
+		const gameTitles = page.locator('tbody .game-title');
+		await expect(gameTitles.first()).toContainText(game.title, { timeout: 10_000 });
+
 		const count = await gameTitles.count();
 		expect(count).toBeGreaterThan(0);
 		for (let i = 0; i < count; i++) {
@@ -75,31 +81,29 @@ test.describe('Transaction Log and Reversals', () => {
 
 		await page.goto(`/management/transactions?gameTitle=${helpers.prefix}_RevCO`);
 
-		const txCard = page
-			.locator('.transaction-card', { hasText: game.title })
+		const txRow = helpers.tableRow(page, game.title)
 			.filter({ hasText: 'Eve Reverse' })
 			.filter({ has: page.locator('.type-badge.checkout') })
 			.first();
-		await expect(txCard).toBeVisible();
+		await expect(txRow).toBeVisible();
 
-		await txCard.locator('.btn-reverse').click();
+		await txRow.locator('.btn-reverse').click();
 
 		await expect(page.getByText('Checkout reversed successfully')).toBeVisible();
 
 		// Corrective transaction should appear
-		const correctionBadge = page.locator('.transaction-card', { hasText: game.title }).locator('.correction-badge');
+		const correctionBadge = helpers.tableRow(page, game.title).locator('.correction-badge');
 		await expect(correctionBadge.first()).toBeVisible();
 
 		// Corrective transactions should not have reversal buttons
-		const correctionCard = page
-			.locator('.transaction-card', { hasText: game.title })
+		const correctionRow = helpers.tableRow(page, game.title)
 			.filter({ has: page.locator('.correction-badge') })
 			.first();
-		await expect(correctionCard.locator('.btn-reverse')).toHaveCount(0);
+		await expect(correctionRow.locator('.btn-reverse')).toHaveCount(0);
 
 		// Game should be back to available
 		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-		await expect(page.locator('.game-card', { hasText: game.title }).first()).toBeVisible();
+		await expect(helpers.tableRow(page, game.title).first()).toBeVisible();
 	});
 
 	test('reverse a checkin', async ({ page, helpers }) => {
@@ -110,19 +114,17 @@ test.describe('Transaction Log and Reversals', () => {
 
 		await page.goto(`/management/transactions?gameTitle=${helpers.prefix}_RevCI`);
 
-		const txCard = page
-			.locator('.transaction-card', { hasText: game.title })
+		const txRow = helpers.tableRow(page, game.title)
 			.filter({ hasText: 'Frank Undo' })
 			.filter({ has: page.locator('.type-badge.checkin') })
 			.first();
-		await expect(txCard).toBeVisible();
+		await expect(txRow).toBeVisible();
 
-		await txCard.locator('.btn-reverse').click();
+		await txRow.locator('.btn-reverse').click();
 
 		await expect(page.getByText('Checkin reversed successfully')).toBeVisible();
 
-		const correctionBadge = page
-			.locator('.transaction-card', { hasText: game.title })
+		const correctionBadge = helpers.tableRow(page, game.title)
 			.locator('.correction-badge');
 		await expect(correctionBadge.first()).toBeVisible();
 	});

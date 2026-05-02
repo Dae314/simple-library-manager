@@ -46,7 +46,7 @@ test.describe('Management Area', () => {
 
 			// Verify the new game appears in the game list
 			await page.goto(`/management/games?search=${title}`);
-			await expect(page.locator('.game-card', { hasText: title }).first()).toBeVisible();
+			await expect(helpers.tableRow(page, title).first()).toBeVisible();
 
 			// Clean up: the game was created via UI, not helpers, so we need to
 			// find its ID. We'll leave it — it has a unique prefix so it won't collide.
@@ -72,7 +72,7 @@ test.describe('Management Area', () => {
 
 			await expect(page.locator('h1')).toContainText('Games');
 
-			const row = page.locator('.game-row', { hasText: game.title });
+			const row = helpers.tableRow(page, game.title);
 			await expect(row).toBeVisible();
 
 			await expect(row.locator('.status-indicator')).toHaveText('Available');
@@ -92,14 +92,16 @@ test.describe('Management Area', () => {
 			const retireBtn = page.locator(`button[aria-label="Retire ${game.title}"]`).first();
 			await retireBtn.click();
 
-			await expect(page.locator('.status-indicator.retired').first()).toBeVisible();
+			await expect(page.getByText(`Retired "${game.title}"`)).toBeVisible();
 
-			// Restore
+			// Game disappears from default view (retired games are hidden by default)
+			// Switch to retired filter to find it and restore
+			await page.goto(`/management/games?search=${helpers.prefix}_RetireRestore&status=retired`);
 			const restoreBtn = page.locator(`button[aria-label="Restore ${game.title}"]`).first();
 			await expect(restoreBtn).toBeVisible();
 			await restoreBtn.click();
 
-			await expect(page.locator(`button[aria-label="Retire ${game.title}"]`).first()).toBeVisible();
+			await expect(page.getByText('Restored')).toBeVisible();
 		});
 	});
 
@@ -110,7 +112,7 @@ test.describe('Management Area', () => {
 
 			await page.goto(`/management/games?search=${helpers.prefix}_Bulk`);
 
-			const checkboxes = page.locator('.game-row input[type="checkbox"]');
+			const checkboxes = page.locator('tbody tr input[type="checkbox"]');
 			await checkboxes.nth(0).check();
 			await checkboxes.nth(1).check();
 
@@ -124,7 +126,7 @@ test.describe('Management Area', () => {
 			await expect(dialog).toBeVisible();
 			await dialog.locator('.btn-confirm').click();
 
-			await expect(page.locator('.status-indicator.retired').first()).toBeVisible();
+			await expect(page.getByText('Retired 2 game(s)')).toBeVisible();
 		});
 	});
 
@@ -134,8 +136,9 @@ test.describe('Management Area', () => {
 
 			await page.goto(`/management/games?search=${helpers.prefix}_NavEdit`);
 
-			const row = page.locator('.game-row', { hasText: game.title });
-			await row.locator('.game-content').click();
+			const row = helpers.tableRow(page, game.title);
+			// Click on the game title text (not a button/link) to trigger row navigation
+			await row.locator('.game-title').click();
 
 			await expect(page).toHaveURL(/\/management\/games\/\d+/);
 			await expect(page.locator('h1')).toContainText('Edit Game');

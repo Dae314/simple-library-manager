@@ -2,9 +2,8 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { getContext } from 'svelte';
-	import FilterPanel from '$lib/components/FilterPanel.svelte';
-	import Pagination from '$lib/components/Pagination.svelte';
-	import GameCard from '$lib/components/GameCard.svelte';
+	import SortableTable from '$lib/components/SortableTable.svelte';
+	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import toast from 'svelte-hot-french-toast';
@@ -64,8 +63,17 @@
 	} | null = $state(null);
 	let csvFileForImport: File | null = $state(null);
 
+	const columns = [
+		{ key: 'select', label: 'Select', srOnly: true },
+		{ key: 'title', label: 'Title', sortField: 'title' },
+		{ key: 'type', label: 'Type', sortField: 'game_type' },
+		{ key: 'status', label: 'Status', sortField: 'status' },
+		{ key: 'bggId', label: 'BGG', sortField: 'bgg_id' },
+		{ key: 'actions', label: 'Actions', srOnly: true }
+	];
+
 	const filterConfigs = [
-		{ key: 'search', label: 'Title Search', type: 'text' as const, placeholder: 'Search by title...' },
+		{ key: 'search', label: 'Search', type: 'text' as const, placeholder: 'Search by title...' },
 		{
 			key: 'status', label: 'Status', type: 'select' as const,
 			options: [
@@ -75,34 +83,17 @@
 			]
 		},
 		{
-			key: 'gameType', label: 'Game Type', type: 'select' as const,
+			key: 'gameType', label: 'Type', type: 'select' as const,
 			options: [
 				{ value: 'standard', label: 'Standard' },
 				{ value: 'play_and_win', label: 'Play & Win' },
 				{ value: 'play_and_take', label: 'Play & Take' }
 			]
 		},
-		{
-			key: 'sortField', label: 'Sort By', type: 'select' as const,
-			options: [
-				{ value: 'title', label: 'Title' },
-				{ value: 'bgg_id', label: 'BGG ID' },
-				{ value: 'status', label: 'Status' },
-				{ value: 'game_type', label: 'Game Type' },
-				{ value: 'last_transaction_date', label: 'Last Transaction' }
-			]
-		},
-		{
-			key: 'sortDir', label: 'Sort Direction', type: 'select' as const,
-			options: [
-				{ value: 'asc', label: 'Ascending' },
-				{ value: 'desc', label: 'Descending' }
-			]
-		},
 		{ key: 'createdSince', label: 'Added Since', type: 'date' as const },
-		{ key: 'lastCheckedOutBefore', label: 'Last Checked Out Before', type: 'date' as const },
-		{ key: 'lastTransactionStart', label: 'Last Transaction From', type: 'date' as const },
-		{ key: 'lastTransactionEnd', label: 'Last Transaction To', type: 'date' as const },
+		{ key: 'lastCheckedOutBefore', label: 'Last Checkout Before', type: 'date' as const },
+		{ key: 'lastTransactionStart', label: 'Last Tx From', type: 'date' as const },
+		{ key: 'lastTransactionEnd', label: 'Last Tx To', type: 'date' as const },
 		{ key: 'groupByBgg', label: 'Group by BGG Title', type: 'toggle' as const }
 	];
 
@@ -110,8 +101,6 @@
 		search: data.filters.search,
 		status: data.filters.status,
 		gameType: data.filters.gameType,
-		sortField: data.filters.sortField,
-		sortDir: data.filters.sortDir,
 		createdSince: data.filters.createdSince,
 		lastCheckedOutBefore: data.filters.lastCheckedOutBefore,
 		lastTransactionStart: data.filters.lastTransactionStart,
@@ -138,7 +127,6 @@
 		data.games.items.filter((g) => selectedIds.has(g.id) && g.status !== 'retired')
 	);
 
-	// Handle CSV validation result
 	function handleCsvValidationResult(validationResult: any) {
 		csvValidationResult = validationResult;
 		if (validationResult.valid) {
@@ -169,6 +157,10 @@
 			}
 		}
 		updateUrl(params);
+	}
+
+	function handleSort(field: string, direction: 'asc' | 'desc') {
+		updateUrl({ sortField: field, sortDir: direction });
 	}
 
 	function handlePageChange(page: number) {
@@ -203,7 +195,6 @@
 	}
 
 	function navigateToGame(e: MouseEvent, gameId: number) {
-		// Don't navigate if clicking on a button, link, checkbox, or form element
 		const target = e.target as HTMLElement;
 		if (target.closest('button, a, input, form, label')) return;
 		goto(`/management/games/${gameId}`);
@@ -214,7 +205,6 @@
 		if (file) {
 			csvFileForImport = file;
 			csvValidationResult = null;
-			// Submit the validate form
 			const validateForm = document.getElementById('csv-validate-form') as HTMLFormElement;
 			if (validateForm) {
 				const dt = new DataTransfer();
@@ -226,6 +216,10 @@
 				}
 			}
 		}
+	}
+
+	function gameDisplayTitle(game: GameRecord): string {
+		return game.totalCopies > 1 ? `${game.title} (Copy #${game.copyNumber})` : game.title;
 	}
 
 	function statusLabel(status: string): string {
@@ -277,23 +271,6 @@
 		</div>
 	</div>
 
-	<FilterPanel
-		filters={filterConfigs}
-		values={filterValues}
-		onChange={handleFilterChange}
-	/>
-
-	{#if selectedCount > 0}
-		<div class="bulk-actions">
-			<span class="selected-count">{selectedCount} selected</span>
-			{#if selectedNonRetiredGames.length > 0}
-				<button class="btn btn-danger" onclick={() => (showRetireDialog = true)}>
-					Retire Selected ({selectedNonRetiredGames.length})
-				</button>
-			{/if}
-		</div>
-	{/if}
-
 	{#if csvValidationResult && !csvValidationResult.valid}
 		<div class="csv-errors">
 			<h3>CSV Validation Errors</h3>
@@ -306,32 +283,43 @@
 		</div>
 	{/if}
 
-	{#if data.games.items.length === 0}
-		<p class="empty-message">No games found matching your filters.</p>
-	{:else}
-		<div class="game-list">
-			<div class="select-all-row">
-				<label class="checkbox-label">
-					<input
-						type="checkbox"
-						checked={allSelected}
-						onchange={toggleSelectAll}
-						aria-label="Select all games"
-					/>
-					Select all
-				</label>
-			</div>
+	<SortableTable
+		{columns}
+		items={data.games.items}
+		totalItems={data.games.total}
+		currentPage={data.games.page}
+		pageSize={data.games.pageSize}
+		sortField={data.filters.sortField}
+		sortDirection={data.filters.sortDir}
+		filters={filterConfigs}
+		{filterValues}
+		emptyMessage="No games found matching your filters."
+		onSort={handleSort}
+		onFilterChange={handleFilterChange}
+		onPageChange={handlePageChange}
+		onPageSizeChange={handlePageSizeChange}
+	>
+		{#snippet aboveTable()}
+			{#if selectedCount > 0}
+				<div class="bulk-actions">
+					<span class="selected-count">{selectedCount} selected</span>
+					{#if selectedNonRetiredGames.length > 0}
+						<button class="btn btn-danger" onclick={() => (showRetireDialog = true)}>
+							Retire Selected ({selectedNonRetiredGames.length})
+						</button>
+					{/if}
+				</div>
+			{/if}
+		{/snippet}
 
-			{#each data.games.items as game (game.id)}
-				<div
-					class="game-row"
-					class:selected={selectedIds.has(game.id)}
-					onclick={(e) => navigateToGame(e, game.id)}
-					role="button"
-					tabindex="0"
-					onkeydown={(e) => { if (e.key === 'Enter') navigateToGame(e as unknown as MouseEvent, game.id); }}
-				>
-					<label class="game-checkbox">
+		{#snippet row(game)}
+			<tr
+				class="clickable-row"
+				class:selected-row={selectedIds.has(game.id)}
+				onclick={(e) => navigateToGame(e, game.id)}
+			>
+				<td class="checkbox-cell">
+					<label>
 						<input
 							type="checkbox"
 							checked={selectedIds.has(game.id)}
@@ -339,73 +327,80 @@
 							aria-label="Select {game.title}"
 						/>
 					</label>
-					<div class="game-content">
-						<GameCard
-							title={game.title}
-							bggId={game.bggId}
-							copyNumber={game.copyNumber}
-							totalCopies={game.totalCopies}
-							gameType={game.gameType}
-							selected={selectedIds.has(game.id)}
-						>
-							<div class="game-status-actions">
-								<span class="status-indicator {game.status}">
-									{statusLabel(game.status)}
-								</span>
-								{#if game.status !== 'retired'}
-									<form method="POST" action="?/retire" use:enhance={() => {
-										return async ({ result, update }) => {
-											if (result.type === 'success') {
-												toast.success(`Retired "${game.title}"`);
-											} else if (result.type === 'failure') {
-												const data = (result as any).data;
-												toast.error(data?.error || 'Failed to retire game');
-											}
-											await update();
-										};
-									}}>
-										<input type="hidden" name="ids" value={game.id} />
-										<button type="submit" class="btn-inline btn-inline-danger" aria-label="Retire {game.title}">
-											Retire
-										</button>
-									</form>
-								{:else}
-									<form method="POST" action="?/restore" use:enhance={() => {
-										return async ({ result, update }) => {
-											if (result.type === 'success') {
-												toast.success(`Restored "${game.title}"`);
-												selectedIds = new Set([...selectedIds].filter((id) => id !== game.id));
-											} else if (result.type === 'failure') {
-												const data = (result as any).data;
-												toast.error(data?.error || 'Failed to restore game');
-											}
-											await update();
-										};
-									}}>
-										<input type="hidden" name="id" value={game.id} />
-										<button type="submit" class="btn-inline btn-inline-restore" aria-label="Restore {game.title}">
-											Restore
-										</button>
-									</form>
-								{/if}
-								<a href="/management/games/{game.id}" class="btn-edit" aria-label="Edit {game.title}">
-									Edit
-								</a>
-							</div>
-						</GameCard>
-					</div>
-				</div>
-			{/each}
-		</div>
-	{/if}
+				</td>
+				<td>
+					<span class="game-title">{gameDisplayTitle(game)}</span>
+				</td>
+				<td><GameTypeBadge gameType={game.gameType} /></td>
+				<td>
+					<span class="status-indicator {game.status}">
+						{statusLabel(game.status)}
+					</span>
+				</td>
+				<td>
+					<a
+						href="https://boardgamegeek.com/boardgame/{game.bggId}"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="bgg-link"
+					>#{game.bggId}</a>
+				</td>
+				<td class="actions-cell">
+					{#if game.status !== 'retired'}
+						<form method="POST" action="?/retire" use:enhance={() => {
+							return async ({ result, update }) => {
+								if (result.type === 'success') {
+									toast.success(`Retired "${game.title}"`);
+								} else if (result.type === 'failure') {
+									const data = (result as any).data;
+									toast.error(data?.error || 'Failed to retire game');
+								}
+								await update();
+							};
+						}}>
+							<input type="hidden" name="ids" value={game.id} />
+							<button type="submit" class="btn-inline btn-inline-danger" aria-label="Retire {game.title}">
+								Retire
+							</button>
+						</form>
+					{:else}
+						<form method="POST" action="?/restore" use:enhance={() => {
+							return async ({ result, update }) => {
+								if (result.type === 'success') {
+									toast.success(`Restored "${game.title}"`);
+									selectedIds = new Set([...selectedIds].filter((id) => id !== game.id));
+								} else if (result.type === 'failure') {
+									const data = (result as any).data;
+									toast.error(data?.error || 'Failed to restore game');
+								}
+								await update();
+							};
+						}}>
+							<input type="hidden" name="id" value={game.id} />
+							<button type="submit" class="btn-inline btn-inline-restore" aria-label="Restore {game.title}">
+								Restore
+							</button>
+						</form>
+					{/if}
+					<a href="/management/games/{game.id}" class="btn-edit" aria-label="Edit {game.title}">
+						Edit
+					</a>
+				</td>
+			</tr>
+		{/snippet}
 
-	<Pagination
-		totalItems={data.games.total}
-		currentPage={data.games.page}
-		pageSize={data.games.pageSize}
-		onPageChange={handlePageChange}
-		onPageSizeChange={handlePageSizeChange}
-	/>
+		{#snippet headerActions()}
+			<label class="select-all-label">
+				<input
+					type="checkbox"
+					checked={allSelected}
+					onchange={toggleSelectAll}
+					aria-label="Select all games"
+				/>
+				Select all
+			</label>
+		{/snippet}
+	</SortableTable>
 </div>
 
 <!-- Bulk Retire Confirm Dialog -->
@@ -641,7 +636,7 @@
 		background-color: #f0f0ff;
 		border: 1px solid #c7d2fe;
 		border-radius: 6px;
-		margin: 1rem 0;
+		margin-bottom: 0.75rem;
 		flex-wrap: wrap;
 	}
 
@@ -656,7 +651,7 @@
 		border: 1px solid #fecaca;
 		border-radius: 6px;
 		padding: 1rem;
-		margin: 1rem 0;
+		margin-bottom: 1rem;
 	}
 
 	.csv-errors h3 {
@@ -677,65 +672,45 @@
 		margin-bottom: 0.2rem;
 	}
 
-	.empty-message {
-		color: #6b7280;
-		font-size: 0.9rem;
-		padding: 2rem 0;
-		text-align: center;
+	.game-title {
+		font-weight: 600;
+		color: #111827;
 	}
 
-	.game-list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		margin: 1rem 0;
+	.bgg-link {
+		font-size: 0.8rem;
+		color: #6366f1;
+		text-decoration: none;
 	}
 
-	.select-all-row {
-		padding: 0.5rem 0.75rem;
+	.bgg-link:hover {
+		text-decoration: underline;
 	}
 
-	.checkbox-label {
+	.select-all-label {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.85rem;
+		gap: 0.4rem;
+		font-size: 0.8rem;
 		color: #4b5563;
 		cursor: pointer;
+		white-space: nowrap;
 	}
 
-	.game-row {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
+	:global(.clickable-row) {
 		cursor: pointer;
-		border-radius: 6px;
-		transition: background-color 0.1s;
 	}
 
-	.game-row:hover {
-		background-color: #f9fafb;
+	:global(.selected-row) {
+		background-color: #f5f3ff !important;
 	}
 
-	.game-row.selected {
-		background-color: #f5f3ff;
+	.checkbox-cell {
+		width: 2rem;
 	}
 
-	.game-checkbox {
-		flex-shrink: 0;
-		cursor: pointer;
-		padding: 0.25rem;
-	}
-
-	.game-content {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.game-status-actions {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
+	.actions-cell {
+		white-space: nowrap;
 	}
 
 	.status-indicator {
@@ -823,10 +798,6 @@
 		.header-actions .btn {
 			flex: 1;
 			text-align: center;
-		}
-
-		.game-status-actions {
-			flex-wrap: wrap;
 		}
 	}
 </style>
