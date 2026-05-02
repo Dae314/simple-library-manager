@@ -1,7 +1,8 @@
 import { db } from '../db/index.js';
 import { games, transactions, conventionConfig } from '../db/schema.js';
 import { eq, and, sql, ilike, desc, asc, count, type SQL } from 'drizzle-orm';
-import { shouldWarnWeight } from '../validation.js';
+import { shouldWarnWeight, getWeightWarningLevel } from '../validation.js';
+import type { WeightWarningLevel } from '../validation.js';
 import type { PaginationParams, PaginatedResult } from './games.js';
 
 // --- Types ---
@@ -41,6 +42,7 @@ export interface WeightWarning {
 	checkinWeight: number;
 	difference: number;
 	tolerance: number;
+	level: WeightWarningLevel;
 }
 
 export interface TransactionFilters {
@@ -218,13 +220,15 @@ export const transactionService = {
 					.where(eq(conventionConfig.id, 1));
 
 				const tolerance = config?.weightTolerance ?? 0.5;
+				const level = getWeightWarningLevel(checkoutTx.checkoutWeight, data.checkinWeight, tolerance);
 
-				if (shouldWarnWeight(checkoutTx.checkoutWeight, data.checkinWeight, tolerance)) {
+				if (level !== 'none') {
 					weightWarning = {
 						checkoutWeight: checkoutTx.checkoutWeight,
 						checkinWeight: data.checkinWeight,
 						difference: Math.abs(data.checkinWeight - checkoutTx.checkoutWeight),
-						tolerance
+						tolerance,
+						level
 					};
 				}
 			}

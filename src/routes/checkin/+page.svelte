@@ -181,15 +181,32 @@
 		const checkinWeight = parseFloat(checkinWeightInput);
 		if (!checkinWeightInput || isNaN(checkinWeight) || checkinWeight <= 0) return null;
 		const difference = Math.abs(checkinWeight - selectedGame.checkoutWeight);
+		const twoPercentThreshold = selectedGame.checkoutWeight * 0.02;
+
+		// Red: exceeds configured warning threshold
 		if (difference > data.weightTolerance) {
 			return {
 				checkoutWeight: selectedGame.checkoutWeight,
 				checkinWeight,
 				difference,
-				tolerance: data.weightTolerance
+				tolerance: data.weightTolerance,
+				level: 'red' as const
 			};
 		}
-		return null;
+
+		// Within 2% — no warning
+		if (difference <= twoPercentThreshold) {
+			return null;
+		}
+
+		// Between 2% and tolerance — yellow
+		return {
+			checkoutWeight: selectedGame.checkoutWeight,
+			checkinWeight,
+			difference,
+			tolerance: data.weightTolerance,
+			level: 'yellow' as const
+		};
 	});
 </script>
 
@@ -316,8 +333,12 @@
 						<span class="field-error">{form.errors.checkinWeight}</span>
 					{/if}
 					{#if liveWeightWarning}
-						<div class="inline-weight-warning" role="alert">
-							<strong>⚠ Weight Discrepancy</strong>
+						<div class="inline-weight-warning {liveWeightWarning.level === 'red' ? 'warning-red' : 'warning-yellow'}" role="alert">
+							{#if liveWeightWarning.level === 'red'}
+								<strong>🚨 Weight Discrepancy — Exceeds Tolerance</strong>
+							{:else}
+								<strong>⚠ Minor Weight Discrepancy</strong>
+							{/if}
 							<span>
 								Checkout: {formatWeight(liveWeightWarning.checkoutWeight, data.weightUnit)} ·
 								Entered: {formatWeight(liveWeightWarning.checkinWeight, data.weightUnit)}
@@ -507,15 +528,24 @@
 		gap: 0.15rem;
 		margin-top: 0.4rem;
 		padding: 0.5rem 0.65rem;
-		background-color: #fef3c7;
-		border: 1px solid #f59e0b;
 		border-radius: 6px;
 		font-size: 0.8rem;
-		color: #92400e;
 	}
 
 	.inline-weight-warning strong {
 		font-size: 0.82rem;
+	}
+
+	.inline-weight-warning.warning-yellow {
+		background-color: #fef3c7;
+		border: 1px solid #f59e0b;
+		color: #92400e;
+	}
+
+	.inline-weight-warning.warning-red {
+		background-color: #fee2e2;
+		border: 1px solid #ef4444;
+		color: #991b1b;
 	}
 
 	.form-actions {
