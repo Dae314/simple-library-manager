@@ -367,6 +367,72 @@ export function shouldWarnWeight(checkoutWeight: number, checkinWeight: number, 
 	return getWeightWarningLevel(checkoutWeight, checkinWeight, tolerance) !== 'none';
 }
 
+// --- Password Input ---
+
+export interface PasswordInput {
+	password: string;
+	confirmation: string;
+}
+
+export function validatePasswordInput(input: PasswordInput): ValidationResult<{ password: string }> {
+	const errors: ValidationErrors = {};
+
+	if (!input.password || input.password.trim().length === 0) {
+		errors.password = 'Password is required';
+	}
+
+	if (Object.keys(errors).length === 0 && input.password !== input.confirmation) {
+		errors.confirmation = 'Passwords do not match';
+	}
+
+	if (Object.keys(errors).length > 0) {
+		return { valid: false, errors };
+	}
+
+	return {
+		valid: true,
+		errors: {},
+		data: { password: input.password }
+	};
+}
+
+export interface PasswordChangeInput {
+	currentPassword: string;
+	newPassword: string;
+	newPasswordConfirmation: string;
+}
+
+export function validatePasswordChangeInput(
+	input: PasswordChangeInput
+): ValidationResult<{ currentPassword: string; newPassword: string }> {
+	const errors: ValidationErrors = {};
+
+	if (!input.currentPassword || input.currentPassword.trim().length === 0) {
+		errors.currentPassword = 'Current password is required';
+	}
+
+	if (!input.newPassword || input.newPassword.trim().length === 0) {
+		errors.newPassword = 'New password is required';
+	}
+
+	if (Object.keys(errors).length === 0 && input.newPassword !== input.newPasswordConfirmation) {
+		errors.newPasswordConfirmation = 'Passwords do not match';
+	}
+
+	if (Object.keys(errors).length > 0) {
+		return { valid: false, errors };
+	}
+
+	return {
+		valid: true,
+		errors: {},
+		data: {
+			currentPassword: input.currentPassword,
+			newPassword: input.newPassword
+		}
+	};
+}
+
 // --- Error Classes ---
 
 export class ValidationError extends Error {

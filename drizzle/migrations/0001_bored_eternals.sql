@@ -1,0 +1,1 @@
+ALTER TABLE "convention_config" ADD COLUMN "password_hash" text;

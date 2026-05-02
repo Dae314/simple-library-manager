@@ -8,6 +8,13 @@
       "when": 1777325685128,
       "tag": "0000_military_micromax",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777749072413,
+      "tag": "0001_bored_eternals",
+      "breakpoints": true
     }
   ]
 }

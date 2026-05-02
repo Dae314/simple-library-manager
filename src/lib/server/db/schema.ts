@@ -18,6 +18,7 @@ export const conventionConfig = pgTable('convention_config', {
 	endDate: date('end_date'),
 	weightTolerance: real('weight_tolerance').notNull().default(0.5),
 	weightUnit: text('weight_unit').notNull().default('oz'),
+	passwordHash: text('password_hash'),
 	version: integer('version').notNull().default(1)
 });
 

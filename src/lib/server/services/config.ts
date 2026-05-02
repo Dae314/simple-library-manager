@@ -24,6 +24,17 @@ const DEFAULT_CONFIG = {
 	weightUnit: 'oz'
 } as const;
 
+/** Column projection that excludes passwordHash from query results */
+const configColumns = {
+	id: conventionConfig.id,
+	conventionName: conventionConfig.conventionName,
+	startDate: conventionConfig.startDate,
+	endDate: conventionConfig.endDate,
+	weightTolerance: conventionConfig.weightTolerance,
+	weightUnit: conventionConfig.weightUnit,
+	version: conventionConfig.version
+} as const;
+
 // --- Config Service ---
 
 export const configService = {
@@ -33,7 +44,7 @@ export const configService = {
 	 */
 	async get(): Promise<ConventionConfig> {
 		const [existing] = await db
-			.select()
+			.select(configColumns)
 			.from(conventionConfig)
 			.where(eq(conventionConfig.id, 1));
 
@@ -51,7 +62,7 @@ export const configService = {
 				weightTolerance: DEFAULT_CONFIG.weightTolerance,
 				weightUnit: DEFAULT_CONFIG.weightUnit
 			})
-			.returning();
+			.returning(configColumns);
 
 		return created;
 	},
@@ -93,7 +104,7 @@ export const configService = {
 			.where(
 				eq(conventionConfig.id, 1)
 			)
-			.returning();
+			.returning(configColumns);
 
 		if (!updated) {
 			throw new Error('Convention config not found');
@@ -144,6 +155,49 @@ export const configService = {
 		if (!deleted) {
 			throw new Error(`ID type with id ${id} not found`);
 		}
+	},
+
+	/**
+	 * Get the password hash from convention config.
+	 * Returns null if no password is set.
+	 */
+	async getPasswordHash(): Promise<string | null> {
+		const [row] = await db
+			.select({ passwordHash: conventionConfig.passwordHash })
+			.from(conventionConfig)
+			.where(eq(conventionConfig.id, 1));
+
+		return row?.passwordHash ?? null;
+	},
+
+	/**
+	 * Set the initial password hash. Does NOT increment version.
+	 */
+	async setPassword(hash: string): Promise<void> {
+		await db
+			.update(conventionConfig)
+			.set({ passwordHash: hash })
+			.where(eq(conventionConfig.id, 1));
+	},
+
+	/**
+	 * Change the password hash. Does NOT increment version.
+	 */
+	async changePassword(newHash: string): Promise<void> {
+		await db
+			.update(conventionConfig)
+			.set({ passwordHash: newHash })
+			.where(eq(conventionConfig.id, 1));
+	},
+
+	/**
+	 * Remove the password by setting the hash to null. Does NOT increment version.
+	 */
+	async removePassword(): Promise<void> {
+		await db
+			.update(conventionConfig)
+			.set({ passwordHash: null })
+			.where(eq(conventionConfig.id, 1));
 	}
 };
 
