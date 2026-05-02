@@ -24,6 +24,9 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	if (status === 'available' || status === 'checked_out' || status === 'retired') {
 		filters.status = status as GameStatus;
+	} else {
+		// By default, hide retired games unless explicitly filtered
+		filters.excludeStatus = 'retired';
 	}
 	if (gameType === 'standard' || gameType === 'play_and_win' || gameType === 'play_and_take') {
 		filters.gameType = gameType as GameType;
