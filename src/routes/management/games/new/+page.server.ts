@@ -40,6 +40,6 @@ export const actions: Actions = {
 			return fail(500, { error: getUserFriendlyDbMessage(err), values });
 		}
 
-		redirect(303, '/management');
+		redirect(303, '/management/games');
 	}
 };
