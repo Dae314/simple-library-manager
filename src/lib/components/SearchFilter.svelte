@@ -13,8 +13,9 @@
 	let inputValue = $state(value);
 
 	$effect(() => {
+		const currentValue = inputValue;
 		const timeout = setTimeout(() => {
-			onSearch(inputValue);
+			onSearch(currentValue);
 		}, 300);
 		return () => clearTimeout(timeout);
 	});
