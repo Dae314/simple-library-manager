@@ -13,7 +13,7 @@ test.describe('Convention Configuration Page', () => {
 		await expect(page.locator('#weightUnit')).toBeVisible();
 
 		const sections = page.locator('.config-section');
-		await expect(sections).toHaveCount(2);
+		await expect(sections).toHaveCount(3);
 
 		await expect(page.getByRole('button', { name: 'Save Configuration' })).toBeVisible();
 	});

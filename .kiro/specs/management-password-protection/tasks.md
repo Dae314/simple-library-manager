@@ -176,8 +176,8 @@ Add optional password protection to all management routes (`/management/**`) and
     - Add `AUTH_SECRET=` with a comment explaining it's optional and used for session persistence across restarts
     - _Requirements: 5.1_
 
-- [-] 13. E2E integration tests
-  - [-] 13.1 Write Playwright E2E tests in `tests/integration/password-protection.test.ts`
+- [x] 13. E2E integration tests
+  - [x] 13.1 Write Playwright E2E tests in `tests/integration/password-protection.test.ts`
     - Test no-password access: management pages accessible without auth prompt
     - Test set password flow: set password from config page, verify session created
     - Test auth gate: clear cookies, visit management page, verify auth gate appears
@@ -192,7 +192,7 @@ Add optional password protection to all management routes (`/management/**`) and
     - Test backup restore warning: verify warning about password hash replacement is displayed
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5_
 
-- [ ] 14. Final checkpoint — Ensure all tests pass
+- [x] 14. Final checkpoint — Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

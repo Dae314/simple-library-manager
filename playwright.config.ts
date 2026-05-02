@@ -17,8 +17,15 @@ export default defineConfig({
 	},
 	projects: [
 		{
-			name: 'chromium',
-			use: { ...devices['Desktop Chrome'] }
+			name: 'main',
+			use: { ...devices['Desktop Chrome'] },
+			testIgnore: /password-protection/
+		},
+		{
+			name: 'password',
+			use: { ...devices['Desktop Chrome'] },
+			testMatch: /password-protection/,
+			dependencies: ['main']
 		}
 	]
 });

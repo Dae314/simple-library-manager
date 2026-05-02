@@ -67,11 +67,9 @@ test.describe('Transaction Log and Reversals', () => {
 		const gameTitles = page.locator('tbody .game-title');
 		await expect(gameTitles.first()).toContainText(game.title, { timeout: 10_000 });
 
-		const count = await gameTitles.count();
-		expect(count).toBeGreaterThan(0);
-		for (let i = 0; i < count; i++) {
-			await expect(gameTitles.nth(i)).toContainText(game.title);
-		}
+		// Wait for the table to stabilize with only matching results before counting
+		await expect(gameTitles).toHaveCount(1, { timeout: 5_000 });
+		await expect(gameTitles.nth(0)).toContainText(game.title);
 	});
 
 	test('reverse a checkout', async ({ page, helpers }) => {

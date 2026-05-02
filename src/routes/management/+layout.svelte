@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import type { Snippet } from 'svelte';
 
 	let { data, form, children }: {
@@ -7,6 +8,8 @@
 		form: Record<string, any> | null;
 		children: Snippet;
 	} = $props();
+
+	let loginError = $state('');
 </script>
 
 {#if data.isAuthenticated}
@@ -18,9 +21,15 @@
 			<h1>Management Access</h1>
 			<p class="auth-description">Enter the management password to continue.</p>
 
-			<form method="POST" action="?/login" use:enhance={() => {
-				return async ({ result, update }) => {
-					await update({ reset: false });
+			<form method="POST" action="/management?/login" use:enhance={() => {
+				loginError = '';
+				return async ({ result }) => {
+					if (result.type === 'success') {
+						await invalidateAll();
+					} else if (result.type === 'failure') {
+						const data = result.data as Record<string, any> | undefined;
+						loginError = data?.loginError ?? 'Login failed';
+					}
 				};
 			}}>
 				<div class="form-group">
@@ -32,8 +41,8 @@
 						autocomplete="current-password"
 						required
 					/>
-					{#if form?.loginError}
-						<span class="field-error" role="alert">{form.loginError}</span>
+					{#if loginError}
+						<span class="field-error" role="alert">{loginError}</span>
 					{/if}
 				</div>
 
