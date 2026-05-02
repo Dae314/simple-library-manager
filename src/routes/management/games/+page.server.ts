@@ -136,7 +136,16 @@ export const actions: Actions = {
 		try {
 			const result = await csvService.importGames(fileContent);
 			broadcastBatchGameEvent(result.gameIds);
-			return { success: true, action: 'csvImport', csvImported: result.created };
+			return {
+				success: true,
+				action: 'csvImport',
+				csvImported: result.added + result.modified + result.deleted,
+				csvImportSummary: {
+					added: result.added,
+					modified: result.modified,
+					deleted: result.deleted
+				}
+			};
 		} catch (e) {
 			return fail(500, { csvError: `Import failed: ${getUserFriendlyDbMessage(e)}` });
 		}

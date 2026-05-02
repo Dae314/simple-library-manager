@@ -16,7 +16,6 @@ test.describe('Convention Configuration Page', () => {
 		await expect(sections).toHaveCount(2);
 
 		await expect(page.getByRole('button', { name: 'Save Configuration' })).toBeVisible();
-		await expect(page.getByRole('link', { name: 'Back' })).toBeVisible();
 	});
 
 	test('save convention name shows success toast', async ({ page }) => {

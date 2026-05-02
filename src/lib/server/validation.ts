@@ -199,10 +199,20 @@ export function validateConfigInput(input: Partial<ConfigInput>): ValidationResu
 
 // --- CSV Row Validation ---
 
+export type CsvRowAction = 'add' | 'modify' | 'delete';
+
+const VALID_CSV_ACTIONS: CsvRowAction[] = ['add', 'modify', 'delete'];
+
 export interface CsvRow {
+	action: CsvRowAction;
 	title: string;
 	bggId: number;
 	copyCount: number;
+	copyNumber?: number;
+	gameType?: 'standard' | 'play_and_win' | 'play_and_take';
+	newTitle?: string;
+	newBggId?: number;
+	sourceRow: number;
 }
 
 export interface CsvValidationResult {
@@ -219,6 +229,14 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 		const row = rows[i];
 		const rowNum = i + 1;
 
+		// Parse action — defaults to 'add' for backward compatibility
+		const rawAction = (row.action ?? 'add').trim().toLowerCase();
+		if (!VALID_CSV_ACTIONS.includes(rawAction as CsvRowAction)) {
+			errors.push({ row: rowNum, message: `Invalid action "${rawAction}". Must be add, modify, or delete` });
+			continue;
+		}
+		const action = rawAction as CsvRowAction;
+
 		const title = row.title?.trim();
 		if (!title) {
 			errors.push({ row: rowNum, message: 'Title is required' });
@@ -229,13 +247,77 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 			errors.push({ row: rowNum, message: 'BGG ID must be a positive integer' });
 		}
 
-		const copyCount = Number(row.copy_count ?? row.copyCount ?? row.copies ?? 1);
-		if (!Number.isInteger(copyCount) || copyCount <= 0) {
-			errors.push({ row: rowNum, message: 'Copy count must be a positive integer' });
+		// Parse game_type (optional, defaults to 'standard' for add)
+		const rawGameType = (row.game_type ?? row.gameType ?? row.game_Type ?? '').trim().toLowerCase();
+		let gameType: 'standard' | 'play_and_win' | 'play_and_take' | undefined;
+		if (rawGameType) {
+			if (!VALID_GAME_TYPES.includes(rawGameType as typeof VALID_GAME_TYPES[number])) {
+				errors.push({ row: rowNum, message: `Invalid game type "${rawGameType}". Must be standard, play_and_win, or play_and_take` });
+			} else {
+				gameType = rawGameType as typeof VALID_GAME_TYPES[number];
+			}
 		}
 
-		if (title && Number.isInteger(bggId) && bggId > 0 && Number.isInteger(copyCount) && copyCount > 0) {
-			parsed.push({ title, bggId, copyCount });
+		if (action === 'add') {
+			// For add: copy_count determines how many copies to create
+			const copyCount = Number(row.copy_count ?? row.copyCount ?? row.copies ?? 1);
+			if (!Number.isInteger(copyCount) || copyCount <= 0) {
+				errors.push({ row: rowNum, message: 'Copy count must be a positive integer' });
+			}
+
+			if (title && Number.isInteger(bggId) && bggId > 0 && Number.isInteger(copyCount) && copyCount > 0) {
+				parsed.push({
+					action: 'add',
+					title,
+					bggId,
+					copyCount,
+					gameType: gameType ?? 'standard',
+					sourceRow: rowNum
+				});
+			}
+		} else {
+			// For modify/delete: copy_number identifies the specific game copy
+			const copyNumber = Number(row.copy_number ?? row.copyNumber ?? '');
+			if (!Number.isInteger(copyNumber) || copyNumber <= 0) {
+				errors.push({ row: rowNum, message: `Copy number is required for ${action} action and must be a positive integer` });
+			}
+
+			// For modify: parse optional new values
+			let newTitle: string | undefined;
+			let newBggId: number | undefined;
+			if (action === 'modify') {
+				const rawNewTitle = (row.new_title ?? row.newTitle ?? '').trim();
+				if (rawNewTitle) newTitle = rawNewTitle;
+
+				const rawNewBggId = row.new_bgg_id ?? row.newBggId ?? row.new_BGG_ID ?? '';
+				if (rawNewBggId) {
+					const parsedNewBggId = Number(rawNewBggId);
+					if (!Number.isInteger(parsedNewBggId) || parsedNewBggId <= 0) {
+						errors.push({ row: rowNum, message: 'New BGG ID must be a positive integer' });
+					} else {
+						newBggId = parsedNewBggId;
+					}
+				}
+
+				// At least one change must be specified for modify
+				if (!gameType && !newTitle && !newBggId) {
+					errors.push({ row: rowNum, message: 'Modify action requires at least one change (game_type, new_title, or new_bgg_id)' });
+				}
+			}
+
+			if (title && Number.isInteger(bggId) && bggId > 0 && Number.isInteger(copyNumber) && copyNumber > 0) {
+				parsed.push({
+					action,
+					title,
+					bggId,
+					copyCount: 1,
+					copyNumber,
+					gameType,
+					newTitle,
+					newBggId,
+					sourceRow: rowNum
+				});
+			}
 		}
 	}
 

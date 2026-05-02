@@ -32,6 +32,12 @@
 
 	let showConflictWarning = $state(false);
 
+	// Local form state to preserve user edits across data invalidations.
+	// When non-null, the user has touched the field and their value takes priority.
+	let localTitle: string | null = $state(null);
+	let localBggId: string | null = $state(null);
+	let localGameType: string | null = $state(null);
+
 	$effect(() => {
 		wsClient.setGetCurrentEditGameId(() => data.game.id);
 		wsClient.setOnConflict((_event: EventMessage) => {
@@ -46,6 +52,9 @@
 
 	function handleReload() {
 		showConflictWarning = false;
+		localTitle = null;
+		localBggId = null;
+		localGameType = null;
 		invalidateAll();
 	}
 
@@ -57,7 +66,9 @@
 	const statusColor = $derived(data.game.status === 'available' ? 'status-available' : 'status-checked-out');
 	const toggleTarget = $derived(data.game.status === 'available' ? 'checked_out' : 'available');
 	const toggleLabel = $derived(data.game.status === 'available' ? 'Mark as Checked Out' : 'Mark as Available');
-	const currentGameType = $derived(form?.values?.gameType ?? data.game.gameType);
+	const effectiveTitle = $derived(localTitle ?? form?.values?.title ?? data.game.title);
+	const effectiveBggId = $derived(localBggId ?? form?.values?.bggId ?? String(data.game.bggId));
+	const currentGameType = $derived(localGameType ?? form?.values?.gameType ?? data.game.gameType);
 </script>
 
 <div class="edit-game-page">
@@ -109,7 +120,8 @@
 				name="title"
 				type="text"
 				required
-				value={form?.values?.title ?? data.game.title}
+				value={effectiveTitle}
+				oninput={(e) => { localTitle = e.currentTarget.value; }}
 			/>
 			{#if form?.errors?.title}
 				<span class="field-error">{form.errors.title}</span>
@@ -125,7 +137,8 @@
 				min="1"
 				step="1"
 				required
-				value={form?.values?.bggId ?? data.game.bggId}
+				value={effectiveBggId}
+				oninput={(e) => { localBggId = e.currentTarget.value; }}
 			/>
 			{#if form?.errors?.bggId}
 				<span class="field-error">{form.errors.bggId}</span>
@@ -134,7 +147,7 @@
 
 		<div class="form-group">
 			<label for="gameType">Game Type</label>
-			<select id="gameType" name="gameType">
+			<select id="gameType" name="gameType" onchange={(e) => { localGameType = e.currentTarget.value; }}>
 				<option value="standard" selected={currentGameType === 'standard'}>Standard</option>
 				<option value="play_and_win" selected={currentGameType === 'play_and_win'}>Play & Win</option>
 				<option value="play_and_take" selected={currentGameType === 'play_and_take'}>Play & Take</option>

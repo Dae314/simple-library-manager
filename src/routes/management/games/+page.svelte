@@ -55,7 +55,12 @@
 	let showRetireDialog = $state(false);
 	let showCsvImportDialog = $state(false);
 	let csvFileInput: HTMLInputElement | undefined = $state();
-	let csvValidationResult: { valid: boolean; errors: { row: number; message: string }[]; rowCount: number } | null = $state(null);
+	let csvValidationResult: {
+		valid: boolean;
+		errors: { row: number; message: string }[];
+		rowCount: number;
+		summary: { add: number; modify: number; delete: number };
+	} | null = $state(null);
 	let csvFileForImport: File | null = $state(null);
 
 	const filterConfigs = [
@@ -469,7 +474,19 @@
 <ConfirmDialog
 	open={showCsvImportDialog}
 	title="Import CSV"
-	message="CSV validated successfully. {csvValidationResult?.rowCount ?? 0} game(s) will be imported. Proceed?"
+	message={csvValidationResult?.valid
+		? (() => {
+			const s = csvValidationResult!.summary;
+			const parts: string[] = [];
+			if (s.add > 0) parts.push(`${s.add} game(s) to add`);
+			if (s.modify > 0) parts.push(`${s.modify} game(s) to modify`);
+			if (s.delete > 0) parts.push(`${s.delete} game(s) to retire`);
+			return `CSV validated successfully. ${parts.join(', ')}. Proceed?`;
+		})()
+		: ''}
+	warning={csvValidationResult?.summary?.delete
+		? `${csvValidationResult.summary.delete} game(s) will be retired (soft-deleted). This can be undone by restoring them individually.`
+		: ''}
 	confirmLabel="Import"
 	cancelLabel="Cancel"
 	onCancel={() => { showCsvImportDialog = false; csvValidationResult = null; csvFileForImport = null; }}
@@ -499,7 +516,14 @@
 		return async ({ result, update }) => {
 			if (result.type === 'success') {
 				const data = (result as any).data;
-				if (data?.csvImported) {
+				if (data?.csvImportSummary) {
+					const s = data.csvImportSummary;
+					const parts: string[] = [];
+					if (s.added > 0) parts.push(`${s.added} added`);
+					if (s.modified > 0) parts.push(`${s.modified} modified`);
+					if (s.deleted > 0) parts.push(`${s.deleted} retired`);
+					toast.success(`CSV import complete: ${parts.join(', ')}`);
+				} else if (data?.csvImported) {
 					toast.success(`Imported ${data.csvImported} game(s) from CSV`);
 				}
 				csvValidationResult = null;
