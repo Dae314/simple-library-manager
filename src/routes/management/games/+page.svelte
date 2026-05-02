@@ -16,6 +16,7 @@
 		title: string;
 		bggId: number;
 		copyNumber: number;
+		totalCopies: number;
 		status: string;
 		gameType: 'standard' | 'play_and_win' | 'play_and_take';
 		version: number;
@@ -343,6 +344,7 @@
 							title={game.title}
 							bggId={game.bggId}
 							copyNumber={game.copyNumber}
+							totalCopies={game.totalCopies}
 							gameType={game.gameType}
 							selected={selectedIds.has(game.id)}
 						>

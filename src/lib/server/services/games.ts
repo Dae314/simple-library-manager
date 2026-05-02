@@ -2,6 +2,12 @@ import { db } from '../db/index.js';
 import { games, transactions } from '../db/schema.js';
 import { eq, ne, and, sql, ilike, gte, lte, inArray, max, count, desc, asc, type SQL } from 'drizzle-orm';
 
+/**
+ * SQL expression that counts how many non-retired games share the same bgg_id.
+ * Used as a window function to determine whether to display copy numbers.
+ */
+const totalCopiesExpr = sql<number>`COUNT(*) FILTER (WHERE ${games.status} != 'retired') OVER (PARTITION BY ${games.bggId})`.mapWith(Number);
+
 // --- Types ---
 
 export type GameStatus = 'available' | 'checked_out' | 'retired';
@@ -12,6 +18,7 @@ export interface GameRecord {
 	title: string;
 	bggId: number;
 	copyNumber: number;
+	totalCopies: number;
 	status: string;
 	gameType: string;
 	version: number;
@@ -125,7 +132,13 @@ export const gameService = {
 				})
 				.returning();
 
-			return created;
+			// Count total non-retired copies for this bggId after insert
+			const [copyCount] = await tx
+				.select({ total: count() })
+				.from(games)
+				.where(and(eq(games.bggId, data.bggId), ne(games.status, 'retired')));
+
+			return { ...created, totalCopies: copyCount?.total ?? 1 };
 		});
 	},
 
@@ -152,7 +165,13 @@ export const gameService = {
 			throw new Error(`Game with id ${id} not found`);
 		}
 
-		return updated;
+		// Count total non-retired copies for this bggId
+		const [copyCount] = await db
+			.select({ total: count() })
+			.from(games)
+			.where(and(eq(games.bggId, updated.bggId), ne(games.status, 'retired')));
+
+		return { ...updated, totalCopies: copyCount?.total ?? 1 };
 	},
 
 	/**
@@ -187,7 +206,18 @@ export const gameService = {
 	 */
 	async getById(id: number): Promise<GameRecord | null> {
 		const [game] = await db
-			.select()
+			.select({
+				id: games.id,
+				title: games.title,
+				bggId: games.bggId,
+				copyNumber: games.copyNumber,
+				totalCopies: totalCopiesExpr,
+				status: games.status,
+				gameType: games.gameType,
+				version: games.version,
+				createdAt: games.createdAt,
+				updatedAt: games.updatedAt
+			})
 			.from(games)
 			.where(eq(games.id, id));
 
@@ -274,6 +304,7 @@ export const gameService = {
 					title: games.title,
 					bggId: games.bggId,
 					copyNumber: games.copyNumber,
+					totalCopies: totalCopiesExpr,
 					status: games.status,
 					gameType: games.gameType,
 					version: games.version,
@@ -294,7 +325,18 @@ export const gameService = {
 		// Standard sort
 		const orderBy = buildSortExpression(sort);
 		const items = await db
-			.select()
+			.select({
+				id: games.id,
+				title: games.title,
+				bggId: games.bggId,
+				copyNumber: games.copyNumber,
+				totalCopies: totalCopiesExpr,
+				status: games.status,
+				gameType: games.gameType,
+				version: games.version,
+				createdAt: games.createdAt,
+				updatedAt: games.updatedAt
+			})
 			.from(games)
 			.where(whereClause)
 			.orderBy(...orderBy)
@@ -324,7 +366,18 @@ export const gameService = {
 			.where(whereClause);
 
 		const items = await db
-			.select()
+			.select({
+				id: games.id,
+				title: games.title,
+				bggId: games.bggId,
+				copyNumber: games.copyNumber,
+				totalCopies: totalCopiesExpr,
+				status: games.status,
+				gameType: games.gameType,
+				version: games.version,
+				createdAt: games.createdAt,
+				updatedAt: games.updatedAt
+			})
 			.from(games)
 			.where(whereClause)
 			.orderBy(asc(games.title))
@@ -380,6 +433,7 @@ export const gameService = {
 				title: games.title,
 				bggId: games.bggId,
 				copyNumber: games.copyNumber,
+				totalCopies: totalCopiesExpr,
 				status: games.status,
 				gameType: games.gameType,
 				version: games.version,
@@ -440,7 +494,13 @@ export const gameService = {
 				isCorrection: true
 			}).returning();
 
-			return { ...updated, transactionId: correctionTx.id };
+			// Count total non-retired copies for this bggId
+			const [copyCount] = await tx
+				.select({ total: count() })
+				.from(games)
+				.where(and(eq(games.bggId, updated.bggId), ne(games.status, 'retired')));
+
+			return { ...updated, totalCopies: copyCount?.total ?? 1, transactionId: correctionTx.id };
 		});
 	}
 };

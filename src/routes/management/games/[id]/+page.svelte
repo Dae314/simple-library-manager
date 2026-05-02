@@ -14,6 +14,7 @@
 		title: string;
 		bggId: number;
 		copyNumber: number;
+		totalCopies: number;
 		status: string;
 		gameType: 'standard' | 'play_and_win' | 'play_and_take';
 		version: number;
@@ -86,7 +87,9 @@
 
 	<div class="game-header">
 		<div class="game-identity">
-			<span class="copy-number">Copy #{data.game.copyNumber}</span>
+			{#if data.game.totalCopies > 1}
+				<span class="copy-number">Copy #{data.game.copyNumber}</span>
+			{/if}
 			<GameTypeBadge gameType={data.game.gameType} />
 			<span class="status-badge {statusColor}">{statusLabel}</span>
 		</div>

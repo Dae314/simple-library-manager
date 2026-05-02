@@ -15,6 +15,7 @@
 		title: string;
 		bggId: number;
 		copyNumber: number;
+		totalCopies: number;
 		status: string;
 		gameType: 'standard' | 'play_and_win' | 'play_and_take';
 		version: number;
@@ -92,7 +93,7 @@
 	}
 
 	function gameDisplayTitle(game: GameRecord): string {
-		return game.copyNumber > 0 ? `${game.title} (Copy #${game.copyNumber})` : game.title;
+		return game.totalCopies > 1 ? `${game.title} (Copy #${game.copyNumber})` : game.title;
 	}
 
 	// Used by GameCard for display title in the form header
@@ -120,6 +121,7 @@
 						title={game.title}
 						bggId={game.bggId}
 						copyNumber={game.copyNumber}
+						totalCopies={game.totalCopies}
 						gameType={game.gameType}
 						selected={selectedGame?.id === game.id}
 					>

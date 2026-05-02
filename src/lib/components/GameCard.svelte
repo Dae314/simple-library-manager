@@ -8,6 +8,7 @@
 		title,
 		bggId,
 		copyNumber,
+		totalCopies = 1,
 		gameType,
 		selected = false,
 		children
@@ -15,13 +16,14 @@
 		title: string;
 		bggId: number;
 		copyNumber: number;
+		totalCopies?: number;
 		gameType: GameType;
 		selected?: boolean;
 		children?: Snippet;
 	} = $props();
 
 	const displayTitle = $derived(
-		copyNumber > 0 ? `${title} (Copy #${copyNumber})` : title
+		totalCopies > 1 ? `${title} (Copy #${copyNumber})` : title
 	);
 </script>
 

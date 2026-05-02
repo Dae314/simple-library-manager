@@ -15,7 +15,8 @@ test.describe('Edit Game and Status Toggle', () => {
 		await expect(page.locator('#title')).toHaveValue(game.title);
 		await expect(page.locator('#bggId')).toHaveValue('55555');
 
-		await expect(page.locator('.copy-number')).toBeVisible();
+		// copy-number badge is hidden for single-copy games
+		await expect(page.locator('.copy-number')).toHaveCount(0);
 		await expect(page.locator('.status-badge')).toBeVisible();
 		await expect(page.locator('a', { hasText: 'View on BGG' })).toBeVisible();
 	});
