@@ -10,6 +10,13 @@
  *   DATABASE_URL=postgresql://user:pass@host:5432/dbname node scripts/reset-password.js
  *
  * The DATABASE_URL environment variable must be set to the PostgreSQL connection string.
+ * 
+ * On windows Powershell, use: $env:DATABASE_URL="postgresql://postgres:postgres@localhost:5432/boardgames"
+ * On windows CMD, use: set DATABASE_URL=postgresql://postgres:postgres@localhost:5432/boardgames
+ * 
+ * Also need to modify docker-compose.yml to map the database container port:
+ * ports:
+ *   - "5432:5432"
  */
 
 import pg from 'pg';
