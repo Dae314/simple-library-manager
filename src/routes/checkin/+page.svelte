@@ -266,6 +266,11 @@
 
 				<div class="form-group">
 					<label for="checkinWeight">Weight ({data.weightUnit})</label>
+					{#if selectedGame.checkoutWeight != null}
+						<div class="checkout-weight-reference">
+							Checkout weight: <strong>{formatWeight(selectedGame.checkoutWeight, data.weightUnit)}</strong>
+						</div>
+					{/if}
 					<input
 						id="checkinWeight"
 						name="checkinWeight"
@@ -448,6 +453,20 @@
 		font-weight: 500;
 		color: #374151;
 		margin-bottom: 0.25rem;
+	}
+
+	.checkout-weight-reference {
+		font-size: 0.82rem;
+		color: #4b5563;
+		background-color: #f3f4f6;
+		border: 1px solid #e5e7eb;
+		border-radius: 6px;
+		padding: 0.35rem 0.6rem;
+		margin-bottom: 0.4rem;
+	}
+
+	.checkout-weight-reference strong {
+		color: #111827;
 	}
 
 	.form-group input,
