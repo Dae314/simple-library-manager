@@ -8,6 +8,7 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import toast from 'svelte-hot-french-toast';
+	import { getPreferredPageSize, savePreferredPageSize } from '$lib/utils/page-size.js';
 
 	const wsClient: { connected: boolean } = getContext('ws');
 
@@ -193,11 +194,25 @@
 	}
 
 	function handlePageSizeChange(size: number) {
+		savePreferredPageSize(size);
 		const url = new URL(window.location.href);
 		url.searchParams.set('pageSize', String(size));
 		url.searchParams.set('page', '1');
 		goto(url.toString(), { replaceState: true });
 	}
+
+	// Apply stored page size preference when navigating to this page without an explicit pageSize param
+	onMount(() => {
+		const currentUrl = new URL(window.location.href);
+		if (!currentUrl.searchParams.has('pageSize')) {
+			const preferred = getPreferredPageSize();
+			if (preferred !== data.games.pageSize) {
+				currentUrl.searchParams.set('pageSize', String(preferred));
+				currentUrl.searchParams.set('page', '1');
+				goto(currentUrl.toString(), { replaceState: true });
+			}
+		}
+	});
 
 	function toggleSelect(id: number) {
 		const next = new Set(selectedIds);

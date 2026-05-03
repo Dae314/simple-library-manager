@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const lastTransactionEnd = url.searchParams.get('lastTransactionEnd') || '';
 	const groupByBgg = url.searchParams.get('groupByBgg') === 'true';
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
-	const pageSize = parseInt(url.searchParams.get('pageSize') || '20', 10);
+	const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
 
 	const filters: GameFilters = {};
 

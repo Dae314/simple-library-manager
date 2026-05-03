@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const status = url.searchParams.get('status') as 'available' | 'checked_out' | null;
 	const gameType = url.searchParams.get('gameType') as 'standard' | 'play_and_win' | 'play_and_take' | null;
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
-	const pageSize = parseInt(url.searchParams.get('pageSize') || '20', 10);
+	const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
 	const sortField = url.searchParams.get('sortField') || 'title';
 	const sortDir = url.searchParams.get('sortDir') || 'asc';
 

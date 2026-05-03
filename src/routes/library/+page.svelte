@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
-	import { getContext, untrack } from 'svelte';
+	import { getContext, untrack, onMount } from 'svelte';
 	import toast from 'svelte-hot-french-toast';
 	import SortableTable from '$lib/components/SortableTable.svelte';
 	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
@@ -9,6 +9,7 @@
 	import CheckoutDialog from '$lib/components/CheckoutDialog.svelte';
 	import CheckinDialog from '$lib/components/CheckinDialog.svelte';
 	import { formatDuration, formatWeight } from '$lib/utils/formatting.js';
+	import { getPreferredPageSize, savePreferredPageSize } from '$lib/utils/page-size.js';
 	import type { LibraryGameRecord } from '$lib/server/services/games.js';
 	import type { EventMessage } from '$lib/server/ws/events.js';
 
@@ -157,11 +158,25 @@
 	}
 
 	function handlePageSizeChange(size: number) {
+		savePreferredPageSize(size);
 		const url = new URL(window.location.href);
 		url.searchParams.set('pageSize', String(size));
 		url.searchParams.set('page', '1');
 		goto(url.toString(), { replaceState: true });
 	}
+
+	// Apply stored page size preference when navigating to this page without an explicit pageSize param
+	onMount(() => {
+		const url = new URL(window.location.href);
+		if (!url.searchParams.has('pageSize')) {
+			const preferred = getPreferredPageSize();
+			if (preferred !== data.games.pageSize) {
+				url.searchParams.set('pageSize', String(preferred));
+				url.searchParams.set('page', '1');
+				goto(url.toString(), { replaceState: true });
+			}
+		}
+	});
 
 	function gameDisplayTitle(game: LibraryGameRecord): string {
 		return game.totalCopies > 1 ? `${game.title} (Copy #${game.copyNumber})` : game.title;

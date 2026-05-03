@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const type = url.searchParams.get('type') || '';
 	const attendeeName = url.searchParams.get('attendeeName') || '';
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
-	const pageSize = parseInt(url.searchParams.get('pageSize') || '20', 10);
+	const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
 	const sortField = url.searchParams.get('sortField') || 'created_at';
 	const sortDir = url.searchParams.get('sortDir') || 'desc';
 
