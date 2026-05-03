@@ -6,22 +6,22 @@ test.describe('Play & Win and Play & Take Flows', () => {
 
 		await helpers.checkoutGame(game.title, 'Raffle', 'Tester', '15.0');
 
-		await page.goto('/checkin');
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}&status=checked_out`);
 		const checkinRow = helpers.tableRow(page, game.title).first();
 		await expect(checkinRow).toBeVisible();
 		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
-		const checkinForm = page.locator('section[aria-label="Check in form"]');
-		await expect(checkinForm).toBeVisible();
+		const checkinDialog = page.locator('dialog.checkin-dialog');
+		await expect(checkinDialog).toBeVisible();
 
-		const raffleReminder = checkinForm.locator('.raffle-reminder');
+		const raffleReminder = checkinDialog.locator('.raffle-reminder');
 		await expect(raffleReminder).toBeVisible();
 		await expect(raffleReminder).toContainText('Play & Win');
 		await expect(raffleReminder).toContainText('raffle entries');
 		await expect(raffleReminder).toContainText('Raffle Tester');
 
-		await checkinForm.locator('#checkinWeight').fill('15.0');
-		await checkinForm.getByRole('button', { name: 'Confirm Check In' }).click();
+		await checkinDialog.locator('#checkin-checkinWeight').fill('15.0');
+		await checkinDialog.getByRole('button', { name: 'Confirm Check In' }).click();
 
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 	});
@@ -31,16 +31,16 @@ test.describe('Play & Win and Play & Take Flows', () => {
 
 		await helpers.checkoutGame(game.title, 'Take', 'Tester', '25.0');
 
-		await page.goto('/checkin');
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}&status=checked_out`);
 		const checkinRow = helpers.tableRow(page, game.title).first();
 		await expect(checkinRow).toBeVisible();
 		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
-		const checkinForm = page.locator('section[aria-label="Check in form"]');
-		await expect(checkinForm).toBeVisible();
+		const checkinDialog = page.locator('dialog.checkin-dialog');
+		await expect(checkinDialog).toBeVisible();
 
-		await checkinForm.locator('#checkinWeight').fill('25.0');
-		await checkinForm.getByRole('button', { name: 'Confirm Check In' }).click();
+		await checkinDialog.locator('#checkin-checkinWeight').fill('25.0');
+		await checkinDialog.getByRole('button', { name: 'Confirm Check In' }).click();
 
 		const dialog = page.locator('dialog.confirm-dialog');
 		await expect(dialog).toBeVisible();
@@ -51,8 +51,8 @@ test.describe('Play & Win and Play & Take Flows', () => {
 
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 
-		// Game should no longer appear on checkout page (retired)
-		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+		// Game should no longer appear on library page (retired)
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 		await expect(helpers.tableRow(page, game.title)).toHaveCount(0);
 	});
 
@@ -61,16 +61,16 @@ test.describe('Play & Win and Play & Take Flows', () => {
 
 		await helpers.checkoutGame(game.title, 'Return', 'Tester', '20.0');
 
-		await page.goto('/checkin');
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}&status=checked_out`);
 		const checkinRow = helpers.tableRow(page, game.title).first();
 		await expect(checkinRow).toBeVisible();
 		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
-		const checkinForm = page.locator('section[aria-label="Check in form"]');
-		await expect(checkinForm).toBeVisible();
+		const checkinDialog = page.locator('dialog.checkin-dialog');
+		await expect(checkinDialog).toBeVisible();
 
-		await checkinForm.locator('#checkinWeight').fill('20.0');
-		await checkinForm.getByRole('button', { name: 'Confirm Check In' }).click();
+		await checkinDialog.locator('#checkin-checkinWeight').fill('20.0');
+		await checkinDialog.getByRole('button', { name: 'Confirm Check In' }).click();
 
 		const dialog = page.locator('dialog.confirm-dialog');
 		await expect(dialog).toBeVisible();
@@ -81,8 +81,8 @@ test.describe('Play & Win and Play & Take Flows', () => {
 
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 
-		// Game should still be available on checkout page
-		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+		// Game should still be available on library page
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 		await expect(helpers.tableRow(page, game.title)).toBeVisible();
 	});
 });

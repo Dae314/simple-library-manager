@@ -120,4 +120,120 @@ test.describe('Real-Time: Edit Page Conflict Warning', () => {
 			await context2.close();
 		}
 	});
+
+	test('Status_Change_Warning appears in checkout dialog when game is checked out by another station', async ({ browser, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_RTDialogConflict`);
+
+		const context1 = await browser.newContext();
+		const context2 = await browser.newContext();
+		const tab1 = await context1.newPage();
+		const tab2 = await context2.newPage();
+
+		try {
+			// Tab 1: navigate to library and open checkout dialog for the game
+			await tab1.goto(`/library?search=${encodeURIComponent(game.title)}`);
+			await expect(tab1.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
+
+			const row1 = tab1.locator('tbody tr', { hasText: game.title }).first();
+			await expect(row1).toBeVisible();
+			await row1.getByRole('button', { name: 'Checkout' }).click();
+
+			const dialog1 = tab1.locator('dialog.checkout-dialog');
+			await expect(dialog1).toBeVisible();
+
+			// Verify no status warning initially
+			await expect(dialog1.locator('.status-warning')).not.toBeVisible();
+
+			// Tab 2: check out the same game from another station
+			await tab2.goto(`/library?search=${encodeURIComponent(game.title)}`);
+			await expect(tab2.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
+
+			const row2 = tab2.locator('tbody tr', { hasText: game.title }).first();
+			await expect(row2).toBeVisible();
+			await row2.getByRole('button', { name: 'Checkout' }).click();
+
+			const dialog2 = tab2.locator('dialog.checkout-dialog');
+			await expect(dialog2).toBeVisible();
+			await dialog2.locator('#checkout-attendeeFirstName').fill('Other');
+			await dialog2.locator('#checkout-attendeeLastName').fill('Station');
+			await dialog2.locator('#checkout-idType').selectOption({ index: 1 });
+			await dialog2.locator('#checkout-checkoutWeight').fill('20.0');
+			await dialog2.getByRole('button', { name: 'Confirm Checkout' }).click();
+			await expect(tab2.getByText('Game checked out successfully!')).toBeVisible();
+
+			// Verify tab 1's dialog shows the status change warning
+			await expect(dialog1.locator('.status-warning')).toBeVisible({ timeout: 10_000 });
+
+			// Verify the submit button is disabled
+			await expect(dialog1.getByRole('button', { name: 'Confirm Checkout' })).toBeDisabled();
+		} finally {
+			await context1.close();
+			await context2.close();
+		}
+	});
+
+	test('Status_Change_Warning appears in checkin dialog when game is checked in by another station', async ({ browser, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_RTCheckinConflict`);
+
+		// Check out the game first
+		const setupContext = await browser.newContext();
+		const setupPage = await setupContext.newPage();
+		await setupPage.goto(`/library?search=${encodeURIComponent(game.title)}`);
+		const setupRow = setupPage.locator('tbody tr', { hasText: game.title }).first();
+		await expect(setupRow).toBeVisible();
+		await setupRow.getByRole('button', { name: 'Checkout' }).click();
+		const setupDialog = setupPage.locator('dialog.checkout-dialog');
+		await expect(setupDialog).toBeVisible();
+		await setupDialog.locator('#checkout-attendeeFirstName').fill('Setup');
+		await setupDialog.locator('#checkout-attendeeLastName').fill('User');
+		await setupDialog.locator('#checkout-idType').selectOption({ index: 1 });
+		await setupDialog.locator('#checkout-checkoutWeight').fill('25.0');
+		await setupDialog.getByRole('button', { name: 'Confirm Checkout' }).click();
+		await expect(setupPage.getByText('Game checked out successfully!')).toBeVisible();
+		await setupContext.close();
+
+		const context1 = await browser.newContext();
+		const context2 = await browser.newContext();
+		const tab1 = await context1.newPage();
+		const tab2 = await context2.newPage();
+
+		try {
+			// Tab 1: navigate to library filtered to checked-out, open checkin dialog
+			await tab1.goto(`/library?status=checked_out&search=${encodeURIComponent(game.title)}`);
+			await expect(tab1.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
+
+			const row1 = tab1.locator('tbody tr', { hasText: game.title }).first();
+			await expect(row1).toBeVisible();
+			await row1.getByRole('button', { name: 'Check In' }).click();
+
+			const dialog1 = tab1.locator('dialog.checkin-dialog');
+			await expect(dialog1).toBeVisible();
+
+			// Verify no status warning initially
+			await expect(dialog1.locator('.status-warning')).not.toBeVisible();
+
+			// Tab 2: check in the same game from another station
+			await tab2.goto(`/library?status=checked_out&search=${encodeURIComponent(game.title)}`);
+			await expect(tab2.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
+
+			const row2 = tab2.locator('tbody tr', { hasText: game.title }).first();
+			await expect(row2).toBeVisible();
+			await row2.getByRole('button', { name: 'Check In' }).click();
+
+			const dialog2 = tab2.locator('dialog.checkin-dialog');
+			await expect(dialog2).toBeVisible();
+			await dialog2.locator('#checkin-checkinWeight').fill('25.0');
+			await dialog2.getByRole('button', { name: 'Confirm Check In' }).click();
+			await expect(tab2.getByText('Game checked in successfully!')).toBeVisible();
+
+			// Verify tab 1's dialog shows the status change warning
+			await expect(dialog1.locator('.status-warning')).toBeVisible({ timeout: 10_000 });
+
+			// Verify the submit button is disabled
+			await expect(dialog1.getByRole('button', { name: 'Confirm Check In' })).toBeDisabled();
+		} finally {
+			await context1.close();
+			await context2.close();
+		}
+	});
 });

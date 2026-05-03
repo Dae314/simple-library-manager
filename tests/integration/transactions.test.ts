@@ -100,7 +100,7 @@ test.describe('Transaction Log and Reversals', () => {
 		await expect(correctionRow.locator('.btn-reverse')).toHaveCount(0);
 
 		// Game should be back to available
-		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 		await expect(helpers.tableRow(page, game.title).first()).toBeVisible();
 	});
 

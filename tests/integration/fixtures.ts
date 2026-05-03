@@ -63,18 +63,18 @@ async function uiCheckoutGame(
 	lastName: string,
 	weight: string
 ): Promise<void> {
-	await page.goto(`/checkout?search=${encodeURIComponent(gameName)}`);
+	await page.goto(`/library?search=${encodeURIComponent(gameName)}`);
 	const row = tableRow(page, gameName).first();
 	await expect(row).toBeVisible();
 	await row.getByRole('button', { name: 'Checkout' }).click();
 
-	const form = page.locator('section[aria-label="Checkout form"]');
-	await expect(form).toBeVisible();
-	await form.locator('#attendeeFirstName').fill(firstName);
-	await form.locator('#attendeeLastName').fill(lastName);
-	await form.locator('#idType').selectOption({ index: 1 });
-	await form.locator('#checkoutWeight').fill(weight);
-	await form.getByRole('button', { name: 'Confirm Checkout' }).click();
+	const dialog = page.locator('dialog.checkout-dialog');
+	await expect(dialog).toBeVisible();
+	await dialog.locator('#checkout-attendeeFirstName').fill(firstName);
+	await dialog.locator('#checkout-attendeeLastName').fill(lastName);
+	await dialog.locator('#checkout-idType').selectOption({ index: 1 });
+	await dialog.locator('#checkout-checkoutWeight').fill(weight);
+	await dialog.getByRole('button', { name: 'Confirm Checkout' }).click();
 	await expect(page.getByText('Game checked out successfully!')).toBeVisible();
 }
 
@@ -83,15 +83,15 @@ async function uiCheckinGame(
 	gameName: string,
 	weight: string
 ): Promise<void> {
-	await page.goto('/checkin');
+	await page.goto(`/library?search=${encodeURIComponent(gameName)}&status=checked_out`);
 	const row = tableRow(page, gameName).first();
 	await expect(row).toBeVisible();
 	await row.getByRole('button', { name: 'Check In' }).click();
 
-	const form = page.locator('section[aria-label="Check in form"]');
-	await expect(form).toBeVisible();
-	await form.locator('#checkinWeight').fill(weight);
-	await form.getByRole('button', { name: 'Confirm Check In' }).click();
+	const dialog = page.locator('dialog.checkin-dialog');
+	await expect(dialog).toBeVisible();
+	await dialog.locator('#checkin-checkinWeight').fill(weight);
+	await dialog.getByRole('button', { name: 'Confirm Check In' }).click();
 	await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 }
 

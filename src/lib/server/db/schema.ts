@@ -13,7 +13,7 @@ import {
 
 export const conventionConfig = pgTable('convention_config', {
 	id: serial('id').primaryKey(),
-	conventionName: text('convention_name').notNull().default(''),
+	conventionName: text('convention_name').notNull().default('Board Game Library'),
 	startDate: date('start_date'),
 	endDate: date('end_date'),
 	weightTolerance: real('weight_tolerance').notNull().default(0.5),

@@ -4,9 +4,7 @@ import type { EventMessage } from '$lib/server/ws/events.js';
 // --- Page Classification ---
 
 export const LIVE_UPDATE_PAGES = [
-	'/checkout',
-	'/checkin',
-	'/catalog',
+	'/library',
 	'/management/games',
 	'/management/transactions'
 ] as const;
@@ -224,6 +222,11 @@ export function createWebSocketClient() {
 						break;
 					case 'invalidate':
 						debouncer.trigger();
+						// Also notify conflict handler for events with a gameId,
+						// enabling dialog conflict detection alongside table refresh
+						if (onConflict && hasGameId(event)) {
+							onConflict(event);
+						}
 						break;
 					case 'ignore':
 						// Do nothing

@@ -1,8 +1,8 @@
 import { test, expect } from './fixtures';
 
 test.describe('Real-Time: Checkout Broadcasting', () => {
-	test('WebSocket connection indicator shows live on checkout page', async ({ page, helpers }) => {
-		await page.goto('/checkout');
+	test('WebSocket connection indicator shows live on library page', async ({ page, helpers }) => {
+		await page.goto('/library');
 
 		const indicator = page.locator('.connection-indicator');
 		await expect(indicator).toBeVisible();
@@ -25,9 +25,9 @@ test.describe('Real-Time: Checkout Broadcasting', () => {
 		const tab2 = await context2.newPage();
 
 		try {
-			// Navigate both tabs to the checkout page with the game visible
-			await tab1.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
-			await tab2.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+			// Navigate both tabs to the library page with the game visible
+			await tab1.goto(`/library?search=${encodeURIComponent(game.title)}`);
+			await tab2.goto(`/library?search=${encodeURIComponent(game.title)}`);
 
 			// Wait for WebSocket connections on both tabs
 			await expect(tab1.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
@@ -39,24 +39,24 @@ test.describe('Real-Time: Checkout Broadcasting', () => {
 			await expect(row1).toBeVisible();
 			await expect(row2).toBeVisible();
 
-			// Check out the game on tab 1
+			// Check out the game on tab 1 via the dialog
 			await row1.getByRole('button', { name: 'Checkout' }).click();
 
-			const checkoutForm = tab1.locator('section[aria-label="Checkout form"]');
-			await expect(checkoutForm).toBeVisible();
-			await checkoutForm.locator('#attendeeFirstName').fill('Alice');
-			await checkoutForm.locator('#attendeeLastName').fill('Tester');
-			await checkoutForm.locator('#idType').selectOption({ index: 1 });
-			await checkoutForm.locator('#checkoutWeight').fill('25.0');
-			await checkoutForm.getByRole('button', { name: 'Confirm Checkout' }).click();
+			const checkoutDialog = tab1.locator('dialog.checkout-dialog');
+			await expect(checkoutDialog).toBeVisible();
+			await checkoutDialog.locator('#checkout-attendeeFirstName').fill('Alice');
+			await checkoutDialog.locator('#checkout-attendeeLastName').fill('Tester');
+			await checkoutDialog.locator('#checkout-idType').selectOption({ index: 1 });
+			await checkoutDialog.locator('#checkout-checkoutWeight').fill('25.0');
+			await checkoutDialog.getByRole('button', { name: 'Confirm Checkout' }).click();
 
 			await expect(tab1.getByText('Game checked out successfully!')).toBeVisible();
 
-			// Verify tab 2 automatically reflects the game as no longer available
-			// The game should disappear from the checkout page (only available games shown)
+			// Verify tab 2 automatically reflects the change
+			// The game status should update (it's now checked out, so the action button changes)
 			await expect(
-				tab2.locator('tbody tr', { hasText: game.title })
-			).not.toBeVisible({ timeout: 10_000 });
+				tab2.locator('tbody tr', { hasText: game.title }).first().getByRole('button', { name: 'Check In' })
+			).toBeVisible({ timeout: 10_000 });
 		} finally {
 			await context1.close();
 			await context2.close();

@@ -17,7 +17,7 @@ export interface ConventionConfig {
 }
 
 const DEFAULT_CONFIG = {
-	conventionName: '',
+	conventionName: 'Board Game Library',
 	startDate: null,
 	endDate: null,
 	weightTolerance: 0.5,

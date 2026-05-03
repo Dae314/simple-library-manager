@@ -91,14 +91,14 @@ test.describe('Convention Configuration Page', () => {
 		// Create a game to open checkout form with
 		const game = await helpers.createGame(`${helpers.prefix}_IdTypeTest`);
 
-		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 		const gameRow = page.locator('tbody tr', { hasText: game.title }).first();
 		await gameRow.getByRole('button', { name: 'Checkout' }).click();
 
-		const checkoutForm = page.locator('section[aria-label="Checkout form"]');
-		await expect(checkoutForm).toBeVisible();
+		const checkoutDialog = page.locator('dialog.checkout-dialog');
+		await expect(checkoutDialog).toBeVisible();
 
-		const idTypeSelect = checkoutForm.locator('#idType');
+		const idTypeSelect = checkoutDialog.locator('#checkout-idType');
 		await expect(idTypeSelect.locator('option', { hasText: idTypeName })).toBeAttached();
 
 		// Clean up the ID type

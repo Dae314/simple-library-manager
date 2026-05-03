@@ -2,9 +2,7 @@ import { test, expect } from './fixtures';
 
 test.describe('Real-Time: Connection Indicator Visibility', () => {
 	const LIVE_UPDATE_PAGES = [
-		{ path: '/checkout', name: 'Checkout' },
-		{ path: '/checkin', name: 'Check In' },
-		{ path: '/catalog', name: 'Catalog' },
+		{ path: '/library', name: 'Library' },
 		{ path: '/management/games', name: 'Management Games' },
 		{ path: '/management/transactions', name: 'Management Transactions' }
 	];

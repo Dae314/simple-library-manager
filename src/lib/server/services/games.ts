@@ -47,6 +47,34 @@ export interface SortParams {
 	direction: 'asc' | 'desc';
 }
 
+export interface LibraryGameRecord {
+	id: number;
+	title: string;
+	bggId: number;
+	copyNumber: number;
+	totalCopies: number;
+	status: string;
+	gameType: string;
+	version: number;
+	attendeeFirstName: string | null;
+	attendeeLastName: string | null;
+	idType: string | null;
+	checkoutWeight: number | null;
+	checkoutAt: Date | null;
+}
+
+export interface LibraryFilters {
+	status?: 'available' | 'checked_out';
+	gameType?: GameType;
+	titleSearch?: string;
+	attendeeSearch?: string;
+}
+
+export interface LibrarySortParams {
+	field: 'title' | 'game_type' | 'status' | 'bgg_id';
+	direction: 'asc' | 'desc';
+}
+
 export interface PaginatedResult<T> {
 	items: T[];
 	total: number;
@@ -474,6 +502,116 @@ export const gameService = {
 			})
 			.from(games)
 			.innerJoin(latestCheckout, eq(games.id, latestCheckout.gameId))
+			.where(whereClause)
+			.orderBy(...orderClause)
+			.limit(pagination.pageSize)
+			.offset((pagination.page - 1) * pagination.pageSize);
+
+		return { items, total, page: pagination.page, pageSize: pagination.pageSize };
+	},
+
+	/**
+	 * List all non-retired games with optional checkout info from the latest checkout transaction.
+	 * Available games have null attendee/checkout fields. Supports filtering by status, game type,
+	 * title search, and attendee name search, plus sorting and pagination.
+	 */
+	async listLibrary(
+		filters: LibraryFilters = {},
+		pagination: PaginationParams = { page: 1, pageSize: 20 },
+		sort?: LibrarySortParams
+	): Promise<PaginatedResult<LibraryGameRecord>> {
+		// Subquery to get the latest checkout transaction per game (ROW_NUMBER window)
+		const latestCheckout = db
+			.select({
+				gameId: transactions.gameId,
+				attendeeFirstName: transactions.attendeeFirstName,
+				attendeeLastName: transactions.attendeeLastName,
+				idType: transactions.idType,
+				checkoutWeight: transactions.checkoutWeight,
+				createdAt: transactions.createdAt,
+				rn: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${transactions.gameId} ORDER BY ${transactions.createdAt} DESC)`.as('rn')
+			})
+			.from(transactions)
+			.where(eq(transactions.type, 'checkout'))
+			.as('latest_checkout');
+
+		// Build WHERE conditions
+		const conditions: SQL[] = [ne(games.status, 'retired')];
+
+		if (filters.status) {
+			conditions.push(eq(games.status, filters.status));
+		}
+		if (filters.gameType) {
+			conditions.push(eq(games.gameType, filters.gameType));
+		}
+		if (filters.titleSearch) {
+			conditions.push(ilike(games.title, `%${filters.titleSearch}%`));
+		}
+		if (filters.attendeeSearch) {
+			conditions.push(
+				sql`(${ilike(latestCheckout.attendeeFirstName, `%${filters.attendeeSearch}%`)} OR ${ilike(latestCheckout.attendeeLastName, `%${filters.attendeeSearch}%`)})`
+			);
+		}
+
+		// The LEFT JOIN condition: match on game_id AND rn = 1 (latest checkout only)
+		const joinCondition = and(
+			eq(games.id, latestCheckout.gameId),
+			eq(latestCheckout.rn, 1)
+		);
+
+		const whereClause = and(...conditions);
+
+		// Count total matching records
+		const countResult = await db
+			.select({ total: count() })
+			.from(games)
+			.leftJoin(latestCheckout, joinCondition)
+			.where(whereClause);
+
+		const total = countResult[0]?.total ?? 0;
+
+		// Build sort expression
+		let orderClause;
+		if (sort) {
+			const dir = sort.direction === 'desc' ? desc : asc;
+			switch (sort.field) {
+				case 'title':
+					orderClause = [dir(games.title)];
+					break;
+				case 'game_type':
+					orderClause = [dir(games.gameType)];
+					break;
+				case 'status':
+					orderClause = [dir(games.status)];
+					break;
+				case 'bgg_id':
+					orderClause = [dir(games.bggId)];
+					break;
+				default:
+					orderClause = [asc(games.title)];
+			}
+		} else {
+			orderClause = [asc(games.title)];
+		}
+
+		const items = await db
+			.select({
+				id: games.id,
+				title: games.title,
+				bggId: games.bggId,
+				copyNumber: games.copyNumber,
+				totalCopies: totalCopiesExpr,
+				status: games.status,
+				gameType: games.gameType,
+				version: games.version,
+				attendeeFirstName: latestCheckout.attendeeFirstName,
+				attendeeLastName: latestCheckout.attendeeLastName,
+				idType: latestCheckout.idType,
+				checkoutWeight: latestCheckout.checkoutWeight,
+				checkoutAt: latestCheckout.createdAt
+			})
+			.from(games)
+			.leftJoin(latestCheckout, joinCondition)
 			.where(whereClause)
 			.orderBy(...orderClause)
 			.limit(pagination.pageSize)

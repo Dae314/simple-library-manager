@@ -5,44 +5,44 @@ test.describe('Checkout → Checkin Flow', () => {
 		const game = await helpers.createGame(`${helpers.prefix}_HappyPath`);
 
 		// --- Checkout ---
-		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 		const row = helpers.tableRow(page, game.title).first();
 		await expect(row).toBeVisible();
 		await row.getByRole('button', { name: 'Checkout' }).click();
 
-		const checkoutForm = page.locator('section[aria-label="Checkout form"]');
-		await expect(checkoutForm).toBeVisible();
+		const checkoutDialog = page.locator('dialog.checkout-dialog');
+		await expect(checkoutDialog).toBeVisible();
 
-		await checkoutForm.locator('#attendeeFirstName').fill('Jane');
-		await checkoutForm.locator('#attendeeLastName').fill('Doe');
-		await checkoutForm.locator('#idType').selectOption({ index: 1 });
-		await checkoutForm.locator('#checkoutWeight').fill('32.5');
-		await checkoutForm.getByRole('button', { name: 'Confirm Checkout' }).click();
+		await checkoutDialog.locator('#checkout-attendeeFirstName').fill('Jane');
+		await checkoutDialog.locator('#checkout-attendeeLastName').fill('Doe');
+		await checkoutDialog.locator('#checkout-idType').selectOption({ index: 1 });
+		await checkoutDialog.locator('#checkout-checkoutWeight').fill('32.5');
+		await checkoutDialog.getByRole('button', { name: 'Confirm Checkout' }).click();
 
 		await expect(page.getByText('Game checked out successfully!')).toBeVisible();
 
 		// --- Checkin ---
-		await page.goto('/checkin');
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}&status=checked_out`);
 		const checkinRow = helpers.tableRow(page, game.title).first();
 		await expect(checkinRow).toBeVisible();
 		await expect(checkinRow).toContainText('Jane Doe');
 
 		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
-		const checkinForm = page.locator('section[aria-label="Check in form"]');
-		await expect(checkinForm).toBeVisible();
+		const checkinDialog = page.locator('dialog.checkin-dialog');
+		await expect(checkinDialog).toBeVisible();
 
-		const idReminder = checkinForm.locator('.id-reminder');
+		const idReminder = checkinDialog.locator('.id-reminder');
 		await expect(idReminder).toBeVisible();
 		await expect(idReminder).toContainText('Jane Doe');
 
-		await checkinForm.locator('#checkinWeight').fill('32.5');
-		await checkinForm.getByRole('button', { name: 'Confirm Check In' }).click();
+		await checkinDialog.locator('#checkin-checkinWeight').fill('32.5');
+		await checkinDialog.getByRole('button', { name: 'Confirm Check In' }).click();
 
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 
 		// Verify the game is back as available
-		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 		await expect(
 			helpers.tableRow(page, game.title).first()
 		).toBeVisible();
@@ -55,21 +55,21 @@ test.describe('Checkout → Checkin Flow', () => {
 		await helpers.checkoutGame(game.title, 'Bob', 'Smith', '32.5');
 
 		// Checkin with weight 30.0 (difference 2.5 > tolerance 0.5 → red)
-		await page.goto('/checkin');
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}&status=checked_out`);
 		const checkinRow = helpers.tableRow(page, game.title).first();
 		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
-		const checkinForm = page.locator('section[aria-label="Check in form"]');
-		await expect(checkinForm).toBeVisible();
+		const checkinDialog = page.locator('dialog.checkin-dialog');
+		await expect(checkinDialog).toBeVisible();
 
-		await checkinForm.locator('#checkinWeight').fill('30.0');
+		await checkinDialog.locator('#checkin-checkinWeight').fill('30.0');
 
-		const weightWarning = checkinForm.locator('.inline-weight-warning');
+		const weightWarning = checkinDialog.locator('.inline-weight-warning');
 		await expect(weightWarning).toBeVisible();
 		await expect(weightWarning).toHaveClass(/warning-red/);
 		await expect(weightWarning).toContainText('Exceeds Tolerance');
 
-		await checkinForm.getByRole('button', { name: 'Confirm Check In' }).click();
+		await checkinDialog.getByRole('button', { name: 'Confirm Check In' }).click();
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 	});
 
@@ -80,21 +80,21 @@ test.describe('Checkout → Checkin Flow', () => {
 
 		await helpers.checkoutGame(game.title, 'Alice', 'Jones', '10.0');
 
-		await page.goto('/checkin');
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}&status=checked_out`);
 		const checkinRow = helpers.tableRow(page, game.title).first();
 		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
-		const checkinForm = page.locator('section[aria-label="Check in form"]');
-		await expect(checkinForm).toBeVisible();
+		const checkinDialog = page.locator('dialog.checkin-dialog');
+		await expect(checkinDialog).toBeVisible();
 
-		await checkinForm.locator('#checkinWeight').fill('9.7');
+		await checkinDialog.locator('#checkin-checkinWeight').fill('9.7');
 
-		const weightWarning = checkinForm.locator('.inline-weight-warning');
+		const weightWarning = checkinDialog.locator('.inline-weight-warning');
 		await expect(weightWarning).toBeVisible();
 		await expect(weightWarning).toHaveClass(/warning-yellow/);
 		await expect(weightWarning).toContainText('Minor Weight Discrepancy');
 
-		await checkinForm.getByRole('button', { name: 'Confirm Check In' }).click();
+		await checkinDialog.getByRole('button', { name: 'Confirm Check In' }).click();
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 	});
 
@@ -105,19 +105,19 @@ test.describe('Checkout → Checkin Flow', () => {
 
 		await helpers.checkoutGame(game.title, 'Carol', 'White', '32.5');
 
-		await page.goto('/checkin');
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}&status=checked_out`);
 		const checkinRow = helpers.tableRow(page, game.title).first();
 		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
-		const checkinForm = page.locator('section[aria-label="Check in form"]');
-		await expect(checkinForm).toBeVisible();
+		const checkinDialog = page.locator('dialog.checkin-dialog');
+		await expect(checkinDialog).toBeVisible();
 
-		await checkinForm.locator('#checkinWeight').fill('32.4');
+		await checkinDialog.locator('#checkin-checkinWeight').fill('32.4');
 
-		const weightWarning = checkinForm.locator('.inline-weight-warning');
+		const weightWarning = checkinDialog.locator('.inline-weight-warning');
 		await expect(weightWarning).not.toBeVisible();
 
-		await checkinForm.getByRole('button', { name: 'Confirm Check In' }).click();
+		await checkinDialog.getByRole('button', { name: 'Confirm Check In' }).click();
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 	});
 
@@ -128,39 +128,39 @@ test.describe('Checkout → Checkin Flow', () => {
 
 		await helpers.checkoutGame(game.title, 'Dave', 'Brown', '10.0');
 
-		await page.goto('/checkin');
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}&status=checked_out`);
 		const checkinRow = helpers.tableRow(page, game.title).first();
 		await checkinRow.getByRole('button', { name: 'Check In' }).click();
 
-		const checkinForm = page.locator('section[aria-label="Check in form"]');
-		await expect(checkinForm).toBeVisible();
+		const checkinDialog = page.locator('dialog.checkin-dialog');
+		await expect(checkinDialog).toBeVisible();
 
-		await checkinForm.locator('#checkinWeight').fill('10.3');
+		await checkinDialog.locator('#checkin-checkinWeight').fill('10.3');
 
-		const weightWarning = checkinForm.locator('.inline-weight-warning');
+		const weightWarning = checkinDialog.locator('.inline-weight-warning');
 		await expect(weightWarning).toBeVisible();
 		await expect(weightWarning).toHaveClass(/warning-yellow/);
 		await expect(weightWarning).toContainText('Minor Weight Discrepancy');
 
-		await checkinForm.getByRole('button', { name: 'Confirm Check In' }).click();
+		await checkinDialog.getByRole('button', { name: 'Confirm Check In' }).click();
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 	});
 
 	test('validation errors appear when submitting checkout without required fields', async ({ page, helpers }) => {
 		const game = await helpers.createGame(`${helpers.prefix}_Validate`);
 
-		await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+		await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 		const row = helpers.tableRow(page, game.title).first();
 		await row.getByRole('button', { name: 'Checkout' }).click();
 
-		const checkoutForm = page.locator('section[aria-label="Checkout form"]');
-		await expect(checkoutForm).toBeVisible();
+		const checkoutDialog = page.locator('dialog.checkout-dialog');
+		await expect(checkoutDialog).toBeVisible();
 
 		// Submit empty form
-		await checkoutForm.locator('#attendeeFirstName').fill('');
-		await checkoutForm.locator('#attendeeLastName').fill('');
-		await checkoutForm.getByRole('button', { name: 'Confirm Checkout' }).click();
+		await checkoutDialog.locator('#checkout-attendeeFirstName').fill('');
+		await checkoutDialog.locator('#checkout-attendeeLastName').fill('');
+		await checkoutDialog.getByRole('button', { name: 'Confirm Checkout' }).click();
 
-		await expect(checkoutForm.locator('.field-error').first()).toBeVisible();
+		await expect(checkoutDialog.locator('.field-error').first()).toBeVisible();
 	});
 });

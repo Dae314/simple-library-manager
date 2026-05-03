@@ -1,11 +1,11 @@
 import { test, expect } from './fixtures';
 
 test.describe('Retired Games Visibility', () => {
-	test('retired game disappears from checkout page', async ({ page, helpers }) => {
+	test('retired game disappears from library page', async ({ page, helpers }) => {
 		const game = await helpers.createGame(`${helpers.prefix}_RetVis1`);
 
-		// Verify visible on checkout
-		await page.goto(`/checkout?search=${game.title}`);
+		// Verify visible on library
+		await page.goto(`/library?search=${game.title}`);
 		await expect(helpers.tableRow(page, game.title)).toBeVisible();
 
 		// Retire via management
@@ -13,19 +13,19 @@ test.describe('Retired Games Visibility', () => {
 		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
 		await expect(page.getByText(`Retired "${game.title}"`)).toBeVisible();
 
-		// Should be gone from checkout
-		await page.goto(`/checkout?search=${game.title}`);
+		// Should be gone from library
+		await page.goto(`/library?search=${game.title}`);
 		await expect(helpers.tableRow(page, game.title)).not.toBeVisible();
 	});
 
-	test('retired game disappears from checkin page', async ({ page, helpers }) => {
+	test('retired checked-out game disappears from library page', async ({ page, helpers }) => {
 		const game = await helpers.createGame(`${helpers.prefix}_RetVis2`);
 
-		// Checkout the game so it appears on checkin
+		// Checkout the game so it appears as checked out
 		await helpers.checkoutGame(game.title, 'Retire', 'Test', '20');
 
-		// Verify visible on checkin
-		await page.goto('/checkin');
+		// Verify visible on library
+		await page.goto(`/library?search=${game.title}`);
 		await expect(helpers.tableRow(page, game.title)).toBeVisible();
 
 		// Retire via management
@@ -33,12 +33,12 @@ test.describe('Retired Games Visibility', () => {
 		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
 		await expect(page.getByText(`Retired "${game.title}"`)).toBeVisible();
 
-		// Should be gone from checkin
-		await page.goto('/checkin');
+		// Should be gone from library
+		await page.goto(`/library?search=${game.title}`);
 		await expect(helpers.tableRow(page, game.title)).not.toBeVisible();
 	});
 
-	test('restoring a retired game makes it appear on checkout page again', async ({ page, helpers }) => {
+	test('restoring a retired game makes it appear on library page again', async ({ page, helpers }) => {
 		const game = await helpers.createGame(`${helpers.prefix}_RetVis3`);
 
 		// Retire
@@ -46,8 +46,8 @@ test.describe('Retired Games Visibility', () => {
 		await page.locator(`button[aria-label="Retire ${game.title}"]`).click();
 		await expect(page.getByText(`Retired "${game.title}"`)).toBeVisible();
 
-		// Verify NOT on checkout
-		await page.goto(`/checkout?search=${game.title}`);
+		// Verify NOT on library
+		await page.goto(`/library?search=${game.title}`);
 		await expect(helpers.tableRow(page, game.title)).not.toBeVisible();
 
 		// Restore — need to filter by retired status to see the game
@@ -56,8 +56,8 @@ test.describe('Retired Games Visibility', () => {
 		await page.locator(`button[aria-label="Restore ${game.title}"]`).click();
 		await expect(page.getByText('Restored')).toBeVisible();
 
-		// Should be back on checkout
-		await page.goto(`/checkout?search=${game.title}`);
+		// Should be back on library
+		await page.goto(`/library?search=${game.title}`);
 		await expect(helpers.tableRow(page, game.title)).toBeVisible();
 	});
 

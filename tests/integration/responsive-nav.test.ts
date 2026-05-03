@@ -7,18 +7,20 @@ test.describe('Responsive Navigation', () => {
 			await page.goto('/');
 		});
 
-		test('all nav links are visible', async ({ page }) => {
+		test('nav links are visible with Library and Manage', async ({ page }) => {
 			const nav = page.locator('nav[aria-label="Main navigation"]');
 			await expect(nav).toBeVisible();
 
-			await expect(nav.locator('a.nav-link', { hasText: 'Checkout' })).toBeVisible();
-			await expect(nav.locator('a.nav-link', { hasText: 'Checkin' })).toBeVisible();
+			const navLinks = nav.locator('.nav-links');
+			await expect(navLinks.locator('a.nav-link', { hasText: 'Library' })).toBeVisible();
+			await expect(navLinks.locator('a.nav-link', { hasText: 'Manage' })).toBeVisible();
+		});
 
-			const desktopLinks = nav.locator('.desktop-links');
-			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Catalog' })).toBeVisible();
-			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Statistics' })).toBeVisible();
-			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Management' })).toBeVisible();
-			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Config' })).toBeVisible();
+		test('Manage link has gear icon', async ({ page }) => {
+			const nav = page.locator('nav[aria-label="Main navigation"]');
+			const manageLink = nav.locator('.nav-links a.manage-link', { hasText: 'Manage' });
+			await expect(manageLink).toBeVisible();
+			await expect(manageLink.locator('svg.gear-icon')).toBeVisible();
 		});
 
 		test('hamburger button is not visible', async ({ page }) => {
@@ -29,26 +31,27 @@ test.describe('Responsive Navigation', () => {
 		test('clicking nav links navigates to correct pages', async ({ page }) => {
 			const nav = page.locator('nav[aria-label="Main navigation"]');
 
-			await nav.locator('a.nav-link', { hasText: 'Checkout' }).click();
-			await expect(page).toHaveURL(/\/checkout/);
+			await nav.locator('.nav-links a.nav-link', { hasText: 'Library' }).click();
+			await expect(page).toHaveURL(/\/library/);
 
-			await nav.locator('a.nav-link', { hasText: 'Checkin' }).click();
-			await expect(page).toHaveURL(/\/checkin/);
+			await nav.locator('.nav-links a.nav-link', { hasText: 'Manage' }).click();
+			await expect(page).toHaveURL(/\/management/);
+		});
 
-			await nav.locator('.desktop-links a.nav-link', { hasText: 'Catalog' }).click();
-			await expect(page).toHaveURL(/\/catalog/);
-
-			await nav.locator('.desktop-links a.nav-link', { hasText: 'Statistics' }).click();
-			await expect(page).toHaveURL(/\/statistics/);
+		test('brand link navigates to landing page', async ({ page }) => {
+			await page.goto('/library');
+			const nav = page.locator('nav[aria-label="Main navigation"]');
+			await nav.locator('a.brand').click();
+			await expect(page).toHaveURL(/\/$/);
 		});
 
 		test('active page is highlighted', async ({ page }) => {
-			await page.goto('/checkout');
+			await page.goto('/library');
 			const nav = page.locator('nav[aria-label="Main navigation"]');
-			const checkoutLink = nav.locator('a.nav-link', { hasText: 'Checkout' });
-			await expect(checkoutLink).toHaveClass(/active/);
+			const libraryLink = nav.locator('.nav-links a.nav-link', { hasText: 'Library' });
+			await expect(libraryLink).toHaveClass(/active/);
 
-			await expect(nav.locator('a.nav-link', { hasText: 'Checkin' })).not.toHaveClass(/active/);
+			await expect(nav.locator('.nav-links a.nav-link', { hasText: 'Manage' })).not.toHaveClass(/active/);
 		});
 	});
 
@@ -58,15 +61,9 @@ test.describe('Responsive Navigation', () => {
 			await page.goto('/');
 		});
 
-		test('primary links are visible', async ({ page }) => {
-			const nav = page.locator('nav[aria-label="Main navigation"]');
-			await expect(nav.locator('a.nav-link', { hasText: 'Checkout' })).toBeVisible();
-			await expect(nav.locator('a.nav-link', { hasText: 'Checkin' })).toBeVisible();
-		});
-
-		test('secondary desktop links are not visible', async ({ page }) => {
-			const desktopLinks = page.locator('.desktop-links');
-			await expect(desktopLinks).not.toBeVisible();
+		test('nav-links are not visible on mobile', async ({ page }) => {
+			const navLinks = page.locator('.nav-links');
+			await expect(navLinks).not.toBeVisible();
 		});
 
 		test('hamburger button is visible', async ({ page }) => {
@@ -75,7 +72,7 @@ test.describe('Responsive Navigation', () => {
 			await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
 		});
 
-		test('clicking hamburger opens mobile menu with secondary links', async ({ page }) => {
+		test('clicking hamburger opens mobile menu with Library and Manage links', async ({ page }) => {
 			const hamburger = page.getByRole('button', { name: 'Toggle navigation menu' });
 			await hamburger.click();
 
@@ -84,10 +81,18 @@ test.describe('Responsive Navigation', () => {
 			const mobileMenu = page.locator('#mobile-menu[role="menu"]');
 			await expect(mobileMenu).toBeVisible();
 
-			await expect(mobileMenu.locator('a[role="menuitem"]', { hasText: 'Catalog' })).toBeVisible();
-			await expect(mobileMenu.locator('a[role="menuitem"]', { hasText: 'Statistics' })).toBeVisible();
-			await expect(mobileMenu.locator('a[role="menuitem"]', { hasText: 'Management' })).toBeVisible();
-			await expect(mobileMenu.locator('a[role="menuitem"]', { hasText: 'Config' })).toBeVisible();
+			await expect(mobileMenu.locator('a[role="menuitem"]', { hasText: 'Library' })).toBeVisible();
+			await expect(mobileMenu.locator('a[role="menuitem"]', { hasText: 'Manage' })).toBeVisible();
+		});
+
+		test('mobile Manage link has gear icon', async ({ page }) => {
+			const hamburger = page.getByRole('button', { name: 'Toggle navigation menu' });
+			await hamburger.click();
+
+			const mobileMenu = page.locator('#mobile-menu[role="menu"]');
+			const manageLink = mobileMenu.locator('a[role="menuitem"]', { hasText: 'Manage' });
+			await expect(manageLink).toBeVisible();
+			await expect(manageLink.locator('svg.gear-icon')).toBeVisible();
 		});
 
 		test('clicking a mobile menu link navigates and closes the menu', async ({ page }) => {
@@ -97,8 +102,8 @@ test.describe('Responsive Navigation', () => {
 			const mobileMenu = page.locator('#mobile-menu[role="menu"]');
 			await expect(mobileMenu).toBeVisible();
 
-			await mobileMenu.locator('a[role="menuitem"]', { hasText: 'Catalog' }).click();
-			await expect(page).toHaveURL(/\/catalog/);
+			await mobileMenu.locator('a[role="menuitem"]', { hasText: 'Library' }).click();
+			await expect(page).toHaveURL(/\/library/);
 
 			await expect(page.locator('#mobile-menu')).not.toBeVisible();
 		});
@@ -122,17 +127,16 @@ test.describe('Responsive Navigation', () => {
 			await page.goto('/');
 		});
 
-		test('behaves like desktop — all links visible, no hamburger', async ({ page }) => {
+		test('behaves like desktop — Library and Manage links visible, no hamburger', async ({ page }) => {
 			const nav = page.locator('nav[aria-label="Main navigation"]');
 
-			await expect(nav.locator('a.nav-link', { hasText: 'Checkout' })).toBeVisible();
-			await expect(nav.locator('a.nav-link', { hasText: 'Checkin' })).toBeVisible();
+			const navLinks = nav.locator('.nav-links');
+			await expect(navLinks.locator('a.nav-link', { hasText: 'Library' })).toBeVisible();
+			await expect(navLinks.locator('a.nav-link', { hasText: 'Manage' })).toBeVisible();
 
-			const desktopLinks = nav.locator('.desktop-links');
-			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Catalog' })).toBeVisible();
-			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Statistics' })).toBeVisible();
-			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Management' })).toBeVisible();
-			await expect(desktopLinks.locator('a.nav-link', { hasText: 'Config' })).toBeVisible();
+			// Verify gear icon on Manage link
+			const manageLink = navLinks.locator('a.manage-link', { hasText: 'Manage' });
+			await expect(manageLink.locator('svg.gear-icon')).toBeVisible();
 
 			const hamburger = page.getByRole('button', { name: 'Toggle navigation menu' });
 			await expect(hamburger).not.toBeVisible();

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300">
+  <defs>
+    <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="1.5" fill="rgba(255,255,255,0.12)" />
+    </pattern>
+  </defs>
+  <rect width="1200" height="300" fill="url(#heroGradient)" />
+  <rect width="1200" height="300" fill="url(#dots)" />
+  <!-- Decorative dice icon (left) -->
+  <g transform="translate(180, 110)" opacity="0.15">
+    <rect x="0" y="0" width="80" height="80" rx="12" fill="white" />
+    <circle cx="20" cy="20" r="6" fill="url(#heroGradient)" />
+    <circle cx="60" cy="20" r="6" fill="url(#heroGradient)" />
+    <circle cx="40" cy="40" r="6" fill="url(#heroGradient)" />
+    <circle cx="20" cy="60" r="6" fill="url(#heroGradient)" />
+    <circle cx="60" cy="60" r="6" fill="url(#heroGradient)" />
+  </g>
+  <!-- Decorative meeple icon (right) -->
+  <g transform="translate(940, 100)" opacity="0.15">
+    <circle cx="40" cy="15" r="15" fill="white" />
+    <path d="M40,35 C20,35 5,60 5,85 L15,85 L20,55 L35,70 L40,85 L45,70 L60,55 L65,85 L75,85 C75,60 60,35 40,35Z" fill="white" />
+  </g>
+  <!-- Main text -->
+  <text x="600" y="140" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="42" font-weight="700" fill="white" letter-spacing="1">
+    Board Game Library
+  </text>
+  <text x="600" y="185" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" fill="rgba(255,255,255,0.75)" letter-spacing="2">
+    Replace this image with your convention banner
+  </text>
+  <!-- Subtle bottom border -->
+  <rect x="0" y="296" width="1200" height="4" fill="rgba(0,0,0,0.15)" />
+</svg>

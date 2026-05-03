@@ -150,77 +150,77 @@ test.describe('Bad Input Handling', () => {
 		test('rejects checkout with empty first name', async ({ page, helpers }) => {
 			const game = await helpers.createGame(`${helpers.prefix}_NoFirst`);
 
-			await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+			await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 			const row = helpers.tableRow(page, game.title).first();
 			await row.getByRole('button', { name: 'Checkout' }).click();
 
-			const form = page.locator('section[aria-label="Checkout form"]');
-			await expect(form).toBeVisible();
+			const dialog = page.locator('dialog.checkout-dialog');
+			await expect(dialog).toBeVisible();
 
-			await form.locator('#attendeeFirstName').fill('');
-			await form.locator('#attendeeLastName').fill('Doe');
-			await form.locator('#idType').selectOption({ index: 1 });
-			await form.locator('#checkoutWeight').fill('30');
-			await form.getByRole('button', { name: 'Confirm Checkout' }).click();
+			await dialog.locator('#checkout-attendeeFirstName').fill('');
+			await dialog.locator('#checkout-attendeeLastName').fill('Doe');
+			await dialog.locator('#checkout-idType').selectOption({ index: 1 });
+			await dialog.locator('#checkout-checkoutWeight').fill('30');
+			await dialog.getByRole('button', { name: 'Confirm Checkout' }).click();
 
-			await expect(form.locator('.field-error').first()).toBeVisible();
+			await expect(dialog.locator('.field-error').first()).toBeVisible();
 		});
 
 		test('rejects checkout with empty last name', async ({ page, helpers }) => {
 			const game = await helpers.createGame(`${helpers.prefix}_NoLast`);
 
-			await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+			await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 			const row = helpers.tableRow(page, game.title).first();
 			await row.getByRole('button', { name: 'Checkout' }).click();
 
-			const form = page.locator('section[aria-label="Checkout form"]');
-			await expect(form).toBeVisible();
+			const dialog = page.locator('dialog.checkout-dialog');
+			await expect(dialog).toBeVisible();
 
-			await form.locator('#attendeeFirstName').fill('Jane');
-			await form.locator('#attendeeLastName').fill('');
-			await form.locator('#idType').selectOption({ index: 1 });
-			await form.locator('#checkoutWeight').fill('30');
-			await form.getByRole('button', { name: 'Confirm Checkout' }).click();
+			await dialog.locator('#checkout-attendeeFirstName').fill('Jane');
+			await dialog.locator('#checkout-attendeeLastName').fill('');
+			await dialog.locator('#checkout-idType').selectOption({ index: 1 });
+			await dialog.locator('#checkout-checkoutWeight').fill('30');
+			await dialog.getByRole('button', { name: 'Confirm Checkout' }).click();
 
-			await expect(form.locator('.field-error').first()).toBeVisible();
+			await expect(dialog.locator('.field-error').first()).toBeVisible();
 		});
 
 		test('rejects checkout with zero weight', async ({ page, helpers }) => {
 			const game = await helpers.createGame(`${helpers.prefix}_ZeroWt`);
 
-			await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+			await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 			const row = helpers.tableRow(page, game.title).first();
 			await row.getByRole('button', { name: 'Checkout' }).click();
 
-			const form = page.locator('section[aria-label="Checkout form"]');
-			await expect(form).toBeVisible();
+			const dialog = page.locator('dialog.checkout-dialog');
+			await expect(dialog).toBeVisible();
 
-			await form.locator('#attendeeFirstName').fill('Jane');
-			await form.locator('#attendeeLastName').fill('Doe');
-			await form.locator('#idType').selectOption({ index: 1 });
-			await form.locator('#checkoutWeight').fill('0');
-			await form.getByRole('button', { name: 'Confirm Checkout' }).click();
+			await dialog.locator('#checkout-attendeeFirstName').fill('Jane');
+			await dialog.locator('#checkout-attendeeLastName').fill('Doe');
+			await dialog.locator('#checkout-idType').selectOption({ index: 1 });
+			await dialog.locator('#checkout-checkoutWeight').fill('0');
+			await dialog.getByRole('button', { name: 'Confirm Checkout' }).click();
 
-			await expect(form.locator('.field-error').first()).toBeVisible();
+			await expect(dialog.locator('.field-error').first()).toBeVisible();
 		});
 
 		test('rejects checkout with negative weight', async ({ page, helpers }) => {
 			const game = await helpers.createGame(`${helpers.prefix}_NegWt`);
 
-			await page.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+			await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 			const row = helpers.tableRow(page, game.title).first();
 			await row.getByRole('button', { name: 'Checkout' }).click();
 
-			const form = page.locator('section[aria-label="Checkout form"]');
-			await expect(form).toBeVisible();
+			const dialog = page.locator('dialog.checkout-dialog');
+			await expect(dialog).toBeVisible();
 
-			await form.locator('#attendeeFirstName').fill('Jane');
-			await form.locator('#attendeeLastName').fill('Doe');
-			await form.locator('#idType').selectOption({ index: 1 });
-			await form.locator('#checkoutWeight').fill('-5');
-			await form.getByRole('button', { name: 'Confirm Checkout' }).click();
+			await dialog.locator('#checkout-attendeeFirstName').fill('Jane');
+			await dialog.locator('#checkout-attendeeLastName').fill('Doe');
+			await dialog.locator('#checkout-idType').selectOption({ index: 1 });
+			await dialog.locator('#checkout-checkoutWeight').fill('-5');
+			await dialog.getByRole('button', { name: 'Confirm Checkout' }).click();
 
-			await expect(form.locator('.field-error').first()).toBeVisible();
+			await expect(dialog.locator('.field-error').first()).toBeVisible();
 		});
 	});
 
@@ -229,34 +229,34 @@ test.describe('Bad Input Handling', () => {
 			const game = await helpers.createGame(`${helpers.prefix}_CIZero`);
 			await helpers.checkoutGame(game.title, 'Bob', 'Smith', '30');
 
-			await page.goto('/checkin');
+			await page.goto(`/library?search=${encodeURIComponent(game.title)}&status=checked_out`);
 			const row = helpers.tableRow(page, game.title).first();
 			await row.getByRole('button', { name: 'Check In' }).click();
 
-			const form = page.locator('section[aria-label="Check in form"]');
-			await expect(form).toBeVisible();
+			const dialog = page.locator('dialog.checkin-dialog');
+			await expect(dialog).toBeVisible();
 
-			await form.locator('#checkinWeight').fill('0');
-			await form.getByRole('button', { name: 'Confirm Check In' }).click();
+			await dialog.locator('#checkin-checkinWeight').fill('0');
+			await dialog.getByRole('button', { name: 'Confirm Check In' }).click();
 
-			await expect(form.locator('.field-error').first()).toBeVisible();
+			await expect(dialog.locator('.field-error').first()).toBeVisible();
 		});
 
 		test('rejects checkin with negative weight', async ({ page, helpers }) => {
 			const game = await helpers.createGame(`${helpers.prefix}_CINeg`);
 			await helpers.checkoutGame(game.title, 'Bob', 'Smith', '30');
 
-			await page.goto('/checkin');
+			await page.goto(`/library?search=${encodeURIComponent(game.title)}&status=checked_out`);
 			const row = helpers.tableRow(page, game.title).first();
 			await row.getByRole('button', { name: 'Check In' }).click();
 
-			const form = page.locator('section[aria-label="Check in form"]');
-			await expect(form).toBeVisible();
+			const dialog = page.locator('dialog.checkin-dialog');
+			await expect(dialog).toBeVisible();
 
-			await form.locator('#checkinWeight').fill('-2');
-			await form.getByRole('button', { name: 'Confirm Check In' }).click();
+			await dialog.locator('#checkin-checkinWeight').fill('-2');
+			await dialog.getByRole('button', { name: 'Confirm Check In' }).click();
 
-			await expect(form.locator('.field-error').first()).toBeVisible();
+			await expect(dialog.locator('.field-error').first()).toBeVisible();
 		});
 	});
 });

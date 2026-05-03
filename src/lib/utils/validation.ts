@@ -41,3 +41,42 @@ export function parseNumber(value: string | null | undefined): number | null {
 	const n = Number(value);
 	return isFinite(n) ? n : null;
 }
+
+// --- Weight Warning ---
+
+export type WeightWarningLevel = 'red' | 'yellow' | 'none';
+
+/**
+ * Determines the weight warning level for a checkin.
+ *
+ * - 'red': weight difference exceeds the configured warning threshold (tolerance)
+ * - 'yellow': weight is outside 2% of checkout weight but within the threshold,
+ *             OR checkin weight is more than 2% heavier than checkout weight
+ * - 'none': weight is within 2% of checkout weight
+ */
+export function getWeightWarningLevel(
+	checkoutWeight: number,
+	checkinWeight: number,
+	tolerance: number
+): WeightWarningLevel {
+	const difference = Math.abs(checkinWeight - checkoutWeight);
+	const twoPercentThreshold = checkoutWeight * 0.02;
+
+	// Red: exceeds the configured warning threshold
+	if (difference > tolerance) {
+		return 'red';
+	}
+
+	// Within 2% of checkout weight — no warning
+	if (difference <= twoPercentThreshold) {
+		return 'none';
+	}
+
+	// Between 2% and tolerance (lighter or heavier) — yellow
+	return 'yellow';
+}
+
+/** @deprecated Use getWeightWarningLevel instead */
+export function shouldWarnWeight(checkoutWeight: number, checkinWeight: number, tolerance: number): boolean {
+	return getWeightWarningLevel(checkoutWeight, checkinWeight, tolerance) !== 'none';
+}

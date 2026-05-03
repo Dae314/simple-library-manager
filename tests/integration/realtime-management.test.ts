@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
 
 test.describe('Real-Time: Management Changes Propagate', () => {
-	test('new game created on management page appears on catalog without refresh', async ({ browser, helpers }) => {
+	test('new game created on management page appears on library without refresh', async ({ browser, helpers }) => {
 		const title = `${helpers.prefix}_RTNewGame`;
 
 		const context1 = await browser.newContext();
@@ -12,14 +12,14 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 		try {
 			// Tab 1: management games page (where we'll create the game)
 			await tab1.goto('/management/games');
-			// Tab 2: catalog page (where we'll observe the change)
-			await tab2.goto(`/catalog?search=${encodeURIComponent(title)}`);
+			// Tab 2: library page (where we'll observe the change)
+			await tab2.goto(`/library?search=${encodeURIComponent(title)}`);
 
 			// Wait for WebSocket connections
 			await expect(tab1.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
 			await expect(tab2.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
 
-			// Verify the game does NOT exist on the catalog yet
+			// Verify the game does NOT exist on the library yet
 			await expect(tab2.locator('tbody tr', { hasText: title })).not.toBeVisible();
 
 			// Create a new game via the management UI on tab 1
@@ -33,7 +33,7 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 			// Wait for redirect back to management games list
 			await expect(tab1).toHaveURL(/\/management\/games$/, { timeout: 10_000 });
 
-			// Verify the new game appears on tab 2's catalog without manual refresh
+			// Verify the new game appears on tab 2's library without manual refresh
 			await expect(
 				tab2.locator('tbody tr', { hasText: title }).first()
 			).toBeVisible({ timeout: 10_000 });
@@ -43,7 +43,7 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 		}
 	});
 
-	test('game title edit on management page propagates to catalog', async ({ browser, helpers }) => {
+	test('game title edit on management page propagates to library', async ({ browser, helpers }) => {
 		const game = await helpers.createGame(`${helpers.prefix}_RTEdit`);
 		const newTitle = `${helpers.prefix}_RTEdited`;
 
@@ -53,8 +53,8 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 		const tab2 = await context2.newPage();
 
 		try {
-			// Tab 2: catalog page showing the game
-			await tab2.goto(`/catalog?search=${encodeURIComponent(helpers.prefix)}`);
+			// Tab 2: library page showing the game
+			await tab2.goto(`/library?search=${encodeURIComponent(helpers.prefix)}`);
 			await expect(tab2.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
 			await expect(tab2.locator('tbody tr', { hasText: game.title }).first()).toBeVisible();
 

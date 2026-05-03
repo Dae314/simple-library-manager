@@ -26,21 +26,21 @@ test.describe('Real-Time: Static Pages Do Not React', () => {
 			// Verify no connection indicator on the static page
 			await expect(tab1.locator('.connection-indicator')).not.toBeVisible();
 
-			// Tab 2: perform a checkout to generate events
-			await tab2.goto(`/checkout?search=${encodeURIComponent(game.title)}`);
+			// Tab 2: perform a checkout on the library page to generate events
+			await tab2.goto(`/library?search=${encodeURIComponent(game.title)}`);
 			await expect(tab2.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
 
 			const row = tab2.locator('tbody tr', { hasText: game.title }).first();
 			await expect(row).toBeVisible();
 			await row.getByRole('button', { name: 'Checkout' }).click();
 
-			const checkoutForm = tab2.locator('section[aria-label="Checkout form"]');
-			await expect(checkoutForm).toBeVisible();
-			await checkoutForm.locator('#attendeeFirstName').fill('Static');
-			await checkoutForm.locator('#attendeeLastName').fill('Test');
-			await checkoutForm.locator('#idType').selectOption({ index: 1 });
-			await checkoutForm.locator('#checkoutWeight').fill('20.0');
-			await checkoutForm.getByRole('button', { name: 'Confirm Checkout' }).click();
+			const checkoutDialog = tab2.locator('dialog.checkout-dialog');
+			await expect(checkoutDialog).toBeVisible();
+			await checkoutDialog.locator('#checkout-attendeeFirstName').fill('Static');
+			await checkoutDialog.locator('#checkout-attendeeLastName').fill('Test');
+			await checkoutDialog.locator('#checkout-idType').selectOption({ index: 1 });
+			await checkoutDialog.locator('#checkout-checkoutWeight').fill('20.0');
+			await checkoutDialog.getByRole('button', { name: 'Confirm Checkout' }).click();
 			await expect(tab2.getByText('Game checked out successfully!')).toBeVisible();
 
 			// Wait a moment for any potential (unwanted) updates to propagate
