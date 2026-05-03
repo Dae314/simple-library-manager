@@ -1,8 +1,8 @@
 <!-- Hero image: replace static/hero.svg with your convention's own banner image -->
 <script lang="ts">
-	import { page } from '$app/stores';
+	let { data }: { data: { conventionName: string } } = $props();
 
-	const conventionName = $derived($page.data.conventionName as string);
+	const conventionName = $derived(data.conventionName);
 </script>
 
 <div class="landing">
