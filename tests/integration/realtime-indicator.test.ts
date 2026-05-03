@@ -9,7 +9,7 @@ test.describe('Real-Time: Connection Indicator Visibility', () => {
 
 	const STATIC_PAGES = [
 		{ path: '/', name: 'Home' },
-		{ path: '/statistics', name: 'Statistics' },
+		{ path: '/management/statistics', name: 'Statistics' },
 		{ path: '/management/config', name: 'Management Config' },
 		{ path: '/management/backup', name: 'Management Backup' },
 		{ path: '/management/games/new', name: 'Management Games New' }

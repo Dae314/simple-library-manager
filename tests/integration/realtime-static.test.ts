@@ -2,7 +2,7 @@ import { test, expect } from './fixtures';
 
 test.describe('Real-Time: Static Pages Do Not React', () => {
 	test('statistics page does not show connection indicator', async ({ page }) => {
-		await page.goto('/statistics');
+		await page.goto('/management/statistics');
 
 		// Static pages should NOT have a connection indicator
 		await expect(page.locator('.connection-indicator')).not.toBeVisible();
@@ -18,7 +18,7 @@ test.describe('Real-Time: Static Pages Do Not React', () => {
 
 		try {
 			// Tab 1: open the statistics page
-			await tab1.goto('/statistics');
+			await tab1.goto('/management/statistics');
 
 			// Capture the initial page content (text snapshot)
 			const initialContent = await tab1.locator('main').textContent();

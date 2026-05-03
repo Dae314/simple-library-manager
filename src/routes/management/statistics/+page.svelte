@@ -128,6 +128,7 @@
 </script>
 
 <div class="statistics-page">
+	<a href="/management" class="back-link" aria-label="Back to management">&larr; Management</a>
 	<h1>Statistics</h1>
 
 	<FilterPanel
@@ -236,6 +237,18 @@
 	.statistics-page {
 		max-width: 960px;
 		margin: 0 auto;
+	}
+
+	.back-link {
+		display: inline-block;
+		font-size: 0.85rem;
+		color: #6366f1;
+		text-decoration: none;
+		margin-bottom: 0.5rem;
+	}
+
+	.back-link:hover {
+		text-decoration: underline;
 	}
 
 	h1 {

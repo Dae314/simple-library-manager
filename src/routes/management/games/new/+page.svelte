@@ -12,6 +12,7 @@
 </script>
 
 <div class="add-game-page">
+	<a href="/management/games" class="back-link" aria-label="Back to games">&larr; Games</a>
 	<h1>Add Game</h1>
 
 	<form method="POST" use:enhance={() => {
@@ -84,6 +85,18 @@
 	.add-game-page {
 		max-width: 480px;
 		margin: 0 auto;
+	}
+
+	.back-link {
+		display: inline-block;
+		font-size: 0.85rem;
+		color: #6366f1;
+		text-decoration: none;
+		margin-bottom: 0.5rem;
+	}
+
+	.back-link:hover {
+		text-decoration: underline;
 	}
 
 	h1 {

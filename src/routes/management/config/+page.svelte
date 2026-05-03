@@ -37,6 +37,7 @@
 </script>
 
 <div class="config-page">
+	<a href="/management" class="back-link" aria-label="Back to management">&larr; Management</a>
 	<h1>Convention Configuration</h1>
 
 	<section class="config-section">
@@ -343,6 +344,18 @@
 	.config-page {
 		max-width: 560px;
 		margin: 0 auto;
+	}
+
+	.back-link {
+		display: inline-block;
+		font-size: 0.85rem;
+		color: #6366f1;
+		text-decoration: none;
+		margin-bottom: 0.5rem;
+	}
+
+	.back-link:hover {
+		text-decoration: underline;
 	}
 
 	h1 {

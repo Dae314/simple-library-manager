@@ -2,7 +2,7 @@ import { test, expect } from './fixtures';
 
 test.describe('Statistics Page', () => {
 	test('renders and displays metric cards', async ({ page }) => {
-		await page.goto('/statistics');
+		await page.goto('/management/statistics');
 
 		await expect(page.locator('.statistics-page h1')).toHaveText('Statistics');
 
@@ -16,7 +16,7 @@ test.describe('Statistics Page', () => {
 	});
 
 	test('filter panel renders all filter options', async ({ page }) => {
-		await page.goto('/statistics');
+		await page.goto('/management/statistics');
 
 		await expect(page.locator('#filter-timeRangeStart')).toBeVisible();
 		await expect(page.locator('#filter-timeRangeEnd')).toBeVisible();
@@ -33,7 +33,7 @@ test.describe('Statistics Page', () => {
 
 		await helpers.checkoutGame(game.title, 'Stats', 'Tester', '30');
 
-		await page.goto(`/statistics?gameTitle=${game.title}`);
+		await page.goto(`/management/statistics?gameTitle=${game.title}`);
 
 		const metrics = page.locator('section[aria-label="Key metrics"]');
 		await expect(metrics).toBeVisible();
@@ -50,7 +50,7 @@ test.describe('Statistics Page', () => {
 	});
 
 	test('no matching data message when filters exclude all results', async ({ page }) => {
-		await page.goto('/statistics');
+		await page.goto('/management/statistics');
 
 		await page.locator('#filter-gameTitle').fill('ZZZZZ_no_match_ever');
 		await page.waitForURL(/gameTitle=ZZZZZ_no_match_ever/);
@@ -64,7 +64,7 @@ test.describe('Statistics Page', () => {
 		await helpers.checkoutGame(game.title, 'Duration', 'Tester', '25');
 		await helpers.checkinGame(game.title, '25');
 
-		await page.goto(`/statistics?gameTitle=${game.title}`);
+		await page.goto(`/management/statistics?gameTitle=${game.title}`);
 
 		const distribution = page.locator('section[aria-label="Duration distribution"]');
 		await expect(distribution).toBeVisible();
@@ -80,7 +80,7 @@ test.describe('Statistics Page', () => {
 	});
 
 	test('filter by game type updates statistics', async ({ page }) => {
-		await page.goto('/statistics');
+		await page.goto('/management/statistics');
 
 		await page.locator('#filter-gameType').selectOption('play_and_win');
 		await page.waitForURL(/gameType=play_and_win/);

@@ -11,7 +11,7 @@ export const LIVE_UPDATE_PAGES = [
 
 export const STATIC_PAGES = [
 	'/',
-	'/statistics',
+	'/management/statistics',
 	'/management/config',
 	'/management/backup',
 	'/management/games/new'

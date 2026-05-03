@@ -140,6 +140,7 @@
 </script>
 
 <div class="edit-game-page">
+	<a href="/management/games" class="back-link" aria-label="Back to games">&larr; Games</a>
 	<h1>Edit Game <ConnectionIndicator connected={wsClient.connected} /></h1>
 
 	{#if showConflictWarning}
@@ -355,6 +356,18 @@
 	.edit-game-page {
 		max-width: 480px;
 		margin: 0 auto;
+	}
+
+	.back-link {
+		display: inline-block;
+		font-size: 0.85rem;
+		color: #6366f1;
+		text-decoration: none;
+		margin-bottom: 0.5rem;
+	}
+
+	.back-link:hover {
+		text-decoration: underline;
 	}
 
 	h1 {

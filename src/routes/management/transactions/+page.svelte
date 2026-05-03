@@ -151,8 +151,8 @@
 
 <div class="transactions-page">
 	<div class="page-header">
+		<a href="/management" class="back-link" aria-label="Back to management">&larr; Management</a>
 		<h1>Transaction Log <ConnectionIndicator connected={wsClient.connected} /></h1>
-		<a href="/management" class="btn btn-secondary">← Back to Management</a>
 	</div>
 
 	<SortableTable
@@ -312,11 +312,22 @@
 
 	.page-header {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
+		flex-direction: column;
+		align-items: flex-start;
 		margin-bottom: 1rem;
-		flex-wrap: wrap;
-		gap: 0.5rem;
+		gap: 0;
+	}
+
+	.back-link {
+		display: inline-block;
+		font-size: 0.85rem;
+		color: #6366f1;
+		text-decoration: none;
+		margin-bottom: 0.5rem;
+	}
+
+	.back-link:hover {
+		text-decoration: underline;
 	}
 
 	h1 {
@@ -324,28 +335,6 @@
 		font-weight: 700;
 		color: #111827;
 		margin: 0;
-	}
-
-	.btn {
-		display: inline-block;
-		padding: 0.4rem 0.8rem;
-		border-radius: 6px;
-		font-size: 0.85rem;
-		font-weight: 500;
-		text-decoration: none;
-		cursor: pointer;
-		border: 1px solid transparent;
-		transition: background-color 0.15s;
-	}
-
-	.btn-secondary {
-		background-color: #f3f4f6;
-		color: #374151;
-		border-color: #d1d5db;
-	}
-
-	.btn-secondary:hover {
-		background-color: #e5e7eb;
 	}
 
 	.timestamp {
@@ -482,10 +471,5 @@
 		background-color: #fde68a;
 	}
 
-	@media (max-width: 640px) {
-		.page-header {
-			flex-direction: column;
-			align-items: flex-start;
-		}
-	}
+	@media (max-width: 640px) {	}
 </style>

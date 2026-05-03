@@ -54,6 +54,11 @@
 			<span class="card-title">Backup</span>
 			<span class="card-desc">Export or import a full database backup.</span>
 		</a>
+		<a href="/management/statistics" class="nav-card">
+			<span class="card-icon" aria-hidden="true">📊</span>
+			<span class="card-title">Statistics</span>
+			<span class="card-desc">Checkout metrics, top games, duration distribution, and trends.</span>
+		</a>
 	</nav>
 </div>
 
