@@ -40,6 +40,7 @@
 			dialogEl.showModal();
 			checkinWeightInput = '';
 			attendeeTakesGameValue = 'false';
+			clientWeightError = '';
 		} else if (!open && dialogEl.open) {
 			dialogEl.close();
 		}
@@ -59,10 +60,25 @@
 		}
 	}
 
+	let clientWeightError: string = $state('');
+
 	function handleSubmit(e: SubmitEvent) {
 		e.preventDefault();
 		const form = e.target as HTMLFormElement;
 		const formData = new FormData(form);
+
+		// Validate weight before anything else (including the play-and-take dialog)
+		const rawWeight = formData.get('checkinWeight')?.toString() ?? '';
+		if (!rawWeight.trim()) {
+			clientWeightError = 'Checkin weight is required';
+			return;
+		}
+		const parsedWeight = parseFloat(rawWeight);
+		if (isNaN(parsedWeight) || !isFinite(parsedWeight) || parsedWeight <= 0) {
+			clientWeightError = 'Checkin weight must be a positive number';
+			return;
+		}
+		clientWeightError = '';
 
 		if (game.gameType === 'play_and_take') {
 			pendingFormData = formData;
@@ -151,11 +167,13 @@
 					min="0.1"
 					required
 					value={formValues?.checkinWeight ?? ''}
-					oninput={(e) => { checkinWeightInput = (e.target as HTMLInputElement).value; }}
-					class:field-invalid={formErrors?.checkinWeight}
+					oninput={(e) => { checkinWeightInput = (e.target as HTMLInputElement).value; clientWeightError = ''; }}
+					class:field-invalid={formErrors?.checkinWeight || clientWeightError}
 				/>
 				{#if formErrors?.checkinWeight}
 					<span class="field-error">{formErrors.checkinWeight}</span>
+				{:else if clientWeightError}
+					<span class="field-error">{clientWeightError}</span>
 				{/if}
 				{#if liveWeightWarning}
 					<div class="inline-weight-warning {liveWeightWarning.level === 'red' ? 'warning-red' : 'warning-yellow'}" role="alert">
