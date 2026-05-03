@@ -46,14 +46,8 @@
 	}
 
 	function handleClick(e: MouseEvent) {
-		const rect = dialogEl?.getBoundingClientRect();
-		if (!rect) return;
-		const clickedInside =
-			e.clientX >= rect.left &&
-			e.clientX <= rect.right &&
-			e.clientY >= rect.top &&
-			e.clientY <= rect.bottom;
-		if (!clickedInside) {
+		// Only close when clicking the backdrop — the dialog element itself is the target
+		if (e.target === dialogEl) {
 			onClose();
 		}
 	}
