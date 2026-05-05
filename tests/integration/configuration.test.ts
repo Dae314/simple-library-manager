@@ -47,6 +47,45 @@ test.describe('Convention Configuration Page', () => {
 		await expect(endDateGroup.locator('.field-error')).toBeVisible();
 	});
 
+	test('validation: live client-side feedback for inverted date range', async ({ page }) => {
+		await page.goto('/management/config');
+
+		// Set start date after end date — error should appear immediately without submitting
+		await page.locator('#startDate').fill('2026-07-15');
+		await page.locator('#endDate').fill('2026-07-01');
+
+		const endDateGroup = page.locator('#endDate').locator('..');
+		const errorMessage = endDateGroup.locator('.field-error');
+		await expect(errorMessage).toBeVisible();
+		await expect(errorMessage).toHaveText('End date must be on or after the start date');
+
+		// Verify the end date input has aria-invalid attribute
+		await expect(page.locator('#endDate')).toHaveAttribute('aria-invalid', 'true');
+
+		// Fix the range — error should disappear without submitting
+		await page.locator('#endDate').fill('2026-07-20');
+		await expect(errorMessage).not.toBeVisible();
+		await expect(page.locator('#endDate')).not.toHaveAttribute('aria-invalid');
+	});
+
+	test('validation: no live error when only one date is set', async ({ page }) => {
+		await page.goto('/management/config');
+
+		// Clear both dates first
+		await page.locator('#startDate').fill('');
+		await page.locator('#endDate').fill('');
+
+		// Set only end date — no error should appear
+		await page.locator('#endDate').fill('2026-03-01');
+		const endDateGroup = page.locator('#endDate').locator('..');
+		await expect(endDateGroup.locator('.field-error')).not.toBeVisible();
+
+		// Set only start date, clear end date — no error
+		await page.locator('#startDate').fill('2026-09-01');
+		await page.locator('#endDate').fill('');
+		await expect(endDateGroup.locator('.field-error')).not.toBeVisible();
+	});
+
 	test('validation: non-positive weight tolerance', async ({ page }) => {
 		await page.goto('/management/config');
 

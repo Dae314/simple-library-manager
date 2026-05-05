@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
 	import toast from 'svelte-hot-french-toast';
+	import { isEndDateValid } from '$lib/utils/validation.js';
 
 	type ConventionConfig = {
 		id: number;
@@ -24,13 +25,26 @@
 	} = $props();
 
 	let newIdType = $state('');
+	let startDateInput = $state('');
+	let endDateInput = $state('');
+
+	$effect(() => {
+		startDateInput = form?.configValues?.startDate ?? data.config.startDate ?? '';
+		endDateInput = form?.configValues?.endDate ?? data.config.endDate ?? '';
+	});
 
 	const isPasswordSet = $derived(($page.data as Record<string, unknown>).isPasswordSet as boolean);
 
+	const endDateError = $derived(
+		!isEndDateValid(startDateInput, endDateInput)
+			? 'End date must be on or after the start date'
+			: ''
+	);
+
 	const configValues = $derived({
 		conventionName: form?.configValues?.conventionName ?? data.config.conventionName,
-		startDate: form?.configValues?.startDate ?? data.config.startDate ?? '',
-		endDate: form?.configValues?.endDate ?? data.config.endDate ?? '',
+		startDate: startDateInput,
+		endDate: endDateInput,
 		weightTolerance: form?.configValues?.weightTolerance ?? String(data.config.weightTolerance),
 		weightUnit: form?.configValues?.weightUnit ?? data.config.weightUnit
 	});
@@ -80,7 +94,7 @@
 						id="startDate"
 						name="startDate"
 						type="date"
-						value={configValues.startDate}
+						bind:value={startDateInput}
 					/>
 				</div>
 				<div class="form-group">
@@ -89,10 +103,14 @@
 						id="endDate"
 						name="endDate"
 						type="date"
-						value={configValues.endDate}
+						bind:value={endDateInput}
+						aria-invalid={endDateError ? 'true' : undefined}
+						aria-describedby={endDateError ? 'endDate-error' : undefined}
 					/>
-					{#if form?.configErrors?.endDate}
-						<span class="field-error">{form.configErrors.endDate}</span>
+					{#if endDateError}
+						<span id="endDate-error" class="field-error">{endDateError}</span>
+					{:else if form?.configErrors?.endDate}
+						<span id="endDate-error" class="field-error">{form.configErrors.endDate}</span>
 					{/if}
 				</div>
 			</div>
