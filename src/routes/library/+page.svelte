@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
-	import { getContext, untrack, onMount } from 'svelte';
+	import { getContext, untrack, onMount, onDestroy } from 'svelte';
 	import toast from 'svelte-hot-french-toast';
 	import SortableTable from '$lib/components/SortableTable.svelte';
 	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import CheckoutDialog from '$lib/components/CheckoutDialog.svelte';
 	import CheckinDialog from '$lib/components/CheckinDialog.svelte';
-	import { formatDuration, formatWeight } from '$lib/utils/formatting.js';
+	import { formatDuration, formatWeight, formatDateTime } from '$lib/utils/formatting.js';
 	import { getPreferredPageSize, savePreferredPageSize } from '$lib/utils/page-size.js';
 	import type { LibraryGameRecord } from '$lib/server/services/games.js';
 	import type { EventMessage } from '$lib/server/ws/events.js';
@@ -57,6 +57,20 @@
 			};
 		} | null;
 	} = $props();
+
+	// Tick counter that increments every minute to force duration recalculation
+	let durationTick = $state(0);
+	let durationInterval: ReturnType<typeof setInterval> | undefined;
+
+	onMount(() => {
+		durationInterval = setInterval(() => {
+			durationTick++;
+		}, 60_000);
+	});
+
+	onDestroy(() => {
+		if (durationInterval) clearInterval(durationInterval);
+	});
 
 	let selectedGame: LibraryGameRecord | null = $state(null);
 	let dialogMode: 'checkout' | 'checkin' | null = $state(null);
@@ -195,7 +209,7 @@
 		return parts.join(' ') || '—';
 	}
 
-	function getCheckoutDuration(game: LibraryGameRecord): string {
+	function getCheckoutDuration(game: LibraryGameRecord, _tick: number): string {
 		if (!game.checkoutAt) return '—';
 		const checkoutDate = typeof game.checkoutAt === 'string' ? new Date(game.checkoutAt as unknown as string) : game.checkoutAt;
 		const ms = Date.now() - checkoutDate.getTime();
@@ -347,7 +361,7 @@
 			</td>
 			<td>
 				{#if game.status === 'checked_out'}
-					<span class="duration">{getCheckoutDuration(game)}</span>
+					<span class="duration" title="Checked out: {formatDateTime(game.checkoutAt)}">{getCheckoutDuration(game, durationTick)}</span>
 				{:else}
 					—
 				{/if}
