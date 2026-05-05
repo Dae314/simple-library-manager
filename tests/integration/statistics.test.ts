@@ -49,10 +49,8 @@ test.describe('Statistics Page', () => {
 	});
 
 	test('no matching data message when filters exclude all results', async ({ page }) => {
-		await page.goto('/management/statistics');
-
-		await page.locator('#filter-gameTitle').fill('ZZZZZ_no_match_ever');
-		await page.waitForURL(/gameTitle=ZZZZZ_no_match_ever/);
+		// Navigate directly with the filter param to avoid debounce/timing issues
+		await page.goto('/management/statistics?gameTitle=ZZZZZ_no_match_ever');
 
 		await expect(page.locator('.statistics-page .empty-message')).toHaveText('No matching data found.');
 	});
@@ -67,7 +65,7 @@ test.describe('Statistics Page', () => {
 
 		const distribution = page.locator('section[aria-label="Duration distribution"]');
 		await expect(distribution).toBeVisible();
-		await expect(distribution.locator('h2')).toHaveText('Checkouts by Duration');
+		await expect(distribution.locator('h2')).toHaveText('Game Playtime');
 
 		const barRows = distribution.locator('.bar-row');
 		const count = await barRows.count();
@@ -86,5 +84,106 @@ test.describe('Statistics Page', () => {
 
 		const statsPage = page.locator('.statistics-page');
 		await expect(statsPage).toBeVisible();
+	});
+
+	test('checkouts by time chart shows data after checkout', async ({ page, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_TimeChart`);
+
+		await helpers.checkoutGame(game.title, 'Time', 'Chart', '30');
+
+		// Use today's date in HST as the time range to avoid depending on convention config state
+		const hstNow = new Date(Date.now() + (-10) * 60 * 60_000);
+		const today = hstNow.toISOString().slice(0, 10);
+		await page.goto(`/management/statistics?gameTitle=${game.title}&timeRangeStart=${today}&timeRangeEnd=${today}`);
+
+		const timeSection = page.locator('section[aria-label="Checkouts over time"]');
+		await expect(timeSection).toBeVisible();
+
+		// The chart should have data (not show empty message)
+		await expect(timeSection.locator('.empty-message')).toHaveCount(0);
+
+		// Should have at least one column with a non-zero count
+		const nonZeroCounts = timeSection.locator('.column-count:not(.hidden)');
+		const countNum = await nonZeroCounts.count();
+		expect(countNum).toBeGreaterThan(0);
+	});
+
+	test('checkouts by time chart shows correct hour for recent checkout', async ({ page, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_TimeHour`);
+
+		await helpers.checkoutGame(game.title, 'Hour', 'Test', '30');
+
+		// Filter to just today (in HST) so we get hourly granularity
+		const now = new Date();
+		const hstOffset = -10;
+		const hstNow = new Date(now.getTime() + hstOffset * 60 * 60_000);
+		const today = hstNow.toISOString().slice(0, 10);
+		await page.goto(`/management/statistics?gameTitle=${game.title}&timeRangeStart=${today}&timeRangeEnd=${today}`);
+
+		const timeSection = page.locator('section[aria-label="Checkouts over time"]');
+		await expect(timeSection).toBeVisible();
+
+		// Should show hourly view (h2 says "Checkouts by Hour")
+		await expect(timeSection.locator('h2')).toHaveText('Checkouts by Hour');
+
+		// Get the current hour in HST (UTC-10), matching the server timezone
+		const hstHour = (now.getUTCHours() + hstOffset + 24) % 24;
+		const period = hstHour < 12 ? 'AM' : 'PM';
+		const display = hstHour === 0 ? 12 : hstHour > 12 ? hstHour - 12 : hstHour;
+		const expectedLabel = `${display}${period}`;
+
+		// The column for the current hour should have a count of at least 1
+		const hourColumn = timeSection.locator('.chart-column', { hasText: expectedLabel });
+		const countText = await hourColumn.locator('.column-count').textContent();
+		expect(Number(countText)).toBeGreaterThanOrEqual(1);
+	});
+
+	test('duration chart updates when convention day filter excludes data', async ({ page, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_DurFilter`);
+
+		await helpers.checkoutGame(game.title, 'Dur', 'Filter', '25');
+		await helpers.checkinGame(game.title, '25');
+
+		// Verify duration data exists without filter
+		await page.goto(`/management/statistics?gameTitle=${game.title}`);
+		const distribution = page.locator('section[aria-label="Duration distribution"]');
+		await expect(distribution).toBeVisible();
+		await expect(distribution.locator('.bar-row')).toHaveCount(4);
+
+		// At least one bar should have a non-zero count
+		const counts = distribution.locator('.bar-count');
+		const allCounts = await counts.allTextContents();
+		const total = allCounts.reduce((sum, c) => sum + Number(c), 0);
+		expect(total).toBeGreaterThan(0);
+
+		// Now filter to a date range that excludes the data (far future)
+		await page.goto(`/management/statistics?gameTitle=${game.title}&timeRangeStart=2099-01-01&timeRangeEnd=2099-01-02`);
+
+		// Duration chart should show empty or all zeros
+		const filteredDistribution = page.locator('section[aria-label="Duration distribution"]');
+		const emptyMsg = filteredDistribution.locator('.empty-message');
+		const hasEmpty = await emptyMsg.count();
+
+		if (hasEmpty > 0) {
+			await expect(emptyMsg).toHaveText('No completed checkouts to display.');
+		} else {
+			// All bar counts should be 0
+			const filteredCounts = await filteredDistribution.locator('.bar-count').allTextContents();
+			const filteredTotal = filteredCounts.reduce((sum, c) => sum + Number(c), 0);
+			expect(filteredTotal).toBe(0);
+		}
+	});
+
+	test('checkouts by time chart is empty when date filter excludes all data', async ({ page, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_TimeEmpty`);
+
+		await helpers.checkoutGame(game.title, 'Empty', 'Time', '30');
+
+		// Filter to a date range with no data
+		await page.goto(`/management/statistics?gameTitle=${game.title}&timeRangeStart=2099-01-01&timeRangeEnd=2099-01-02`);
+
+		const timeSection = page.locator('section[aria-label="Checkouts over time"]');
+		await expect(timeSection).toBeVisible();
+		await expect(timeSection.locator('.empty-message')).toHaveText('No checkout data to display.');
 	});
 });

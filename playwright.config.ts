@@ -13,7 +13,8 @@ export default defineConfig({
 	},
 	use: {
 		baseURL: 'http://localhost:8080',
-		trace: 'on-first-retry'
+		trace: 'on-first-retry',
+		timezoneId: 'Pacific/Honolulu'
 	},
 	projects: [
 		{
