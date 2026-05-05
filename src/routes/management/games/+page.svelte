@@ -257,6 +257,9 @@
 	}
 
 	function gameDisplayTitle(game: GameRecord): string {
+		if (data.filters.groupByBgg) {
+			return game.totalCopies > 1 ? `${game.title} (×${game.totalCopies})` : game.title;
+		}
 		return game.totalCopies > 1 ? `${game.title} (Copy #${game.copyNumber})` : game.title;
 	}
 

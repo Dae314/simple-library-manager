@@ -35,6 +35,7 @@ export interface GameFilters {
 	lastCheckedOutBefore?: Date;
 	lastTransactionStart?: Date;
 	lastTransactionEnd?: Date;
+	groupByBgg?: boolean;
 }
 
 export interface PaginationParams {
@@ -314,6 +315,54 @@ export const gameService = {
 		}
 
 		const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+		// Grouped by BGG title mode
+		if (filters.groupByBgg) {
+			const [{ total }] = await db
+				.select({ total: sql<number>`COUNT(DISTINCT ${games.bggId})` })
+				.from(games)
+				.where(whereClause);
+
+			const groupedTotal = Number(total) || 0;
+
+			const dir = sort?.direction === 'desc' ? desc : asc;
+			let orderExpr;
+			switch (sort?.field) {
+				case 'bgg_id':
+					orderExpr = dir(games.bggId);
+					break;
+				case 'status':
+					orderExpr = dir(sql`MIN(${games.status})`);
+					break;
+				case 'game_type':
+					orderExpr = dir(sql`MIN(${games.gameType})`);
+					break;
+				default:
+					orderExpr = dir(sql`MIN(${games.title})`);
+			}
+
+			const items = await db
+				.select({
+					id: sql<number>`MIN(${games.id})`.mapWith(Number),
+					title: sql<string>`MIN(${games.title})`,
+					bggId: games.bggId,
+					copyNumber: sql<number>`1`.mapWith(Number),
+					totalCopies: count(),
+					status: sql<string>`MIN(${games.status})`,
+					gameType: sql<string>`MIN(${games.gameType})`,
+					version: sql<number>`MIN(${games.version})`.mapWith(Number),
+					createdAt: sql<Date>`MIN(${games.createdAt})`,
+					updatedAt: sql<Date>`MAX(${games.updatedAt})`
+				})
+				.from(games)
+				.where(whereClause)
+				.groupBy(games.bggId)
+				.orderBy(orderExpr)
+				.limit(pagination.pageSize)
+				.offset((pagination.page - 1) * pagination.pageSize);
+
+			return { items, total: groupedTotal, page: pagination.page, pageSize: pagination.pageSize };
+		}
 
 		// Count total
 		const [{ total }] = await db

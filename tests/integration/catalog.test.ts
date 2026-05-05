@@ -98,8 +98,10 @@ test.describe('Library Page — Catalog Browsing', () => {
 		// Check out the game so it has an attendee
 		await helpers.checkoutGame(gameName, 'UniqueFirstXYZ', 'UniqueLastXYZ', '3.0');
 
-		// Navigate to library and search by attendee name
+		// Navigate to library and wait for the table to render (ensures onMount pageSize redirect has settled)
 		await page.goto('/library');
+		await page.locator('table').waitFor({ state: 'visible', timeout: 10_000 });
+		await page.waitForLoadState('networkidle');
 		const attendeeInput = page.locator('#filter-attendeeSearch');
 		await attendeeInput.click();
 		await attendeeInput.pressSequentially('UniqueFirstXYZ', { delay: 10 });
@@ -109,10 +111,8 @@ test.describe('Library Page — Catalog Browsing', () => {
 	});
 
 	test('empty state when no games match search', async ({ page }) => {
-		await page.goto('/library');
-		const searchInput = page.locator('#filter-search');
-		await searchInput.click();
-		await searchInput.pressSequentially('ZZZZZ_no_match_ever', { delay: 10 });
+		// Use URL-based search to avoid debounce timing issues
+		await page.goto('/library?search=ZZZZZ_no_match_ever');
 
 		await expect(page.locator('.empty-message')).toBeVisible({ timeout: 10_000 });
 		await expect(page.locator('.empty-message')).toHaveText('No games found matching your filters.');

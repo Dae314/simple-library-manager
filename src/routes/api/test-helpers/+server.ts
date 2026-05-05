@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db/index.js';
-import { games, transactions } from '$lib/server/db/schema.js';
+import { games, transactions, conventionConfig } from '$lib/server/db/schema.js';
 import { eq, inArray } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { gameService } from '$lib/server/services/games.js';
@@ -12,8 +12,9 @@ import { gameService } from '$lib/server/services/games.js';
  * their own isolated data without going through the UI.
  *
  * Actions:
- *   createGame   — insert a game, returns { id, version, copyNumber }
- *   deleteGames  — delete games (and their transactions) by id array
+ *   createGame    — insert a game, returns { id, version, copyNumber }
+ *   deleteGames   — delete games (and their transactions) by id array
+ *   updateConfig  — update convention config fields directly
  */
 export const POST: RequestHandler = async ({ request }) => {
 	if (env.ALLOW_TEST_RESET !== 'true') {
@@ -45,6 +46,20 @@ export const POST: RequestHandler = async ({ request }) => {
 				await db.delete(transactions).where(inArray(transactions.gameId, ids));
 				await db.delete(games).where(inArray(games.id, ids));
 				return json({ deleted: ids.length });
+			}
+
+			case 'updateConfig': {
+				const updates: Record<string, unknown> = {};
+				if (body.conventionName !== undefined) updates.conventionName = body.conventionName;
+				if (body.startDate !== undefined) updates.startDate = body.startDate;
+				if (body.endDate !== undefined) updates.endDate = body.endDate;
+				if (body.weightTolerance !== undefined) updates.weightTolerance = body.weightTolerance;
+				if (body.weightUnit !== undefined) updates.weightUnit = body.weightUnit;
+
+				if (Object.keys(updates).length > 0) {
+					await db.update(conventionConfig).set(updates).where(eq(conventionConfig.id, 1));
+				}
+				return json({ success: true });
 			}
 
 			default:

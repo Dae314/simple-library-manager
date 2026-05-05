@@ -1,6 +1,15 @@
 import { test, expect } from './fixtures';
 
+const BASE = 'http://localhost:8080';
+
 test.describe('Landing Page', () => {
+	// Ensure convention name is set before testing the landing page
+	test.beforeAll(async ({ request }) => {
+		await request.post(`${BASE}/api/test-helpers`, {
+			data: { action: 'updateConfig', conventionName: 'Board Game Library' }
+		});
+	});
+
 	test('displays convention name heading', async ({ page }) => {
 		await page.goto('/');
 

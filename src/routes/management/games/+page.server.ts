@@ -48,6 +48,9 @@ export const load: PageServerLoad = async ({ url }) => {
 	if (lastTransactionEnd) {
 		filters.lastTransactionEnd = new Date(lastTransactionEnd);
 	}
+	if (groupByBgg) {
+		filters.groupByBgg = true;
+	}
 
 	const validSortFields = ['title', 'bgg_id', 'status', 'game_type', 'last_transaction_date'] as const;
 	const sort: SortParams = {
