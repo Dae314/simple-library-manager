@@ -116,8 +116,8 @@
 		},
 		{ key: 'createdSince', label: 'Added Since', type: 'date' as const },
 		{ key: 'lastCheckedOutBefore', label: 'Last Checkout Before', type: 'date' as const },
-		{ key: 'lastTransactionStart', label: 'Last Tx From', type: 'date' as const },
-		{ key: 'lastTransactionEnd', label: 'Last Tx To', type: 'date' as const },
+		{ key: 'lastTransactionStart', label: 'Last Tx After', type: 'date' as const },
+		{ key: 'lastTransactionEnd', label: 'Last Tx Before', type: 'date' as const },
 		{ key: 'groupByBgg', label: 'Group by BGG Title', type: 'toggle' as const }
 	];
 
@@ -272,7 +272,7 @@
 
 <div class="management-page">
 	<div class="page-header">
-		<div class="header-left">
+		<div class="header-left">	
 			<a href="/management" class="back-link" aria-label="Back to management">&larr; Management</a>
 			<h1>Games <ConnectionIndicator connected={wsClient.connected} /></h1>
 		</div>
@@ -638,7 +638,7 @@
 
 	.page-header {
 		display: flex;
-		align-items: center;
+		align-items: flex-end;
 		justify-content: space-between;
 		margin-bottom: 1rem;
 		flex-wrap: wrap;
@@ -647,7 +647,8 @@
 
 	.header-left {
 		display: flex;
-		align-items: center;
+		flex-direction: column;
+		align-items: flex-start;
 		gap: 0.75rem;
 	}
 

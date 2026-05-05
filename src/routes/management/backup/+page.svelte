@@ -211,7 +211,8 @@
 
 	.page-header {
 		display: flex;
-		align-items: center;
+		flex-flow: column;
+		align-items: flex-start;
 		gap: 0.75rem;
 		margin-bottom: 1.5rem;
 	}

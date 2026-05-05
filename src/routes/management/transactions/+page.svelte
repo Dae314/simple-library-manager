@@ -68,14 +68,14 @@
 
 	const filterConfigs = [
 		{ key: 'gameTitle', label: 'Game Title', type: 'text' as const, placeholder: 'Search by game title...' },
+		{ key: 'attendeeName', label: 'Attendee', type: 'text' as const, placeholder: 'Search by attendee...' },
 		{
 			key: 'type', label: 'Type', type: 'select' as const,
 			options: [
 				{ value: 'checkout', label: 'Checkout' },
 				{ value: 'checkin', label: 'Checkin' }
 			]
-		},
-		{ key: 'attendeeName', label: 'Attendee', type: 'text' as const, placeholder: 'Search by attendee...' }
+		}
 	];
 
 	let filterValues = $derived({
