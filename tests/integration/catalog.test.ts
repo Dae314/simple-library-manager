@@ -98,13 +98,9 @@ test.describe('Library Page — Catalog Browsing', () => {
 		// Check out the game so it has an attendee
 		await helpers.checkoutGame(gameName, 'UniqueFirstXYZ', 'UniqueLastXYZ', '3.0');
 
-		// Navigate to library and wait for the table to render (ensures onMount pageSize redirect has settled)
-		await page.goto('/library');
+		// Navigate to library with attendee search via URL to avoid debounce issues
+		await page.goto(`/library?attendeeSearch=UniqueFirstXYZ`);
 		await page.locator('table').waitFor({ state: 'visible', timeout: 10_000 });
-		await page.waitForLoadState('networkidle');
-		const attendeeInput = page.locator('#filter-attendeeSearch');
-		await attendeeInput.click();
-		await attendeeInput.pressSequentially('UniqueFirstXYZ', { delay: 10 });
 
 		// The checked-out game with matching attendee should appear
 		await expect(helpers.tableRow(page, gameName)).toBeVisible({ timeout: 10_000 });

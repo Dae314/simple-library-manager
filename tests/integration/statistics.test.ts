@@ -20,7 +20,6 @@ test.describe('Statistics Page', () => {
 
 		await expect(page.locator('#filter-timeRangeStart')).toBeVisible();
 		await expect(page.locator('#filter-timeRangeEnd')).toBeVisible();
-		await expect(page.locator('#filter-timeOfDay')).toBeVisible();
 		await expect(page.locator('#filter-gameTitle')).toBeVisible();
 		await expect(page.locator('#filter-attendeeName')).toBeVisible();
 		await expect(page.locator('#filter-status')).toBeVisible();
@@ -68,7 +67,7 @@ test.describe('Statistics Page', () => {
 
 		const distribution = page.locator('section[aria-label="Duration distribution"]');
 		await expect(distribution).toBeVisible();
-		await expect(distribution.locator('h2')).toHaveText('Duration Distribution');
+		await expect(distribution.locator('h2')).toHaveText('Checkouts by Duration');
 
 		const barRows = distribution.locator('.bar-row');
 		const count = await barRows.count();

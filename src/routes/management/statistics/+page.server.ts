@@ -5,7 +5,6 @@ import { configService } from '$lib/server/services/config.js';
 export const load: PageServerLoad = async ({ url }) => {
 	const timeRangeStart = url.searchParams.get('timeRangeStart') || '';
 	const timeRangeEnd = url.searchParams.get('timeRangeEnd') || '';
-	const timeOfDay = url.searchParams.get('timeOfDay') || '';
 	const conventionDay = url.searchParams.get('conventionDay') || '';
 	const gameTitle = url.searchParams.get('gameTitle') || '';
 	const attendeeName = url.searchParams.get('attendeeName') || '';
@@ -22,28 +21,19 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	if (timeRangeStart && timeRangeEnd) {
 		filters.timeRange = {
-			start: new Date(timeRangeStart),
+			start: new Date(timeRangeStart + 'T00:00:00'),
 			end: new Date(timeRangeEnd + 'T23:59:59.999')
 		};
 	} else if (timeRangeStart) {
 		filters.timeRange = {
-			start: new Date(timeRangeStart),
+			start: new Date(timeRangeStart + 'T00:00:00'),
 			end: new Date('2099-12-31T23:59:59.999')
 		};
 	} else if (timeRangeEnd) {
 		filters.timeRange = {
-			start: new Date('2000-01-01'),
+			start: new Date('2000-01-01T00:00:00'),
 			end: new Date(timeRangeEnd + 'T23:59:59.999')
 		};
-	}
-
-	const timeOfDayMap: Record<string, { startHour: number; endHour: number }> = {
-		morning: { startHour: 8, endHour: 12 },
-		afternoon: { startHour: 12, endHour: 17 },
-		evening: { startHour: 17, endHour: 22 }
-	};
-	if (timeOfDay && timeOfDayMap[timeOfDay]) {
-		filters.timeOfDay = timeOfDayMap[timeOfDay];
 	}
 
 	if (conventionDay) {
@@ -98,7 +88,6 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters: {
 			timeRangeStart,
 			timeRangeEnd,
-			timeOfDay,
 			conventionDay,
 			gameTitle,
 			attendeeName,

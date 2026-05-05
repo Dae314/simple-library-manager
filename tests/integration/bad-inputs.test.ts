@@ -209,10 +209,11 @@ test.describe('Bad Input Handling', () => {
 
 			await page.goto(`/library?search=${encodeURIComponent(game.title)}`);
 			const row = helpers.tableRow(page, game.title).first();
+			await expect(row).toBeVisible({ timeout: 10_000 });
 			await row.getByRole('button', { name: 'Checkout' }).click();
 
 			const dialog = page.locator('dialog.checkout-dialog');
-			await expect(dialog).toBeVisible();
+			await expect(dialog).toBeVisible({ timeout: 5_000 });
 
 			await dialog.locator('#checkout-attendeeFirstName').fill('Jane');
 			await dialog.locator('#checkout-attendeeLastName').fill('Doe');

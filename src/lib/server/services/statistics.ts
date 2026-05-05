@@ -22,6 +22,18 @@ export interface StatisticsFilters {
 	groupByBggTitle?: boolean;
 }
 
+export type TimeGranularity = 'hourly' | 'block' | 'daily';
+
+export interface TimeDistributionBucket {
+	label: string;
+	count: number;
+}
+
+export interface TimeDistribution {
+	granularity: TimeGranularity;
+	buckets: TimeDistributionBucket[];
+}
+
 export interface StatisticsResult {
 	totalCheckouts: number;
 	currentCheckedOut: number;
@@ -33,6 +45,7 @@ export interface StatisticsResult {
 	longestCumulativeGame: { gameId: number; title: string; totalDuration: Duration } | null;
 	topGames: PaginatedResult<{ title: string; checkoutCount: number }>;
 	durationDistribution: { bucket: string; count: number }[];
+	timeDistribution: TimeDistribution;
 }
 
 interface CompletedPair {
@@ -54,7 +67,18 @@ function minutesToDuration(totalMinutes: number): Duration {
 }
 
 /**
+ * Parse a PostgreSQL date string (YYYY-MM-DD) as a local-time Date.
+ * Avoids the UTC-midnight pitfall of `new Date('2025-05-01')`.
+ */
+function parseLocalDate(dateStr: string): Date {
+	const parts = dateStr.split('-').map(Number);
+	return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+/**
  * Build WHERE conditions for checkout transactions joined with games.
+ * With timestamptz, direct Date comparisons work correctly — the pg driver
+ * sends Dates as UTC and PostgreSQL compares UTC values.
  */
 function buildCheckoutConditions(filters: StatisticsFilters): SQL[] {
 	const conditions: SQL[] = [eq(transactions.type, 'checkout')];
@@ -65,6 +89,7 @@ function buildCheckoutConditions(filters: StatisticsFilters): SQL[] {
 	}
 
 	if (filters.timeOfDay) {
+		// With session timezone set, EXTRACT returns local hours
 		conditions.push(
 			sql`EXTRACT(HOUR FROM ${transactions.createdAt}) >= ${filters.timeOfDay.startHour}`
 		);
@@ -106,9 +131,9 @@ async function getConventionDayCondition(conventionDay: number): Promise<SQL | n
 
 	if (!config?.startDate) return null;
 
-	const startDate = new Date(config.startDate);
-	const targetDate = new Date(startDate);
+	const targetDate = parseLocalDate(config.startDate);
 	targetDate.setDate(targetDate.getDate() + (conventionDay - 1));
+	targetDate.setHours(0, 0, 0, 0);
 
 	const nextDate = new Date(targetDate);
 	nextDate.setDate(nextDate.getDate() + 1);
@@ -136,10 +161,8 @@ async function buildFullCheckoutWhere(filters: StatisticsFilters): Promise<SQL |
 /**
  * Fetch all transactions for games matching the filters, ordered by game and time.
  * Then pair checkouts with their next checkin in application code.
- * This avoids raw SQL CTEs and keeps everything in Drizzle's query builder.
  */
 async function getCompletedPairs(filters: StatisticsFilters): Promise<CompletedPair[]> {
-	// Build game-level filter conditions
 	const gameConditions: SQL[] = [];
 	if (filters.gameTitle) {
 		gameConditions.push(ilike(games.title, `%${filters.gameTitle}%`));
@@ -151,34 +174,25 @@ async function getCompletedPairs(filters: StatisticsFilters): Promise<CompletedP
 		gameConditions.push(eq(games.status, filters.availabilityStatus));
 	}
 
-	// Build transaction-level filter conditions (applied to checkout transactions for filtering)
-	const txConditions: SQL[] = [];
-	if (filters.timeRange) {
-		txConditions.push(gte(transactions.createdAt, filters.timeRange.start));
-		txConditions.push(lte(transactions.createdAt, filters.timeRange.end));
-	}
-	if (filters.timeOfDay) {
-		txConditions.push(
-			sql`EXTRACT(HOUR FROM ${transactions.createdAt}) >= ${filters.timeOfDay.startHour}`
-		);
-		txConditions.push(
-			sql`EXTRACT(HOUR FROM ${transactions.createdAt}) < ${filters.timeOfDay.endHour}`
-		);
-	}
-	if (filters.attendeeName) {
-		const search = `%${filters.attendeeName}%`;
-		txConditions.push(
-			sql`(${ilike(transactions.attendeeFirstName, search)} OR ${ilike(transactions.attendeeLastName, search)})`
-		);
-	}
+	// Resolve convention day to a concrete date range for app-level filtering
+	let conventionDayRange: { start: Date; end: Date } | null = null;
 	if (filters.conventionDay != null) {
-		const dayCondition = await getConventionDayCondition(filters.conventionDay);
-		if (dayCondition) txConditions.push(dayCondition);
+		const [config] = await db
+			.select({ startDate: conventionConfig.startDate })
+			.from(conventionConfig)
+			.where(eq(conventionConfig.id, 1));
+
+		if (config?.startDate) {
+			const start = parseLocalDate(config.startDate);
+			start.setDate(start.getDate() + (filters.conventionDay - 1));
+			start.setHours(0, 0, 0, 0);
+			const end = new Date(start);
+			end.setHours(23, 59, 59, 999);
+			conventionDayRange = { start, end };
+		}
 	}
 
-	// Fetch all checkout and checkin transactions for matching games, ordered by game then time
 	const whereConditions: SQL[] = [...gameConditions];
-	// We need both checkouts and checkins to form pairs, so don't filter by type here
 	const allTx = await db
 		.select({
 			id: transactions.id,
@@ -195,7 +209,6 @@ async function getCompletedPairs(filters: StatisticsFilters): Promise<CompletedP
 		.where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
 		.orderBy(asc(transactions.gameId), asc(transactions.createdAt));
 
-	// Pair checkouts with their next checkin per game in application code
 	const pairs: CompletedPair[] = [];
 	const txByGame = new Map<number, typeof allTx>();
 
@@ -209,7 +222,6 @@ async function getCompletedPairs(filters: StatisticsFilters): Promise<CompletedP
 			const co = gameTxs[i];
 			if (co.type !== 'checkout') continue;
 
-			// Find the next checkin after this checkout
 			for (let j = i + 1; j < gameTxs.length; j++) {
 				if (gameTxs[j].type === 'checkin') {
 					const ci = gameTxs[j];
@@ -217,7 +229,6 @@ async function getCompletedPairs(filters: StatisticsFilters): Promise<CompletedP
 					const checkinAt = new Date(ci.createdAt);
 					const durationMinutes = (checkinAt.getTime() - checkoutAt.getTime()) / (1000 * 60);
 
-					// Apply transaction-level filters to the checkout
 					let passesFilters = true;
 
 					if (filters.timeRange) {
@@ -239,10 +250,10 @@ async function getCompletedPairs(filters: StatisticsFilters): Promise<CompletedP
 							passesFilters = false;
 						}
 					}
-					if (filters.conventionDay != null && passesFilters) {
-						// Convention day filtering was already applied at the DB level via txConditions
-						// but since we fetched all types, we need to check the checkout timestamp
-						// We'll rely on the pairs being formed from the full set and filter below
+					if (conventionDayRange && passesFilters) {
+						if (checkoutAt < conventionDayRange.start || checkoutAt > conventionDayRange.end) {
+							passesFilters = false;
+						}
 					}
 
 					if (passesFilters) {
@@ -256,7 +267,7 @@ async function getCompletedPairs(filters: StatisticsFilters): Promise<CompletedP
 						});
 					}
 
-					i = j; // Skip to after the checkin to avoid double-pairing
+					i = j;
 					break;
 				}
 			}
@@ -275,14 +286,12 @@ export const statisticsService = {
 	): Promise<StatisticsResult> {
 		const checkoutWhere = await buildFullCheckoutWhere(filters);
 
-		// Total checkouts
 		const [{ totalCheckouts }] = await db
 			.select({ totalCheckouts: count() })
 			.from(transactions)
 			.innerJoin(games, eq(transactions.gameId, games.id))
 			.where(checkoutWhere);
 
-		// Current game counts (game-level filters only)
 		const gameConditions: SQL[] = [];
 		if (filters.gameTitle) gameConditions.push(ilike(games.title, `%${filters.gameTitle}%`));
 		if (filters.gameType) gameConditions.push(eq(games.gameType, filters.gameType));
@@ -297,7 +306,6 @@ export const statisticsService = {
 			.from(games)
 			.where(and(eq(games.status, 'available'), ...gameConditions));
 
-		// Avg checkouts per day
 		const [dateRange] = await db
 			.select({
 				minDate: sql<Date>`MIN(${transactions.createdAt})`,
@@ -315,7 +323,6 @@ export const statisticsService = {
 			avgCheckoutsPerDay = Math.round((totalCheckouts / diffDays) * 100) / 100;
 		}
 
-		// Duration metrics from completed pairs (app-level pairing)
 		const pairs = await getCompletedPairs(filters);
 
 		const avgCheckoutDuration = minutesToDuration(
@@ -328,14 +335,10 @@ export const statisticsService = {
 			pairs.length > 0 ? Math.max(...pairs.map((p) => p.durationMinutes)) : 0
 		);
 
-		// Longest cumulative game
 		const longestCumulativeGame = calcLongestCumulative(pairs, filters.groupByBggTitle ?? false);
-
-		// Top games
 		const topGames = await this.calcTopGames(filters, topGamesPagination);
-
-		// Duration distribution
 		const durationDistribution = calcDurationBuckets(pairs);
+		const timeDistribution = await calcTimeDistribution(checkoutWhere, filters);
 
 		return {
 			totalCheckouts,
@@ -347,7 +350,8 @@ export const statisticsService = {
 			maxCheckoutDuration,
 			longestCumulativeGame,
 			topGames,
-			durationDistribution
+			durationDistribution,
+			timeDistribution
 		};
 	},
 
@@ -395,7 +399,7 @@ export const statisticsService = {
 	}
 };
 
-// --- Pure functions for computing stats from completed pairs ---
+// --- Pure functions ---
 
 function calcLongestCumulative(
 	pairs: CompletedPair[],
@@ -422,6 +426,192 @@ function calcLongestCumulative(
 
 	if (!best) return null;
 	return { gameId: best.gameId, title: best.title, totalDuration: minutesToDuration(best.total) };
+}
+
+/**
+ * Determine the appropriate time granularity based on the date range span.
+ * - 1 calendar day: hourly (24 buckets)
+ * - 2–7 calendar days: 6-hour blocks per day
+ * - 8+ calendar days: daily totals
+ */
+export function determineGranularity(rangeStart: Date | null, rangeEnd: Date | null): TimeGranularity {
+	if (!rangeStart || !rangeEnd) return 'daily';
+	if (isNaN(rangeStart.getTime()) || isNaN(rangeEnd.getTime())) return 'daily';
+
+	const startDay = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate());
+	const endDay = new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), rangeEnd.getDate());
+	const calendarDays = Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+	if (calendarDays <= 1) return 'hourly';
+	if (calendarDays <= 7) return 'block';
+	return 'daily';
+}
+
+async function calcTimeDistribution(
+	checkoutWhere: SQL | undefined,
+	filters: StatisticsFilters
+): Promise<TimeDistribution> {
+	let rangeStart: Date | null = filters.timeRange?.start ?? null;
+	let rangeEnd: Date | null = filters.timeRange?.end ?? null;
+
+	// Convention day → single-day range
+	if (filters.conventionDay != null) {
+		const [config] = await db
+			.select({ startDate: conventionConfig.startDate })
+			.from(conventionConfig)
+			.where(eq(conventionConfig.id, 1));
+
+		if (config?.startDate) {
+			const start = parseLocalDate(config.startDate);
+			start.setDate(start.getDate() + (filters.conventionDay - 1));
+			start.setHours(0, 0, 0, 0);
+			rangeStart = start;
+			rangeEnd = new Date(start);
+			rangeEnd.setHours(23, 59, 59, 999);
+		}
+	}
+
+	// No range → use convention dates or data span
+	if (!rangeStart || !rangeEnd) {
+		const [config] = await db
+			.select({ startDate: conventionConfig.startDate, endDate: conventionConfig.endDate })
+			.from(conventionConfig)
+			.where(eq(conventionConfig.id, 1));
+
+		if (config?.startDate && config?.endDate) {
+			rangeStart = parseLocalDate(config.startDate);
+			rangeStart.setHours(0, 0, 0, 0);
+			rangeEnd = parseLocalDate(config.endDate);
+			rangeEnd.setHours(23, 59, 59, 999);
+		} else {
+			const [span] = await db
+				.select({
+					minDate: sql<Date>`MIN(${transactions.createdAt})`,
+					maxDate: sql<Date>`MAX(${transactions.createdAt})`
+				})
+				.from(transactions)
+				.innerJoin(games, eq(transactions.gameId, games.id))
+				.where(checkoutWhere);
+
+			if (span?.minDate && span?.maxDate) {
+				rangeStart = new Date(span.minDate);
+				rangeEnd = new Date(span.maxDate);
+				rangeStart.setHours(0, 0, 0, 0);
+				rangeEnd.setHours(23, 59, 59, 999);
+			}
+		}
+	}
+
+	const granularity = determineGranularity(rangeStart, rangeEnd);
+
+	if (granularity === 'hourly') {
+		const rows = await db
+			.select({
+				hour: sql<number>`EXTRACT(HOUR FROM ${transactions.createdAt})::int`,
+				count: count()
+			})
+			.from(transactions)
+			.innerJoin(games, eq(transactions.gameId, games.id))
+			.where(checkoutWhere)
+			.groupBy(sql`EXTRACT(HOUR FROM ${transactions.createdAt})::int`)
+			.orderBy(sql`EXTRACT(HOUR FROM ${transactions.createdAt})::int`);
+
+		const hourMap = new Map<number, number>();
+		for (const row of rows) {
+			hourMap.set(Number(row.hour), Number(row.count));
+		}
+
+		const buckets: TimeDistributionBucket[] = [];
+		for (let h = 0; h < 24; h++) {
+			const period = h < 12 ? 'AM' : 'PM';
+			const display = h === 0 ? 12 : h > 12 ? h - 12 : h;
+			buckets.push({ label: `${display}${period}`, count: hourMap.get(h) ?? 0 });
+		}
+
+		return { granularity, buckets };
+	}
+
+	if (granularity === 'block') {
+		const rows = await db
+			.select({
+				date: sql<string>`TO_CHAR(${transactions.createdAt}, 'YYYY-MM-DD')`,
+				block: sql<number>`FLOOR(EXTRACT(HOUR FROM ${transactions.createdAt}) / 6)::int`,
+				count: count()
+			})
+			.from(transactions)
+			.innerJoin(games, eq(transactions.gameId, games.id))
+			.where(checkoutWhere)
+			.groupBy(
+				sql`TO_CHAR(${transactions.createdAt}, 'YYYY-MM-DD')`,
+				sql`FLOOR(EXTRACT(HOUR FROM ${transactions.createdAt}) / 6)::int`
+			)
+			.orderBy(
+				sql`TO_CHAR(${transactions.createdAt}, 'YYYY-MM-DD')`,
+				sql`FLOOR(EXTRACT(HOUR FROM ${transactions.createdAt}) / 6)::int`
+			);
+
+		const blockLabels = ['Night', 'Morning', 'Afternoon', 'Evening'];
+		const dataMap = new Map<string, number>();
+		for (const row of rows) {
+			dataMap.set(`${row.date}-${row.block}`, Number(row.count));
+		}
+
+		const buckets: TimeDistributionBucket[] = [];
+		if (rangeStart && rangeEnd) {
+			const current = new Date(rangeStart);
+			current.setHours(0, 0, 0, 0);
+			while (current <= rangeEnd) {
+				const dateStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+				const dayName = current.toLocaleDateString('en-US', { weekday: 'short' });
+				for (let block = 0; block < 4; block++) {
+					buckets.push({
+						label: `${dayName} ${blockLabels[block]}`,
+						count: dataMap.get(`${dateStr}-${block}`) ?? 0
+					});
+				}
+				current.setDate(current.getDate() + 1);
+			}
+		}
+
+		return { granularity, buckets };
+	}
+
+	// Daily
+	const rows = await db
+		.select({
+			date: sql<string>`TO_CHAR(${transactions.createdAt}, 'YYYY-MM-DD')`,
+			count: count()
+		})
+		.from(transactions)
+		.innerJoin(games, eq(transactions.gameId, games.id))
+		.where(checkoutWhere)
+		.groupBy(sql`TO_CHAR(${transactions.createdAt}, 'YYYY-MM-DD')`)
+		.orderBy(sql`TO_CHAR(${transactions.createdAt}, 'YYYY-MM-DD')`);
+
+	const dataMap = new Map<string, number>();
+	for (const row of rows) {
+		dataMap.set(row.date, Number(row.count));
+	}
+
+	const buckets: TimeDistributionBucket[] = [];
+	if (rangeStart && rangeEnd) {
+		const current = new Date(rangeStart);
+		current.setHours(0, 0, 0, 0);
+		while (current <= rangeEnd) {
+			const dateStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+			const label = current.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+			buckets.push({ label, count: dataMap.get(dateStr) ?? 0 });
+			current.setDate(current.getDate() + 1);
+		}
+	} else {
+		for (const row of rows) {
+			const d = new Date(row.date + 'T12:00:00');
+			const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+			buckets.push({ label, count: Number(row.count) });
+		}
+	}
+
+	return { granularity, buckets };
 }
 
 function calcDurationBuckets(pairs: CompletedPair[]): { bucket: string; count: number }[] {

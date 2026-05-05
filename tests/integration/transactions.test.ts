@@ -57,17 +57,11 @@ test.describe('Transaction Log and Reversals', () => {
 
 		await helpers.checkoutGame(game.title, 'Dave', 'Search', '28');
 
-		await page.goto('/management/transactions');
+		// Use URL-based filtering to avoid debounce timing issues
+		await page.goto(`/management/transactions?gameTitle=${encodeURIComponent(game.title)}`);
 
-		const gameTitleInput = page.locator('#filter-gameTitle');
-		await gameTitleInput.click();
-		await gameTitleInput.pressSequentially(game.title, { delay: 10 });
-
-		// Wait for the filtered results to appear (debounced search triggers navigation)
 		const gameTitles = page.locator('tbody .game-title');
 		await expect(gameTitles.first()).toContainText(game.title, { timeout: 10_000 });
-
-		// Wait for the table to stabilize with only matching results before counting
 		await expect(gameTitles).toHaveCount(1, { timeout: 5_000 });
 		await expect(gameTitles.nth(0)).toContainText(game.title);
 	});

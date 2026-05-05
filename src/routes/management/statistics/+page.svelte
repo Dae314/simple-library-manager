@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import BarChart from '$lib/components/BarChart.svelte';
 	import FilterPanel from '$lib/components/FilterPanel.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { formatDuration } from '$lib/utils/formatting.js';
@@ -9,7 +10,6 @@
 	type FilterValues = {
 		timeRangeStart: string;
 		timeRangeEnd: string;
-		timeOfDay: string;
 		conventionDay: string;
 		gameTitle: string;
 		attendeeName: string;
@@ -34,14 +34,6 @@
 	const filterConfigs = $derived([
 		{ key: 'timeRangeStart', label: 'From Date', type: 'date' as const },
 		{ key: 'timeRangeEnd', label: 'To Date', type: 'date' as const },
-		{
-			key: 'timeOfDay', label: 'Time of Day', type: 'select' as const,
-			options: [
-				{ value: 'morning', label: 'Morning (8am–12pm)' },
-				{ value: 'afternoon', label: 'Afternoon (12pm–5pm)' },
-				{ value: 'evening', label: 'Evening (5pm–10pm)' }
-			]
-		},
 		...(data.conventionDays.length > 0
 			? [{
 				key: 'conventionDay', label: 'Convention Day', type: 'select' as const,
@@ -71,7 +63,6 @@
 	let filterValues = $derived({
 		timeRangeStart: data.filters.timeRangeStart,
 		timeRangeEnd: data.filters.timeRangeEnd,
-		timeOfDay: data.filters.timeOfDay,
 		conventionDay: data.filters.conventionDay,
 		gameTitle: data.filters.gameTitle,
 		attendeeName: data.filters.attendeeName,
@@ -122,8 +113,20 @@
 		goto(url.toString(), { replaceState: true });
 	}
 
-	let maxDistributionCount = $derived(
-		Math.max(...stats.durationDistribution.map(b => b.count), 0)
+	let durationItems = $derived(
+		stats.durationDistribution.map(b => ({ label: b.bucket, value: b.count }))
+	);
+
+	let timeItems = $derived(
+		stats.timeDistribution.buckets.map(b => ({ label: b.label, value: b.count }))
+	);
+
+	let timeChartTitle = $derived(
+		stats.timeDistribution.granularity === 'hourly'
+			? 'Checkouts by Hour'
+			: stats.timeDistribution.granularity === 'block'
+				? 'Checkouts by Period'
+				: 'Checkouts by Day'
 	);
 </script>
 
@@ -204,31 +207,24 @@
 			/>
 		</section>
 
-		<section class="duration-distribution" aria-label="Duration distribution">
-			<h2>Duration Distribution</h2>
-			{#if stats.durationDistribution.every(b => b.count === 0)}
-				<p class="empty-message">No completed checkouts to display.</p>
-			{:else}
-				<div class="distribution-bars">
-					{#each stats.durationDistribution as bucket (bucket.bucket)}
-						<div class="bar-row">
-							<span class="bar-label">{bucket.bucket}</span>
-							<div class="bar-track">
-								<div
-									class="bar-fill"
-									style="width: {maxDistributionCount > 0 ? (bucket.count / maxDistributionCount) * 100 : 0}%"
-									role="meter"
-									aria-valuenow={bucket.count}
-									aria-valuemin={0}
-									aria-valuemax={maxDistributionCount}
-									aria-label="{bucket.bucket}: {bucket.count}"
-								></div>
-							</div>
-							<span class="bar-count">{bucket.count}</span>
-						</div>
-					{/each}
-				</div>
-			{/if}
+		<section class="chart-section" aria-label="Checkouts over time">
+			<h2>{timeChartTitle}</h2>
+			<BarChart
+				items={timeItems}
+				direction="vertical"
+				ariaLabel="Bar chart showing checkouts over time"
+				emptyMessage="No checkout data to display."
+			/>
+		</section>
+
+		<section class="chart-section" aria-label="Duration distribution">
+			<h2>Checkouts by Duration</h2>
+			<BarChart
+				items={durationItems}
+				direction="horizontal"
+				ariaLabel="Bar chart showing checkout duration distribution"
+				emptyMessage="No completed checkouts to display."
+			/>
 		</section>
 	{/if}
 </div>
@@ -346,50 +342,8 @@
 		white-space: nowrap;
 	}
 
-	.duration-distribution {
+	.chart-section {
 		margin: 1.5rem 0;
-	}
-
-	.distribution-bars {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.bar-row {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-	}
-
-	.bar-label {
-		min-width: 130px;
-		font-size: 0.85rem;
-		color: #4b5563;
-		text-align: right;
-	}
-
-	.bar-track {
-		flex: 1;
-		height: 24px;
-		background: #f3f4f6;
-		border-radius: 4px;
-		overflow: hidden;
-	}
-
-	.bar-fill {
-		height: 100%;
-		background: #6366f1;
-		border-radius: 4px;
-		transition: width 0.3s ease;
-		min-width: 2px;
-	}
-
-	.bar-count {
-		min-width: 2rem;
-		font-size: 0.85rem;
-		font-weight: 600;
-		color: #374151;
 	}
 
 	@media (max-width: 640px) {
@@ -399,11 +353,6 @@
 
 		.metric-card.wide {
 			grid-column: span 2;
-		}
-
-		.bar-label {
-			min-width: 90px;
-			font-size: 0.75rem;
 		}
 	}
 </style>

@@ -15,6 +15,13 @@
       "when": 1777749072413,
       "tag": "0001_bored_eternals",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777961809176,
+      "tag": "0002_luxuriant_corsair",
+      "breakpoints": true
     }
   ]
 }

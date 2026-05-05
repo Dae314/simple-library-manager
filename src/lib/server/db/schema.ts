@@ -37,8 +37,8 @@ export const games = pgTable(
 		status: text('status').notNull().default('available'),
 		gameType: text('game_type').notNull().default('standard'),
 		version: integer('version').notNull().default(1),
-		createdAt: timestamp('created_at').notNull().defaultNow(),
-		updatedAt: timestamp('updated_at').notNull().defaultNow()
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 	},
 	(table) => [
 		index('idx_games_bgg_id').on(table.bggId),
@@ -63,7 +63,7 @@ export const transactions = pgTable(
 		note: text('note'),
 		isCorrection: boolean('is_correction').notNull().default(false),
 		relatedTransactionId: integer('related_transaction_id').references((): AnyPgColumn => transactions.id),
-		createdAt: timestamp('created_at').notNull().defaultNow()
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 	},
 	(table) => [
 		index('idx_transactions_game_id').on(table.gameId),
