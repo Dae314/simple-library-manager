@@ -24,6 +24,7 @@ export interface GameRecord {
 	version: number;
 	createdAt: Date;
 	updatedAt: Date;
+	lastTransactionDate: Date | null;
 }
 
 export interface GameFilters {
@@ -44,7 +45,7 @@ export interface PaginationParams {
 }
 
 export interface SortParams {
-	field: 'title' | 'bgg_id' | 'status' | 'game_type' | 'last_transaction_date' | 'checkout_time' | 'attendee';
+	field: 'title' | 'bgg_id' | 'status' | 'game_type' | 'last_transaction_date' | 'created_at' | 'checkout_time' | 'attendee';
 	direction: 'asc' | 'desc';
 }
 
@@ -121,6 +122,8 @@ function buildSortExpression(sort?: SortParams) {
 			return [dir(games.status)];
 		case 'game_type':
 			return [dir(games.gameType)];
+		case 'created_at':
+			return [dir(games.createdAt)];
 		case 'last_transaction_date':
 			// Handled separately in the list query with a subquery
 			return [];
@@ -167,7 +170,7 @@ export const gameService = {
 				.from(games)
 				.where(and(eq(games.bggId, data.bggId), ne(games.status, 'retired')));
 
-			return { ...created, totalCopies: copyCount?.total ?? 1 };
+			return { ...created, totalCopies: copyCount?.total ?? 1, lastTransactionDate: null };
 		});
 	},
 
@@ -200,7 +203,13 @@ export const gameService = {
 			.from(games)
 			.where(and(eq(games.bggId, updated.bggId), ne(games.status, 'retired')));
 
-		return { ...updated, totalCopies: copyCount?.total ?? 1 };
+		// Get last transaction date
+		const [lastTx] = await db
+			.select({ lastDate: max(transactions.createdAt) })
+			.from(transactions)
+			.where(eq(transactions.gameId, id));
+
+		return { ...updated, totalCopies: copyCount?.total ?? 1, lastTransactionDate: lastTx?.lastDate ?? null };
 	},
 
 	/**
@@ -245,7 +254,8 @@ export const gameService = {
 				gameType: games.gameType,
 				version: games.version,
 				createdAt: games.createdAt,
-				updatedAt: games.updatedAt
+				updatedAt: games.updatedAt,
+				lastTransactionDate: sql<Date | null>`(SELECT MAX(${transactions.createdAt}) FROM ${transactions} WHERE ${transactions.gameId} = ${games.id})`
 			})
 			.from(games)
 			.where(eq(games.id, id));
@@ -337,6 +347,9 @@ export const gameService = {
 				case 'game_type':
 					orderExpr = dir(sql`MIN(${games.gameType})`);
 					break;
+				case 'last_transaction_date':
+					orderExpr = dir(sql`MAX(${transactions.createdAt})`);
+					break;
 				default:
 					orderExpr = dir(sql`MIN(${games.title})`);
 			}
@@ -352,9 +365,11 @@ export const gameService = {
 					gameType: sql<string>`MIN(${games.gameType})`,
 					version: sql<number>`MIN(${games.version})`.mapWith(Number),
 					createdAt: sql<Date>`MIN(${games.createdAt})`,
-					updatedAt: sql<Date>`MAX(${games.updatedAt})`
+					updatedAt: sql<Date>`MAX(${games.updatedAt})`,
+					lastTransactionDate: sql<Date | null>`MAX(${transactions.createdAt})`
 				})
 				.from(games)
+				.leftJoin(transactions, eq(games.id, transactions.gameId))
 				.where(whereClause)
 				.groupBy(games.bggId)
 				.orderBy(orderExpr)
@@ -370,10 +385,11 @@ export const gameService = {
 			.from(games)
 			.where(whereClause);
 
-		// Sort by last_transaction_date requires a left join
+		// All queries now use a left join on transactions to get lastTransactionDate
+		const lastTxDate = sql<Date | null>`MAX(${transactions.createdAt})`;
+
 		if (sort?.field === 'last_transaction_date') {
 			const dir = sort.direction === 'desc' ? desc : asc;
-			const lastTxDate = sql<Date>`MAX(${transactions.createdAt})`.as('last_tx_date');
 
 			const items = await db
 				.select({
@@ -386,7 +402,8 @@ export const gameService = {
 					gameType: games.gameType,
 					version: games.version,
 					createdAt: games.createdAt,
-					updatedAt: games.updatedAt
+					updatedAt: games.updatedAt,
+					lastTransactionDate: lastTxDate
 				})
 				.from(games)
 				.leftJoin(transactions, eq(games.id, transactions.gameId))
@@ -399,7 +416,7 @@ export const gameService = {
 			return { items, total, page: pagination.page, pageSize: pagination.pageSize };
 		}
 
-		// Standard sort
+		// Standard sort — still join transactions to get lastTransactionDate
 		const orderBy = buildSortExpression(sort);
 		const items = await db
 			.select({
@@ -412,10 +429,13 @@ export const gameService = {
 				gameType: games.gameType,
 				version: games.version,
 				createdAt: games.createdAt,
-				updatedAt: games.updatedAt
+				updatedAt: games.updatedAt,
+				lastTransactionDate: lastTxDate
 			})
 			.from(games)
+			.leftJoin(transactions, eq(games.id, transactions.gameId))
 			.where(whereClause)
+			.groupBy(games.id)
 			.orderBy(...orderBy)
 			.limit(pagination.pageSize)
 			.offset((pagination.page - 1) * pagination.pageSize);
@@ -455,7 +475,8 @@ export const gameService = {
 				gameType: games.gameType,
 				version: games.version,
 				createdAt: games.createdAt,
-				updatedAt: games.updatedAt
+				updatedAt: games.updatedAt,
+				lastTransactionDate: sql<Date | null>`(SELECT MAX(t."created_at") FROM "transactions" t WHERE t."game_id" = ${games.id})`
 			})
 			.from(games)
 			.where(whereClause)
@@ -543,6 +564,7 @@ export const gameService = {
 				version: games.version,
 				createdAt: games.createdAt,
 				updatedAt: games.updatedAt,
+				lastTransactionDate: latestCheckout.createdAt,
 				attendeeFirstName: latestCheckout.attendeeFirstName,
 				attendeeLastName: latestCheckout.attendeeLastName,
 				idType: latestCheckout.idType,
@@ -789,7 +811,7 @@ export const gameService = {
 				.from(games)
 				.where(and(eq(games.bggId, updated.bggId), ne(games.status, 'retired')));
 
-			return { ...updated, totalCopies: copyCount?.total ?? 1, transactionId: correctionTx.id };
+			return { ...updated, totalCopies: copyCount?.total ?? 1, lastTransactionDate: correctionTx.createdAt, transactionId: correctionTx.id };
 		});
 	}
 };

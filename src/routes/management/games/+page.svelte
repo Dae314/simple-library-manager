@@ -9,6 +9,7 @@
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import toast from 'svelte-hot-french-toast';
 	import { getPreferredPageSize, savePreferredPageSize } from '$lib/utils/page-size.js';
+	import { formatDate } from '$lib/utils/formatting.js';
 
 	const wsClient: { connected: boolean } = getContext('ws');
 
@@ -21,6 +22,8 @@
 		status: string;
 		gameType: 'standard' | 'play_and_win' | 'play_and_take';
 		version: number;
+		createdAt: string;
+		lastTransactionDate: string | null;
 	};
 
 	type PaginatedResult = {
@@ -91,6 +94,8 @@
 		{ key: 'title', label: 'Title', sortField: 'title' },
 		{ key: 'type', label: 'Type', sortField: 'game_type' },
 		{ key: 'status', label: 'Status', sortField: 'status' },
+		{ key: 'dateAdded', label: 'Date Added', sortField: 'created_at' },
+		{ key: 'lastTx', label: 'Last Transaction', sortField: 'last_transaction_date' },
 		{ key: 'bggId', label: 'BGG', sortField: 'bgg_id' },
 		{ key: 'actions', label: 'Actions', srOnly: true }
 	];
@@ -377,6 +382,12 @@
 					<span class="status-indicator {game.status}">
 						{statusLabel(game.status)}
 					</span>
+				</td>
+				<td class="date-cell">
+					{formatDate(game.createdAt)}
+				</td>
+				<td class="date-cell">
+					{formatDate(game.lastTransactionDate)}
 				</td>
 				<td>
 					<a
@@ -805,6 +816,12 @@
 	}
 
 	.actions-cell {
+		white-space: nowrap;
+	}
+
+	.date-cell {
+		font-size: 0.8rem;
+		color: #6b7280;
 		white-space: nowrap;
 	}
 

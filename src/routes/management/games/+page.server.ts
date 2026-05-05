@@ -52,7 +52,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters.groupByBgg = true;
 	}
 
-	const validSortFields = ['title', 'bgg_id', 'status', 'game_type', 'last_transaction_date'] as const;
+	const validSortFields = ['title', 'bgg_id', 'status', 'game_type', 'last_transaction_date', 'created_at'] as const;
 	const sort: SortParams = {
 		field: validSortFields.includes(sortField as any) ? (sortField as SortParams['field']) : 'title',
 		direction: sortDir === 'desc' ? 'desc' : 'asc'
