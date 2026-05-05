@@ -41,14 +41,6 @@
 			}]
 			: []),
 		{ key: 'gameTitle', label: 'Game Title', type: 'text' as const, placeholder: 'Search by title...' },
-		{ key: 'attendeeName', label: 'Attendee Name', type: 'text' as const, placeholder: 'Search by name...' },
-		{
-			key: 'status', label: 'Availability Status', type: 'select' as const,
-			options: [
-				{ value: 'available', label: 'Available' },
-				{ value: 'checked_out', label: 'Checked Out' }
-			]
-		},
 		{
 			key: 'gameType', label: 'Game Type', type: 'select' as const,
 			options: [
@@ -65,8 +57,6 @@
 		timeRangeEnd: data.filters.timeRangeEnd,
 		conventionDay: data.filters.conventionDay,
 		gameTitle: data.filters.gameTitle,
-		attendeeName: data.filters.attendeeName,
-		status: data.filters.status,
 		gameType: data.filters.gameType,
 		groupByBgg: data.filters.groupByBgg
 	});
