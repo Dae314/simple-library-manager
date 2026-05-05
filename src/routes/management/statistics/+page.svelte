@@ -218,7 +218,7 @@
 		</section>
 
 		<section class="chart-section" aria-label="Duration distribution">
-			<h2>Checkouts by Duration</h2>
+			<h2>Game Playtime</h2>
 			<BarChart
 				items={durationItems}
 				direction="horizontal"
