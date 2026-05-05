@@ -12,6 +12,9 @@ Requires a `.env` file with:
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/boardgames
 ```
 
+Optional environment variables:
+- `AUTH_SECRET` — HMAC key for session cookies. If unset, a random secret is generated on startup (sessions won't survive restarts).
+
 See `.env.example` for the template.
 
 ## Database Commands
@@ -43,6 +46,13 @@ npm run build           # Outputs to build/
 npm run preview         # Preview the production build locally
 ```
 
+The production entry point is `server.js` (not the default adapter-node entry). It:
+1. Creates a `WebSocketServer` with `{ noServer: true }`
+2. Stores it on `globalThis.__wss` so `hooks.server.ts` can wire up connection tracking
+3. Imports `./build/index.js` (the adapter-node output) which starts the HTTP server
+4. Attaches an `upgrade` handler on the HTTP server for the `/ws` path
+5. Listens for `sveltekit:shutdown` to gracefully close WebSocket connections
+
 ## Docker (Production)
 
 ```bash
@@ -53,10 +63,19 @@ docker compose down -v            # Stop and destroy database volume
 
 Services:
 - **caddy** — Reverse proxy on port 80 (plain HTTP, suitable for LAN access at conventions)
-- **app** — SvelteKit Node server on port 3000 (internal)
+- **app** — SvelteKit Node server on port 3000 (internal), started via `server.js`
 - **db** — PostgreSQL 17 with health check
 
-The app waits for the database health check before starting.
+The app waits for the database health check before starting. Timezone is set to `Pacific/Honolulu`.
+
+## WebSocket in Development vs Production
+
+| Concern | Development | Production |
+|---------|-------------|------------|
+| WSS creation | Vite plugin (`src/lib/server/ws/vite-plugin.ts`) | `server.js` before SvelteKit import |
+| HTTP upgrade | Plugin hooks into `server.httpServer` | `server.js` hooks into Polka's `server.server` |
+| HMR safety | Plugin only handles `/ws` path, leaves other upgrades to Vite | N/A |
+| Connection tracking | `setupWebSocketServer()` called by plugin | `initWebSocket()` in `hooks.server.ts` picks up `globalThis.__wss` |
 
 ## Testing
 

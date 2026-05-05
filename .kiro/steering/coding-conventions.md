@@ -31,6 +31,7 @@
 - **API routes**: `+server.ts` files in `src/routes/api/`. Use `json()` helper for responses.
 - **Error handling**: Use SvelteKit's `fail()` for expected errors in actions. Throw or re-throw for unexpected errors.
 - **Imports**: Use `$lib/` for library code, `$app/` for SvelteKit builtins.
+- **Context**: Use `setContext`/`getContext` for shared state (e.g., the WebSocket client is set in root layout and consumed by pages).
 
 ## Service Layer
 
@@ -39,6 +40,7 @@
 - Use `db.transaction()` for operations that need atomicity
 - Services throw plain `Error` instances with descriptive messages (e.g., `'Conflict: game was modified by another user'`)
 - Validation lives in `src/lib/server/validation.ts`, separate from services
+- Services broadcast WebSocket events after successful mutations (via `broadcastGameEvent()`, `broadcastTransactionEvent()`, etc.)
 
 ## Validation
 
@@ -55,6 +57,16 @@
 - Migrations generated with `npm run db:generate`, applied with `npm run db:migrate`
 - Migrations auto-run on server startup via `hooks.server.ts`
 
+## WebSocket
+
+- Server-side modules live in `src/lib/server/ws/`
+- Client-side store in `src/lib/stores/websocket.svelte.ts` uses Svelte 5 runes (`$state()` for `connected`)
+- Event types are defined in `src/lib/server/ws/events.ts` and shared between server and client
+- Broadcast helpers in `src/lib/server/ws/broadcast.ts` provide typed convenience functions
+- The connection manager is a singleton class tracking active WebSocket connections
+- Production uses a standalone `server.js` that creates the WSS before importing the SvelteKit build
+- Development uses a Vite plugin that attaches to the dev server's HTTP upgrade event (filtering by `/ws` path to avoid breaking Vite HMR)
+
 ## Components
 
 - Reusable components live in `src/lib/components/`
@@ -62,9 +74,12 @@
 - Keep components focused — one responsibility per component
 - Use semantic HTML and ARIA attributes for accessibility
 - Style with scoped CSS; use the project's indigo accent color (`#6366f1`) for interactive elements
+- Dialog components (`CheckoutDialog`, `CheckinDialog`, `ConfirmDialog`) use the native `<dialog>` element pattern
 
 ## Error Handling
 
 - Optimistic locking conflicts return `fail(409, { conflict: true, message })` from form actions
 - Validation errors return `fail(400, { errors, values })` — `values` preserves form state for re-rendering
 - Success returns `{ success: true }` from form actions
+- Database errors are classified via `db-errors.ts` into user-friendly messages
+- WebSocket conflict detection shows inline warnings when another user modifies the same game
