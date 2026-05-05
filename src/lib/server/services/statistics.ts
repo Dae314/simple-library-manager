@@ -34,6 +34,13 @@ export interface TimeDistribution {
 	buckets: TimeDistributionBucket[];
 }
 
+export interface TopGameItem {
+	title: string;
+	gameType: string;
+	status: string;
+	checkoutCount: number;
+}
+
 export interface StatisticsResult {
 	totalCheckouts: number;
 	currentCheckedOut: number;
@@ -43,9 +50,17 @@ export interface StatisticsResult {
 	minCheckoutDuration: Duration;
 	maxCheckoutDuration: Duration;
 	longestCumulativeGame: { gameId: number; title: string; totalDuration: Duration } | null;
-	topGames: PaginatedResult<{ title: string; checkoutCount: number }>;
+	topGames: PaginatedResult<TopGameItem>;
 	durationDistribution: { bucket: string; count: number }[];
 	timeDistribution: TimeDistribution;
+}
+
+export type TopGamesSortField = 'title' | 'game_type' | 'status' | 'checkouts';
+export type SortDirection = 'asc' | 'desc';
+
+export interface TopGamesSortParams {
+	field: TopGamesSortField;
+	direction: SortDirection;
 }
 
 interface CompletedPair {
@@ -282,7 +297,8 @@ async function getCompletedPairs(filters: StatisticsFilters): Promise<CompletedP
 export const statisticsService = {
 	async getStatistics(
 		filters: StatisticsFilters = {},
-		topGamesPagination: PaginationParams = { page: 1, pageSize: 10 }
+		topGamesPagination: PaginationParams = { page: 1, pageSize: 10 },
+		topGamesSort?: TopGamesSortParams
 	): Promise<StatisticsResult> {
 		const checkoutWhere = await buildFullCheckoutWhere(filters);
 
@@ -336,7 +352,7 @@ export const statisticsService = {
 		);
 
 		const longestCumulativeGame = calcLongestCumulative(pairs, filters.groupByBggTitle ?? false);
-		const topGames = await this.calcTopGames(filters, topGamesPagination);
+		const topGames = await this.calcTopGames(filters, topGamesPagination, topGamesSort);
 		const durationDistribution = calcDurationBuckets(pairs);
 		const timeDistribution = await calcTimeDistribution(checkoutWhere, filters);
 
@@ -357,14 +373,21 @@ export const statisticsService = {
 
 	async calcTopGames(
 		filters: StatisticsFilters,
-		pagination: PaginationParams = { page: 1, pageSize: 10 }
-	): Promise<PaginatedResult<{ title: string; checkoutCount: number }>> {
+		pagination: PaginationParams = { page: 1, pageSize: 10 },
+		sort?: TopGamesSortParams
+	): Promise<PaginatedResult<TopGameItem>> {
 		const checkoutWhere = await buildFullCheckoutWhere(filters);
 
 		const groupByField = filters.groupByBggTitle ? games.bggId : games.id;
 		const titleExpr = filters.groupByBggTitle
 			? sql<string>`MIN(${games.title})`
 			: games.title;
+		const gameTypeExpr = filters.groupByBggTitle
+			? sql<string>`MIN(${games.gameType})`
+			: games.gameType;
+		const statusExpr = filters.groupByBggTitle
+			? sql<string>`MIN(${games.status})`
+			: games.status;
 
 		const countResult = await db
 			.select({ groupCount: sql<number>`COUNT(DISTINCT ${groupByField})` })
@@ -374,22 +397,55 @@ export const statisticsService = {
 
 		const total = Number(countResult[0]?.groupCount) || 0;
 
+		// Determine sort order
+		let orderByClause;
+		if (sort) {
+			const dir = sort.direction === 'asc' ? asc : desc;
+			switch (sort.field) {
+				case 'title':
+					orderByClause = filters.groupByBggTitle
+						? [dir(sql`MIN(${games.title})`)]
+						: [dir(games.title)];
+					break;
+				case 'game_type':
+					orderByClause = filters.groupByBggTitle
+						? [dir(sql`MIN(${games.gameType})`), desc(count())]
+						: [dir(games.gameType), desc(count())];
+					break;
+				case 'status':
+					orderByClause = filters.groupByBggTitle
+						? [dir(sql`MIN(${games.status})`), desc(count())]
+						: [dir(games.status), desc(count())];
+					break;
+				case 'checkouts':
+				default:
+					orderByClause = [dir(count()), filters.groupByBggTitle ? asc(sql`MIN(${games.title})`) : asc(games.title)];
+					break;
+			}
+		} else {
+			orderByClause = [desc(count()), filters.groupByBggTitle ? asc(sql`MIN(${games.title})`) : asc(games.title)];
+		}
+
 		const items = await db
 			.select({
 				title: titleExpr,
+				gameType: gameTypeExpr,
+				status: statusExpr,
 				checkoutCount: count()
 			})
 			.from(transactions)
 			.innerJoin(games, eq(transactions.gameId, games.id))
 			.where(checkoutWhere)
 			.groupBy(groupByField)
-			.orderBy(desc(count()), filters.groupByBggTitle ? sql`MIN(${games.title})` : games.title)
+			.orderBy(...orderByClause)
 			.limit(pagination.pageSize)
 			.offset((pagination.page - 1) * pagination.pageSize);
 
 		return {
 			items: items.map((r) => ({
 				title: String(r.title),
+				gameType: String(r.gameType),
+				status: String(r.status),
 				checkoutCount: Number(r.checkoutCount)
 			})),
 			total,

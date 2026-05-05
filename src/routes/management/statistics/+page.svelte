@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import BarChart from '$lib/components/BarChart.svelte';
 	import FilterPanel from '$lib/components/FilterPanel.svelte';
-	import Pagination from '$lib/components/Pagination.svelte';
+	import SortableTable from '$lib/components/SortableTable.svelte';
+	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
 	import { formatDuration } from '$lib/utils/formatting.js';
 
 	import type { StatisticsResult } from '$lib/server/services/statistics.js';
@@ -18,6 +19,8 @@
 		groupByBgg: boolean;
 		page: number;
 		pageSize: number;
+		sortField: string;
+		sortDir: string;
 	};
 
 	let { data }: {
@@ -61,6 +64,13 @@
 		groupByBgg: data.filters.groupByBgg
 	});
 
+	const topGamesColumns = [
+		{ key: 'title', label: 'Title', sortField: 'title' },
+		{ key: 'type', label: 'Type', sortField: 'game_type' },
+		{ key: 'status', label: 'Status', sortField: 'status' },
+		{ key: 'checkouts', label: 'Checkouts', sortField: 'checkouts' }
+	];
+
 	function durationMs(d: { hours: number; minutes: number; totalMinutes: number }): number {
 		return d.totalMinutes * 60_000;
 	}
@@ -90,6 +100,10 @@
 		updateUrl(params);
 	}
 
+	function handleSort(field: string, direction: 'asc' | 'desc') {
+		updateUrl({ sortField: field, sortDir: direction });
+	}
+
 	function handlePageChange(page: number) {
 		const url = new URL(window.location.href);
 		url.searchParams.set('page', String(page));
@@ -101,6 +115,15 @@
 		url.searchParams.set('pageSize', String(size));
 		url.searchParams.set('page', '1');
 		goto(url.toString(), { replaceState: true });
+	}
+
+	function statusLabel(status: string): string {
+		switch (status) {
+			case 'available': return 'Available';
+			case 'checked_out': return 'Checked Out';
+			case 'retired': return 'Retired';
+			default: return status;
+		}
 	}
 
 	let durationItems = $derived(
@@ -174,27 +197,32 @@
 
 		<section class="top-games" aria-label="Top games by checkouts">
 			<h2>Top Games</h2>
-			{#if stats.topGames.items.length === 0}
-				<p class="empty-message">No game checkout data available.</p>
-			{:else}
-				<ol class="ranked-list">
-					{#each stats.topGames.items as game, i (game.title)}
-						<li class="ranked-item">
-							<span class="rank">#{(stats.topGames.page - 1) * stats.topGames.pageSize + i + 1}</span>
-							<span class="game-title">{game.title}</span>
-							<span class="checkout-count">{game.checkoutCount} checkout{game.checkoutCount !== 1 ? 's' : ''}</span>
-						</li>
-					{/each}
-				</ol>
-			{/if}
-
-			<Pagination
+			<SortableTable
+				columns={topGamesColumns}
+				items={stats.topGames.items}
 				totalItems={stats.topGames.total}
 				currentPage={stats.topGames.page}
 				pageSize={stats.topGames.pageSize}
+				sortField={data.filters.sortField || null}
+				sortDirection={data.filters.sortDir || null}
+				emptyMessage="No game checkout data available."
+				onSort={handleSort}
 				onPageChange={handlePageChange}
 				onPageSizeChange={handlePageSizeChange}
-			/>
+			>
+				{#snippet row(game)}
+					<tr>
+						<td><span class="game-title">{game.title}</span></td>
+						<td><GameTypeBadge gameType={game.gameType} /></td>
+						<td>
+							<span class="status-indicator {game.status}">
+								{statusLabel(game.status)}
+							</span>
+						</td>
+						<td class="checkout-count">{game.checkoutCount}</td>
+					</tr>
+				{/snippet}
+			</SortableTable>
 		</section>
 
 		<section class="chart-section" aria-label="Checkouts over time">
@@ -294,42 +322,38 @@
 		margin: 1.5rem 0;
 	}
 
-	.ranked-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
-	}
-
-	.ranked-item {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.6rem 0.75rem;
-		background: #fff;
-		border: 1px solid #e5e7eb;
-		border-radius: 6px;
-	}
-
-	.rank {
-		font-weight: 700;
-		color: #6366f1;
-		min-width: 2rem;
-		font-size: 0.9rem;
-	}
-
 	.game-title {
-		flex: 1;
-		font-weight: 500;
-		color: #1f2937;
+		font-weight: 600;
+		color: #111827;
 	}
 
 	.checkout-count {
-		font-size: 0.85rem;
-		color: #6b7280;
+		font-weight: 600;
+		color: #6366f1;
+	}
+
+	.status-indicator {
+		display: inline-block;
+		padding: 0.2em 0.6em;
+		border-radius: 4px;
+		font-size: 0.8rem;
+		font-weight: 600;
 		white-space: nowrap;
+	}
+
+	.status-indicator.available {
+		background-color: #d1fae5;
+		color: #065f46;
+	}
+
+	.status-indicator.checked_out {
+		background-color: #fee2e2;
+		color: #991b1b;
+	}
+
+	.status-indicator.retired {
+		background-color: #e5e7eb;
+		color: #6b7280;
 	}
 
 	.chart-section {

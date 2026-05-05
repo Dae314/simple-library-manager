@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { statisticsService, type StatisticsFilters } from '$lib/server/services/statistics.js';
+import { statisticsService, type StatisticsFilters, type TopGamesSortField } from '$lib/server/services/statistics.js';
 import { configService } from '$lib/server/services/config.js';
 
 export const load: PageServerLoad = async ({ url }) => {
@@ -13,6 +13,8 @@ export const load: PageServerLoad = async ({ url }) => {
 	const groupByBgg = url.searchParams.get('groupByBgg') === 'true';
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
 	const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
+	const sortField = url.searchParams.get('sortField') || '';
+	const sortDir = url.searchParams.get('sortDir') || '';
 
 	const config = await configService.get();
 
@@ -63,7 +65,13 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters.groupByBggTitle = true;
 	}
 
-	const statistics = await statisticsService.getStatistics(filters, { page, pageSize });
+	const validSortFields: TopGamesSortField[] = ['title', 'game_type', 'status', 'checkouts'];
+	const validSortDirs = ['asc', 'desc'] as const;
+	const topGamesSort = validSortFields.includes(sortField as TopGamesSortField) && validSortDirs.includes(sortDir as 'asc' | 'desc')
+		? { field: sortField as TopGamesSortField, direction: sortDir as 'asc' | 'desc' }
+		: undefined;
+
+	const statistics = await statisticsService.getStatistics(filters, { page, pageSize }, topGamesSort);
 
 	// Derive convention days from config dates
 	const conventionDays: { value: string; label: string }[] = [];
@@ -95,7 +103,9 @@ export const load: PageServerLoad = async ({ url }) => {
 			gameType,
 			groupByBgg,
 			page,
-			pageSize
+			pageSize,
+			sortField,
+			sortDir
 		}
 	};
 };

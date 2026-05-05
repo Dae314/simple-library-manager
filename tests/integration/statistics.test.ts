@@ -21,8 +21,6 @@ test.describe('Statistics Page', () => {
 		await expect(page.locator('#filter-timeRangeStart')).toBeVisible();
 		await expect(page.locator('#filter-timeRangeEnd')).toBeVisible();
 		await expect(page.locator('#filter-gameTitle')).toBeVisible();
-		await expect(page.locator('#filter-attendeeName')).toBeVisible();
-		await expect(page.locator('#filter-status')).toBeVisible();
 		await expect(page.locator('#filter-gameType')).toBeVisible();
 		await expect(page.locator('#filter-groupByBgg')).toBeAttached();
 	});
@@ -45,7 +43,7 @@ test.describe('Statistics Page', () => {
 		const topGames = page.locator('section[aria-label="Top games by checkouts"]');
 		await expect(topGames).toBeVisible();
 		await expect(topGames.locator('h2')).toHaveText('Top Games');
-		await expect(topGames.locator('.ranked-item').first()).toBeVisible();
+		await expect(topGames.locator('tbody tr').first()).toBeVisible();
 	});
 
 	test('no matching data message when filters exclude all results', async ({ page }) => {
