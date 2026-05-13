@@ -131,9 +131,44 @@ test.describe('Statistics Page', () => {
 		const expectedLabel = `${display}${period}`;
 
 		// The column for the current hour should have a count of at least 1
-		const hourColumn = timeSection.locator('.chart-column', { hasText: expectedLabel });
+		// Labels may be hidden to avoid overlap, so locate via aria-label on the bar
+		const hourBar = timeSection.locator(`[role="meter"][aria-label^="${expectedLabel}:"]`);
+		await expect(hourBar).toBeVisible();
+		const hourColumn = hourBar.locator('..');
 		const countText = await hourColumn.locator('.column-count').textContent();
 		expect(Number(countText)).toBeGreaterThanOrEqual(1);
+	});
+
+	test('checkouts by time chart only shows a subset of x-axis labels to avoid overlap', async ({ page, helpers }) => {
+		const game = await helpers.createGame(`${helpers.prefix}_TimeLabels`);
+
+		await helpers.checkoutGame(game.title, 'Label', 'Test', '30');
+
+		// Filter to just today (in HST) so we get hourly granularity (24 columns)
+		const now = new Date();
+		const hstOffset = -10;
+		const hstNow = new Date(now.getTime() + hstOffset * 60 * 60_000);
+		const today = hstNow.toISOString().slice(0, 10);
+		await page.goto(`/management/statistics?gameTitle=${game.title}&timeRangeStart=${today}&timeRangeEnd=${today}`);
+
+		const timeSection = page.locator('section[aria-label="Checkouts over time"]');
+		await expect(timeSection).toBeVisible();
+
+		// There should be 24 columns (one per hour)
+		const allColumns = timeSection.locator('.chart-column');
+		await expect(allColumns).toHaveCount(24);
+
+		// But only a subset of labels should be visible (not all 24)
+		const visibleLabels = timeSection.locator('.column-label:not(.column-label-hidden)');
+		const visibleCount = await visibleLabels.count();
+		expect(visibleCount).toBeGreaterThan(0);
+		expect(visibleCount).toBeLessThan(24);
+
+		// First and last labels should always be visible
+		const firstLabel = allColumns.first().locator('.column-label');
+		await expect(firstLabel).not.toHaveClass(/column-label-hidden/);
+		const lastLabel = allColumns.last().locator('.column-label');
+		await expect(lastLabel).not.toHaveClass(/column-label-hidden/);
 	});
 
 	test('duration chart updates when convention day filter excludes data', async ({ page, helpers }) => {

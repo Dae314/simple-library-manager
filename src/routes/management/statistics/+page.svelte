@@ -134,6 +134,12 @@
 		stats.timeDistribution.buckets.map(b => ({ label: b.label, value: b.count }))
 	);
 
+	let timeMaxLabels = $derived(
+		stats.timeDistribution.granularity === 'hourly' ? 8
+		: stats.timeDistribution.granularity === 'block' ? 7
+		: 8
+	);
+
 	let timeChartTitle = $derived(
 		stats.timeDistribution.granularity === 'hourly'
 			? 'Checkouts by Hour'
@@ -232,6 +238,7 @@
 				direction="vertical"
 				ariaLabel="Bar chart showing checkouts over time"
 				emptyMessage="No checkout data to display."
+				maxLabels={timeMaxLabels}
 			/>
 		</section>
 

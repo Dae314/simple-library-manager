@@ -9,17 +9,39 @@
 		direction = 'horizontal',
 		ariaLabel = 'Bar chart',
 		emptyMessage = 'No data to display.',
-		height = 180
+		height = 180,
+		maxLabels = 0
 	}: {
 		items: BarItem[];
 		direction?: 'horizontal' | 'vertical';
 		ariaLabel?: string;
 		emptyMessage?: string;
 		height?: number;
+		maxLabels?: number;
 	} = $props();
 
 	let maxValue = $derived(Math.max(...items.map(i => i.value), 0));
 	let hasData = $derived(items.some(i => i.value > 0));
+
+	/**
+	 * Compute which label indices to show. When maxLabels is set and the item count
+	 * exceeds it, we space labels evenly across the axis, always including the first
+	 * and last items.
+	 */
+	let visibleLabelIndices = $derived.by(() => {
+		const total = items.length;
+		if (maxLabels <= 0 || total <= maxLabels) {
+			return new Set(items.map((_, i) => i));
+		}
+		const indices = new Set<number>();
+		indices.add(0);
+		indices.add(total - 1);
+		const step = (total - 1) / (maxLabels - 1);
+		for (let i = 1; i < maxLabels - 1; i++) {
+			indices.add(Math.round(step * i));
+		}
+		return indices;
+	});
 </script>
 
 {#if !hasData}
@@ -47,7 +69,7 @@
 {:else}
 	<div class="vertical-chart" role="img" aria-label={ariaLabel}>
 		<div class="chart-bars" style="height: {height}px">
-			{#each items as item (item.label)}
+			{#each items as item, idx (item.label)}
 				<div class="chart-column">
 					<span class="column-count" class:hidden={item.value === 0}>{item.value}</span>
 					<div
@@ -59,7 +81,7 @@
 						aria-valuemax={maxValue}
 						aria-label="{item.label}: {item.value}"
 					></div>
-					<span class="column-label">{item.label}</span>
+					<span class="column-label" class:column-label-hidden={!visibleLabelIndices.has(idx)}>{item.label}</span>
 				</div>
 			{/each}
 		</div>
@@ -167,6 +189,10 @@
 		color: #6b7280;
 		margin-top: 4px;
 		white-space: nowrap;
+	}
+
+	.column-label-hidden {
+		visibility: hidden;
 	}
 
 	@media (max-width: 640px) {
