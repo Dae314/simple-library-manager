@@ -23,11 +23,15 @@
 	let {
 		returnGame,
 		open = $bindable(false),
-		onSuccess
+		onSuccess,
+		weightUnit: weightUnitProp = 'lbs',
+		weightTolerance: weightToleranceProp = 0.5
 	}: {
 		returnGame: LibraryGameRecord;
 		open: boolean;
 		onSuccess: () => void;
+		weightUnit?: string;
+		weightTolerance?: number;
 	} = $props();
 
 	let dialogEl: HTMLDialogElement | undefined = $state();
@@ -53,8 +57,8 @@
 
 	// Weight warning state
 	let weightWarning: { checkoutWeight: number; checkinWeight: number; tolerance: number } | null = $state(null);
-	let weightUnit = $state('lbs');
-	let weightTolerance = $state(0.5);
+	let weightUnit = $derived(weightUnitProp);
+	let weightTolerance = $derived(weightToleranceProp);
 
 	// Conflict detection state
 	let statusChangeWarning = $state(false);
@@ -251,8 +255,6 @@
 						checkinWeight: resultData.weightWarning.checkinWeight,
 						tolerance: resultData.weightWarning.tolerance
 					};
-					weightUnit = resultData.weightWarning.weightUnit || 'lbs';
-					weightTolerance = resultData.weightWarning.tolerance;
 				}
 				toast.success('Game swap completed successfully!');
 				open = false;

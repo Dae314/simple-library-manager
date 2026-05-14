@@ -520,6 +520,8 @@
 		returnGame={swapGame}
 		bind:open={swapDialogOpen}
 		onSuccess={() => { swapGame = null; }}
+		weightUnit={data.weightUnit}
+		weightTolerance={data.weightTolerance}
 	/>
 {/if}
 
