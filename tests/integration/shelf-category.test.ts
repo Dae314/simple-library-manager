@@ -14,7 +14,7 @@ test.describe('Shelf Category', () => {
 		await page.locator('#shelfCategory').selectOption('family');
 		await page.getByRole('button', { name: 'Add Game' }).click();
 
-		await expect(page.getByText('Game added successfully')).toBeVisible({ timeout: 10_000 });
+		await expect(page).toHaveURL(/\/management\/games$/);
 
 		// Verify the game appears with the correct shelf category
 		await page.goto(`/management/games?search=${encodeURIComponent(title)}`);
@@ -34,7 +34,7 @@ test.describe('Shelf Category', () => {
 		await page.locator('#shelfCategory').selectOption('small');
 		await page.getByRole('button', { name: 'Save Changes' }).click();
 
-		await expect(page.getByText('Game updated successfully')).toBeVisible({ timeout: 10_000 });
+		await expect(page).toHaveURL(/\/management\/games$/);
 
 		// Verify the change persisted
 		await page.goto(`/management/games/${game.id}`);

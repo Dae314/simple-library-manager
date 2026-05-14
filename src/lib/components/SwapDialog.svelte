@@ -205,8 +205,12 @@
 		return valid;
 	}
 
-	async function handleSubmit(e: SubmitEvent) {
-		e.preventDefault();
+	function handleFormSubmit() {
+		doSwap();
+	}
+
+	async function doSwap() {
+		console.log('[SwapDialog] doSwap called');
 		formError = '';
 
 		if (!selectedGame) {
@@ -227,7 +231,7 @@
 			formData.set('checkinWeight', checkinWeightInput);
 			formData.set('checkoutWeight', checkoutWeightInput);
 
-			const response = await fetch('?/swap', {
+			const response = await fetch('/library?/swap', {
 				method: 'POST',
 				body: formData,
 				headers: { 'x-sveltekit-action': 'true' }
@@ -408,11 +412,7 @@
 		</div>
 
 		<!-- Weight inputs -->
-		<form onsubmit={handleSubmit} novalidate>
-			<input type="hidden" name="returnGameId" value={returnGame.id} />
-			<input type="hidden" name="newGameId" value={selectedGame?.id ?? ''} />
-			<input type="hidden" name="checkinWeight" value={checkinWeightInput} />
-			<input type="hidden" name="checkoutWeight" value={checkoutWeightInput} />
+		<form onsubmit={(e) => { e.preventDefault(); handleFormSubmit(); }} novalidate>
 
 			<div class="weights-section">
 				<div class="form-group">

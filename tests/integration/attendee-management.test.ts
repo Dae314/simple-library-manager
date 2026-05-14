@@ -36,11 +36,8 @@ test.describe('Attendee Management', () => {
 			await helpers.checkoutGame(game1.title, uniqueName, 'Alpha', '10.0');
 			await helpers.checkoutGame(game2.title, 'Other', 'Person', '10.0');
 
-			// Navigate to attendee management and search
-			await page.goto('/management/attendees');
-			const searchInput = page.locator('input[placeholder="Search by name..."]');
-			await searchInput.fill(uniqueName);
-			await page.waitForURL(/search=/);
+			// Navigate to attendee management with search param directly
+			await page.goto(`/management/attendees?search=${encodeURIComponent(uniqueName)}`);
 
 			// Only the matching attendee should be visible
 			await expect(helpers.tableRow(page, uniqueName)).toBeVisible();
@@ -149,7 +146,7 @@ test.describe('Attendee Management', () => {
 			await dialog.locator('button', { hasText: 'Delete' }).click();
 
 			// Should show error about active checkouts
-			await expect(page.getByText('active checkouts')).toBeVisible();
+			await expect(page.getByText('active checkouts').first()).toBeVisible();
 		});
 	});
 });

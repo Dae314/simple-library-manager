@@ -21,7 +21,7 @@ test.describe('Statistics Page', () => {
 		await expect(page.locator('#filter-timeRangeStart')).toBeVisible();
 		await expect(page.locator('#filter-timeRangeEnd')).toBeVisible();
 		await expect(page.locator('#filter-gameTitle')).toBeVisible();
-		await expect(page.locator('#filter-gameType')).toBeVisible();
+		await expect(page.locator('#filter-prizeType')).toBeVisible();
 		await expect(page.locator('#filter-groupByBgg')).toBeAttached();
 	});
 
@@ -77,8 +77,8 @@ test.describe('Statistics Page', () => {
 	test('filter by game type updates statistics', async ({ page }) => {
 		await page.goto('/management/statistics');
 
-		await page.locator('#filter-gameType').selectOption('play_and_win');
-		await page.waitForURL(/gameType=play_and_win/);
+		await page.locator('#filter-prizeType').selectOption('play_and_win');
+		await page.waitForURL(/prizeType=play_and_win/);
 
 		const statsPage = page.locator('.statistics-page');
 		await expect(statsPage).toBeVisible();

@@ -28,13 +28,13 @@ test.describe('CSV Import & Export', () => {
 		const lines = csvContent.trim().split(/\r?\n/);
 		const headers = lines[0].split(',').map((h) => h.trim());
 
-		expect(headers).toContain('game_type');
+		expect(headers).toContain('prize_type');
 		expect(headers).toContain('title');
 		expect(headers).toContain('BGG_ID');
 		expect(headers).toContain('copy_number');
 		expect(headers).toContain('status');
 
-		// Find the row for our game and verify game_type
+		// Find the row for our game and verify prize_type
 		const gameRow = lines.find((l) => l.includes(title));
 		expect(gameRow).toBeDefined();
 		expect(gameRow).toContain('play_and_win');

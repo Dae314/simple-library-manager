@@ -175,7 +175,7 @@
 			if (val !== currentUrlValue) {
 				updateUrl({ attendeeSearch: val });
 			}
-		}, 300);
+		}, 2000);
 		return () => {
 			if (attendeeSearchTimer) clearTimeout(attendeeSearchTimer);
 		};

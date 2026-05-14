@@ -103,7 +103,7 @@
 			if (val !== currentUrlValue) {
 				updateUrl({ attendeeName: val });
 			}
-		}, 300);
+		}, 2000);
 		return () => {
 			if (attendeeNameTimer) clearTimeout(attendeeNameTimer);
 		};

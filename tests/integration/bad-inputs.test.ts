@@ -70,7 +70,7 @@ test.describe('Bad Input Handling', () => {
 			await page.goto('/management/games/new');
 
 			await page.fill('#bggId', '12345');
-			await page.selectOption('#gameType', 'standard');
+			await page.selectOption('#prizeType', 'standard');
 			await page.click('button:has-text("Add Game")');
 
 			await expect(page).toHaveURL(/\/management\/games\/new/);
@@ -82,7 +82,7 @@ test.describe('Bad Input Handling', () => {
 
 			await page.fill('#title', `${helpers.prefix}_BadBGG`);
 			await page.locator('#bggId').fill('');
-			await page.selectOption('#gameType', 'standard');
+			await page.selectOption('#prizeType', 'standard');
 			await page.click('button:has-text("Add Game")');
 
 			await expect(page).toHaveURL(/\/management\/games\/new/);
@@ -94,7 +94,7 @@ test.describe('Bad Input Handling', () => {
 
 			await page.fill('#title', `${helpers.prefix}_NegBGG`);
 			await page.fill('#bggId', '-1');
-			await page.selectOption('#gameType', 'standard');
+			await page.selectOption('#prizeType', 'standard');
 			await page.click('button:has-text("Add Game")');
 
 			await expect(page).toHaveURL(/\/management\/games\/new/);
@@ -106,7 +106,7 @@ test.describe('Bad Input Handling', () => {
 
 			await page.fill('#title', `${helpers.prefix}_ZeroBGG`);
 			await page.fill('#bggId', '0');
-			await page.selectOption('#gameType', 'standard');
+			await page.selectOption('#prizeType', 'standard');
 			await page.click('button:has-text("Add Game")');
 
 			await expect(page).toHaveURL(/\/management\/games\/new/);

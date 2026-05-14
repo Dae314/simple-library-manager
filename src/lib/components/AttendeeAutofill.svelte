@@ -12,17 +12,20 @@
 		value = $bindable(''),
 		field,
 		onSelect,
-		placeholder = ''
+		placeholder = '',
+		id = undefined
 	}: {
 		value?: string;
 		field: 'firstName' | 'lastName';
 		onSelect: (attendee: AttendeeRecord) => void;
 		placeholder?: string;
+		id?: string;
 	} = $props();
 
 	let suggestions: AttendeeRecord[] = $state([]);
 	let showSuggestions = $state(false);
 	let inputEl: HTMLInputElement | undefined = $state();
+	let lastFetchedQuery = '';
 
 	$effect(() => {
 		const query = value;
@@ -30,6 +33,12 @@
 		if (query.length < 2) {
 			suggestions = [];
 			showSuggestions = false;
+			lastFetchedQuery = '';
+			return;
+		}
+
+		// Don't re-fetch if the query hasn't changed (e.g. parent re-render)
+		if (query === lastFetchedQuery && suggestions.length > 0) {
 			return;
 		}
 
@@ -46,6 +55,7 @@
 				const data = await res.json();
 				suggestions = data.suggestions ?? [];
 				showSuggestions = suggestions.length > 0;
+				lastFetchedQuery = query;
 			} catch {
 				suggestions = [];
 				showSuggestions = false;
@@ -79,6 +89,7 @@
 		bind:this={inputEl}
 		type="text"
 		bind:value
+		{id}
 		{placeholder}
 		aria-label={placeholder}
 		autocomplete="off"

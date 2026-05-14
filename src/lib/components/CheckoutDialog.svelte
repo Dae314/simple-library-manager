@@ -101,6 +101,7 @@
 				<label for="checkout-attendeeFirstName">First Name</label>
 				<input type="hidden" name="attendeeFirstName" value={firstName} />
 				<AttendeeAutofill
+					id="checkout-attendeeFirstName"
 					bind:value={firstName}
 					field="firstName"
 					onSelect={handleAttendeeSelect}
@@ -115,6 +116,7 @@
 				<label for="checkout-attendeeLastName">Last Name</label>
 				<input type="hidden" name="attendeeLastName" value={lastName} />
 				<AttendeeAutofill
+					id="checkout-attendeeLastName"
 					bind:value={lastName}
 					field="lastName"
 					onSelect={handleAttendeeSelect}

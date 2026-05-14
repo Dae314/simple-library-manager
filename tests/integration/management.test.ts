@@ -39,7 +39,7 @@ test.describe('Management Area', () => {
 
 			await page.fill('#title', title);
 			await page.fill('#bggId', '36218');
-			await page.selectOption('#gameType', 'standard');
+			await page.selectOption('#prizeType', 'standard');
 			await page.click('button:has-text("Add Game")');
 
 			await expect(page).toHaveURL(/\/management\/games$/);
@@ -56,7 +56,7 @@ test.describe('Management Area', () => {
 			await page.goto('/management/games/new');
 
 			await page.fill('#bggId', '12345');
-			await page.selectOption('#gameType', 'standard');
+			await page.selectOption('#prizeType', 'standard');
 			await page.click('button:has-text("Add Game")');
 
 			await expect(page).toHaveURL(/\/management\/games\/new/);

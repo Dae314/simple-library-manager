@@ -27,7 +27,7 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 			await expect(tab1).toHaveURL(/\/management\/games\/new/);
 			await tab1.fill('#title', title);
 			await tab1.fill('#bggId', '36218');
-			await tab1.selectOption('#gameType', 'standard');
+			await tab1.selectOption('#prizeType', 'standard');
 			await tab1.click('button:has-text("Add Game")');
 
 			// Wait for redirect back to management games list
