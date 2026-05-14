@@ -50,9 +50,8 @@ export type WeightWarningLevel = 'red' | 'yellow' | 'none';
  * Determines the weight warning level for a checkin.
  *
  * - 'red': weight difference exceeds the configured warning threshold (tolerance)
- * - 'yellow': weight is outside 2% of checkout weight but within the threshold,
- *             OR checkin weight is more than 2% heavier than checkout weight
- * - 'none': weight is within 2% of checkout weight
+ * - 'yellow': weight difference is between 0.1 and the tolerance threshold
+ * - 'none': weight difference is within 0.1 (static minor threshold)
  */
 export function getWeightWarningLevel(
 	checkoutWeight: number,
@@ -60,19 +59,19 @@ export function getWeightWarningLevel(
 	tolerance: number
 ): WeightWarningLevel {
 	const difference = Math.abs(checkinWeight - checkoutWeight);
-	const twoPercentThreshold = checkoutWeight * 0.02;
+	const minorWarningThreshold = 0.1;
 
 	// Red: exceeds the configured warning threshold
 	if (difference > tolerance) {
 		return 'red';
 	}
 
-	// Within 2% of checkout weight — no warning
-	if (difference <= twoPercentThreshold) {
+	// Within 0.1 of checkout weight — no warning
+	if (difference <= minorWarningThreshold) {
 		return 'none';
 	}
 
-	// Between 2% and tolerance (lighter or heavier) — yellow
+	// Between 0.1 and tolerance (lighter or heavier) — yellow
 	return 'yellow';
 }
 

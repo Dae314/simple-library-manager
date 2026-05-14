@@ -51,7 +51,7 @@ test.describe('Checkout → Checkin Flow', () => {
 	test('red weight warning when checkin weight differs beyond tolerance', async ({ page, helpers }) => {
 		const game = await helpers.createGame(`${helpers.prefix}_RedWarn`);
 
-		// Checkout with weight 32.5 (tolerance is 0.5 oz, 2% of 32.5 = 0.65)
+		// Checkout with weight 32.5 (tolerance is 0.5 oz)
 		await helpers.checkoutGame(game.title, 'Bob', 'Smith', '32.5');
 
 		// Checkin with weight 30.0 (difference 2.5 > tolerance 0.5 → red)
@@ -73,9 +73,9 @@ test.describe('Checkout → Checkin Flow', () => {
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 	});
 
-	test('yellow weight warning when difference is between 2% and tolerance', async ({ page, helpers }) => {
-		// Checkout weight 10.0: 2% = 0.2, tolerance = 0.5
-		// A checkin weight of 9.7 gives difference 0.3, which is > 0.2 (2%) but < 0.5 (tolerance) → yellow
+	test('yellow weight warning when difference is between 0.1 and tolerance', async ({ page, helpers }) => {
+		// Checkout weight 10.0, tolerance = 0.5
+		// A checkin weight of 9.7 gives difference 0.3, which is > 0.1 (static threshold) but < 0.5 (tolerance) → yellow
 		const game = await helpers.createGame(`${helpers.prefix}_YellowWarn`);
 
 		await helpers.checkoutGame(game.title, 'Alice', 'Jones', '10.0');
@@ -98,9 +98,9 @@ test.describe('Checkout → Checkin Flow', () => {
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 	});
 
-	test('no weight warning when checkin weight is within 2% of checkout weight', async ({ page, helpers }) => {
-		// Checkout weight 32.5: 2% = 0.65
-		// A checkin weight of 32.4 gives difference 0.1, which is < 0.65 (2%) → no warning
+	test('no weight warning when checkin weight is within 0.1 of checkout weight', async ({ page, helpers }) => {
+		// Checkout weight 32.5
+		// A checkin weight of 32.45 gives difference 0.05, which is ≤ 0.1 (static threshold) → no warning
 		const game = await helpers.createGame(`${helpers.prefix}_NoWarn`);
 
 		await helpers.checkoutGame(game.title, 'Carol', 'White', '32.5');
@@ -112,7 +112,7 @@ test.describe('Checkout → Checkin Flow', () => {
 		const checkinDialog = page.locator('dialog.checkin-dialog');
 		await expect(checkinDialog).toBeVisible();
 
-		await checkinDialog.locator('#checkin-checkinWeight').fill('32.4');
+		await checkinDialog.locator('#checkin-checkinWeight').fill('32.45');
 
 		const weightWarning = checkinDialog.locator('.inline-weight-warning');
 		await expect(weightWarning).not.toBeVisible();
@@ -121,9 +121,9 @@ test.describe('Checkout → Checkin Flow', () => {
 		await expect(page.getByText('Game checked in successfully!')).toBeVisible();
 	});
 
-	test('yellow weight warning when checkin weight is heavier by more than 2% but within tolerance', async ({ page, helpers }) => {
-		// Checkout weight 10.0: 2% = 0.2, tolerance = 0.5
-		// A checkin weight of 10.3 gives difference 0.3, which is > 0.2 (2%) but < 0.5 (tolerance) → yellow
+	test('yellow weight warning when checkin weight is heavier by more than 0.1 but within tolerance', async ({ page, helpers }) => {
+		// Checkout weight 10.0, tolerance = 0.5
+		// A checkin weight of 10.3 gives difference 0.3, which is > 0.1 (static threshold) but < 0.5 (tolerance) → yellow
 		const game = await helpers.createGame(`${helpers.prefix}_YellowHeavy`);
 
 		await helpers.checkoutGame(game.title, 'Dave', 'Brown', '10.0');
