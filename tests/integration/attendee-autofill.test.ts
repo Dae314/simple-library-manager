@@ -52,7 +52,7 @@ test.describe('Attendee Autofill', () => {
 		expect(idTypeValue).not.toBe('');
 	});
 
-	test.fixme('library page attendee filter: autofill suggestions appear and selecting filters the library', async ({
+	test('library page attendee filter: autofill suggestions appear and selecting filters the library', async ({
 		page,
 		helpers
 	}) => {
@@ -66,10 +66,8 @@ test.describe('Attendee Autofill', () => {
 		// Find the attendee search autofill input in the filter panel
 		const attendeeFilter = page.locator('.attendee-autofill').first();
 		const filterInput = attendeeFilter.locator('input[type="text"]');
-		await filterInput.fill('Fer');
-		
-		// Manually trigger input event to ensure Svelte binding updates
-		await filterInput.dispatchEvent('input');
+		await filterInput.click();
+		await filterInput.pressSequentially('Fer', { delay: 50 });
 
 		// Wait for suggestions to appear
 		const suggestions = attendeeFilter.locator('.suggestions');
@@ -170,7 +168,7 @@ test.describe('Attendee Autofill', () => {
 		expect(idTypeValue).not.toBe('');
 	});
 
-	test.fixme('transactions page attendee filter: autofill suggestions appear', async ({
+	test('transactions page attendee filter: autofill suggestions appear', async ({
 		page,
 		helpers
 	}) => {
@@ -184,8 +182,8 @@ test.describe('Attendee Autofill', () => {
 		// Find the attendee autofill filter
 		const attendeeFilter = page.locator('.attendee-autofill').first();
 		const filterInput = attendeeFilter.locator('input[type="text"]');
-		await filterInput.fill('Bea');
-		await filterInput.dispatchEvent('input');
+		await filterInput.click();
+		await filterInput.pressSequentially('Bea', { delay: 50 });
 
 		// Wait for suggestions to appear
 		const suggestions = attendeeFilter.locator('.suggestions');

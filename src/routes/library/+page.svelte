@@ -160,9 +160,17 @@
 	// Local state for the attendee autofill input
 	let attendeeSearchValue = $state('');
 
+	// Track the last server-synced value to avoid resetting during invalidateAll
+	let lastSyncedAttendeeSearch = '';
+
 	// Sync attendee search value when server data changes (e.g. after navigation)
+	// Only update if the server value actually changed (not just a re-render from invalidateAll)
 	$effect(() => {
-		attendeeSearchValue = data.activeAttendeeSearch ?? '';
+		const serverValue = data.activeAttendeeSearch ?? '';
+		if (serverValue !== lastSyncedAttendeeSearch) {
+			lastSyncedAttendeeSearch = serverValue;
+			attendeeSearchValue = serverValue;
+		}
 	});
 
 	// Debounce attendee search text input to also filter when user types without selecting

@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
 
 test.describe('Swap Flow', () => {
-	test.fixme('full swap flow: open dialog, select game, enter weights, confirm → success toast', async ({
+	test('full swap flow: open dialog, select game, enter weights, confirm → success toast', async ({
 		page,
 		helpers
 	}) => {
@@ -42,13 +42,9 @@ test.describe('Swap Flow', () => {
 		await dialog.locator('#swap-checkinWeight').fill('25.0');
 		await dialog.locator('#swap-checkoutWeight').fill('30.0');
 
-		// Confirm the swap - directly trigger the swap via the form's submit event
+		// Confirm the swap
 		await expect(dialog.getByRole('button', { name: 'Confirm Swap' })).toBeEnabled({ timeout: 5_000 });
-		
-		// Use requestSubmit which properly triggers the submit event including Svelte's handler
-		await dialog.locator('form').evaluate(form => {
-			(form as HTMLFormElement).requestSubmit();
-		});
+		await dialog.getByRole('button', { name: 'Confirm Swap' }).click();
 
 		// Wait for the swap to complete - dialog should close
 		await expect(dialog).not.toBeVisible({ timeout: 15_000 });

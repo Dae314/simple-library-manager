@@ -184,8 +184,11 @@
 		checkinWeightError = '';
 		checkoutWeightError = '';
 
-		const checkinWeight = parseFloat(checkinWeightInput);
-		if (!checkinWeightInput.trim()) {
+		const checkinStr = String(checkinWeightInput ?? '');
+		const checkoutStr = String(checkoutWeightInput ?? '');
+
+		const checkinWeight = parseFloat(checkinStr);
+		if (!checkinStr.trim()) {
 			checkinWeightError = 'Checkin weight is required';
 			valid = false;
 		} else if (isNaN(checkinWeight) || !isFinite(checkinWeight) || checkinWeight <= 0) {
@@ -193,8 +196,8 @@
 			valid = false;
 		}
 
-		const checkoutWeight = parseFloat(checkoutWeightInput);
-		if (!checkoutWeightInput.trim()) {
+		const checkoutWeight = parseFloat(checkoutStr);
+		if (!checkoutStr.trim()) {
 			checkoutWeightError = 'Checkout weight is required';
 			valid = false;
 		} else if (isNaN(checkoutWeight) || !isFinite(checkoutWeight) || checkoutWeight <= 0) {
@@ -210,7 +213,6 @@
 	}
 
 	async function doSwap() {
-		console.log('[SwapDialog] doSwap called');
 		formError = '';
 
 		if (!selectedGame) {
@@ -228,8 +230,8 @@
 			const formData = new FormData();
 			formData.set('returnGameId', String(returnGame.id));
 			formData.set('newGameId', String(selectedGame.id));
-			formData.set('checkinWeight', checkinWeightInput);
-			formData.set('checkoutWeight', checkoutWeightInput);
+			formData.set('checkinWeight', String(checkinWeightInput));
+			formData.set('checkoutWeight', String(checkoutWeightInput));
 
 			const response = await fetch('/library?/swap', {
 				method: 'POST',

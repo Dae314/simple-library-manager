@@ -538,10 +538,20 @@ export const transactionService = {
 		}
 
 		if (filters.attendeeName) {
-			const search = `%${filters.attendeeName}%`;
-			conditions.push(
-				sql`(${ilike(transactions.attendeeFirstName, search)} OR ${ilike(transactions.attendeeLastName, search)})`
-			);
+			// Support full name search (e.g. "Beatrice Langford") by splitting on space
+			const parts = filters.attendeeName.trim().split(/\s+/);
+			if (parts.length >= 2) {
+				const firstName = parts[0];
+				const lastName = parts.slice(1).join(' ');
+				conditions.push(
+					sql`(${ilike(transactions.attendeeFirstName, `%${firstName}%`)} AND ${ilike(transactions.attendeeLastName, `%${lastName}%`)})`
+				);
+			} else {
+				const search = `%${filters.attendeeName}%`;
+				conditions.push(
+					sql`(${ilike(transactions.attendeeFirstName, search)} OR ${ilike(transactions.attendeeLastName, search)})`
+				);
+			}
 		}
 
 		if (filters.gameTitle) {

@@ -650,9 +650,22 @@ export const gameService = {
 			conditions.push(ilike(games.title, `%${filters.titleSearch}%`));
 		}
 		if (filters.attendeeSearch) {
-			conditions.push(
-				sql`(${ilike(latestCheckout.attendeeFirstName, `%${filters.attendeeSearch}%`)} OR ${ilike(latestCheckout.attendeeLastName, `%${filters.attendeeSearch}%`)})`
-			);
+			// Support full name search (e.g. "Fernando Gutierrez") by splitting on space
+			// and matching each part against either first or last name
+			const parts = filters.attendeeSearch.trim().split(/\s+/);
+			if (parts.length >= 2) {
+				// Multi-word: first part matches firstName, last part(s) match lastName
+				const firstName = parts[0];
+				const lastName = parts.slice(1).join(' ');
+				conditions.push(
+					sql`(${ilike(latestCheckout.attendeeFirstName, `%${firstName}%`)} AND ${ilike(latestCheckout.attendeeLastName, `%${lastName}%`)})`
+				);
+			} else {
+				// Single word: match against either field
+				conditions.push(
+					sql`(${ilike(latestCheckout.attendeeFirstName, `%${filters.attendeeSearch}%`)} OR ${ilike(latestCheckout.attendeeLastName, `%${filters.attendeeSearch}%`)})`
+				);
+			}
 		}
 
 		// The LEFT JOIN condition: match on game_id AND rn = 1 (latest checkout only)
