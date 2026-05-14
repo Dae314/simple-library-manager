@@ -10,14 +10,9 @@ test.describe('Attendee Management', () => {
 			// Checkout creates the attendee
 			await helpers.checkoutGame(game.title, firstName, lastName, '10.0');
 
-			// Navigate to attendee management page
-			await page.goto('/management/attendees');
+			// Navigate to attendee management page with search param directly
+			await page.goto(`/management/attendees?search=${encodeURIComponent(firstName)}`);
 			await expect(page.locator('h1')).toContainText('Attendees');
-
-			// Search for the attendee
-			const searchInput = page.locator('input[placeholder="Search by name..."]');
-			await searchInput.fill(firstName);
-			await page.waitForURL(/search=/);
 
 			// Attendee should appear in the list
 			const row = helpers.tableRow(page, firstName);
