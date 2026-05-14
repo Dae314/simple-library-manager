@@ -12,20 +12,22 @@ interface TestGame {
 }
 
 type GameType = 'standard' | 'play_and_win' | 'play_and_take';
+type ShelfCategory = 'family' | 'small' | 'standard';
 
 // ── Low-level API helpers (use request context, not page) ──────────────
 
 async function apiCreateGame(
 	request: APIRequestContext,
 	title: string,
-	opts?: { bggId?: number; gameType?: GameType }
+	opts?: { bggId?: number; gameType?: GameType; shelfCategory?: ShelfCategory }
 ): Promise<TestGame> {
 	const res = await request.post(`${BASE}/api/test-helpers`, {
 		data: {
 			action: 'createGame',
 			title,
 			bggId: opts?.bggId ?? 99999,
-			gameType: opts?.gameType ?? 'standard'
+			gameType: opts?.gameType ?? 'standard',
+			shelfCategory: opts?.shelfCategory ?? 'standard'
 		}
 	});
 	if (!res.ok()) throw new Error(`createGame failed: ${await res.text()}`);
@@ -106,7 +108,7 @@ export const test = base.extend<{
 		/** Unique prefix for this test (use in game titles to avoid collisions) */
 		prefix: string;
 		/** Create a game via API. Automatically cleaned up after the test. */
-		createGame: (title: string, opts?: { bggId?: number; gameType?: GameType }) => Promise<TestGame>;
+		createGame: (title: string, opts?: { bggId?: number; gameType?: GameType; shelfCategory?: ShelfCategory }) => Promise<TestGame>;
 		/** Checkout a game through the UI */
 		checkoutGame: (gameName: string, firstName: string, lastName: string, weight: string) => Promise<void>;
 		/** Checkin a game through the UI */
@@ -123,7 +125,7 @@ export const test = base.extend<{
 		const helpers = {
 			prefix,
 
-			async createGame(title: string, opts?: { bggId?: number; gameType?: GameType }) {
+			async createGame(title: string, opts?: { bggId?: number; gameType?: GameType; shelfCategory?: ShelfCategory }) {
 				const game = await apiCreateGame(request, title, opts);
 				createdIds.push(game.id);
 				return game;

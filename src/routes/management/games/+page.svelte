@@ -20,7 +20,8 @@
 		copyNumber: number;
 		totalCopies: number;
 		status: string;
-		gameType: 'standard' | 'play_and_win' | 'play_and_take';
+		prizeType: 'standard' | 'play_and_win' | 'play_and_take';
+		shelfCategory: 'family' | 'small' | 'standard';
 		version: number;
 		createdAt: string;
 		lastTransactionDate: string | null;
@@ -36,7 +37,8 @@
 	type FilterValues = {
 		search: string;
 		status: string;
-		gameType: string;
+		prizeType: string;
+		shelfCategory: string;
 		sortField: string;
 		sortDir: string;
 		createdSince: string;
@@ -93,6 +95,7 @@
 		{ key: 'select', label: 'Select', srOnly: true },
 		{ key: 'title', label: 'Title', sortField: 'title' },
 		{ key: 'type', label: 'Type', sortField: 'game_type' },
+		{ key: 'shelfCategory', label: 'Shelf', sortField: 'shelf_category' },
 		{ key: 'status', label: 'Status', sortField: 'status' },
 		{ key: 'dateAdded', label: 'Date Added', sortField: 'created_at' },
 		{ key: 'lastTx', label: 'Last Transaction', sortField: 'last_transaction_date' },
@@ -112,11 +115,19 @@
 			]
 		},
 		{
-			key: 'gameType', label: 'Type', type: 'select' as const,
+			key: 'prizeType', label: 'Type', type: 'select' as const,
 			options: [
 				{ value: 'standard', label: 'Standard' },
 				{ value: 'play_and_win', label: 'Play & Win' },
 				{ value: 'play_and_take', label: 'Play & Take' }
+			]
+		},
+		{
+			key: 'shelfCategory', label: 'Shelf Category', type: 'select' as const,
+			options: [
+				{ value: 'family', label: 'Family' },
+				{ value: 'small', label: 'Small' },
+				{ value: 'standard', label: 'Standard' }
 			]
 		},
 		{ key: 'createdSince', label: 'Added Since', type: 'date' as const },
@@ -129,7 +140,8 @@
 	let filterValues = $derived({
 		search: data.filters.search,
 		status: data.filters.status,
-		gameType: data.filters.gameType,
+		prizeType: data.filters.prizeType,
+		shelfCategory: data.filters.shelfCategory,
 		createdSince: data.filters.createdSince,
 		lastCheckedOutBefore: data.filters.lastCheckedOutBefore,
 		lastTransactionStart: data.filters.lastTransactionStart,
@@ -276,6 +288,15 @@
 			default: return status;
 		}
 	}
+
+	function shelfCategoryLabel(category: string): string {
+		switch (category) {
+			case 'family': return 'Family';
+			case 'small': return 'Small';
+			case 'standard': return 'Standard';
+			default: return category;
+		}
+	}
 </script>
 
 <div class="management-page">
@@ -377,7 +398,8 @@
 				<td>
 					<span class="game-title">{gameDisplayTitle(game)}</span>
 				</td>
-				<td><GameTypeBadge gameType={game.gameType} /></td>
+				<td><GameTypeBadge prizeType={game.prizeType} /></td>
+				<td>{shelfCategoryLabel(game.shelfCategory)}</td>
 				<td>
 					<span class="status-indicator {game.status}">
 						{statusLabel(game.status)}

@@ -1,16 +1,16 @@
 <script lang="ts">
-	type GameType = 'standard' | 'play_and_win' | 'play_and_take';
+	type PrizeType = 'standard' | 'play_and_win' | 'play_and_take';
 
-	let { gameType }: { gameType: GameType } = $props();
+	let { prizeType }: { prizeType: PrizeType } = $props();
 
-	const labels: Record<GameType, string> = {
+	const labels: Record<PrizeType, string> = {
 		standard: 'Standard',
 		play_and_win: 'Play & Win',
 		play_and_take: 'Play & Take'
 	};
 </script>
 
-<span class="badge {gameType}">{labels[gameType]}</span>
+<span class="badge {prizeType}">{labels[prizeType]}</span>
 
 <style>
 	.badge {

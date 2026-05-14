@@ -54,6 +54,11 @@
 			<span class="card-title">Backup</span>
 			<span class="card-desc">Export or import a full database backup.</span>
 		</a>
+		<a href="/management/attendees" class="nav-card">
+			<span class="card-icon" aria-hidden="true">👥</span>
+			<span class="card-title">Attendees</span>
+			<span class="card-desc">View, edit, and delete attendees. Search by name and filter by ID type.</span>
+		</a>
 		<a href="/management/statistics" class="nav-card">
 			<span class="card-icon" aria-hidden="true">📊</span>
 			<span class="card-title">Statistics</span>

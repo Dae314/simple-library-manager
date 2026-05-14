@@ -10,7 +10,7 @@
 	interface FilterConfig {
 		key: string;
 		label: string;
-		type: 'text' | 'select' | 'date' | 'toggle';
+		type: 'text' | 'select' | 'date' | 'toggle' | 'custom';
 		options?: FilterOption[];
 		placeholder?: string;
 	}
@@ -39,7 +39,8 @@
 		onPageSizeChange,
 		row,
 		headerActions,
-		aboveTable
+		aboveTable,
+		customFilter
 	}: {
 		columns: ColumnDef[];
 		items: any[];
@@ -58,6 +59,7 @@
 		row: Snippet<[any, number]>;
 		headerActions?: Snippet;
 		aboveTable?: Snippet;
+		customFilter?: Snippet<[FilterConfig]>;
 	} = $props();
 
 	// Local copy of filter values that updates immediately on user interaction,
@@ -104,8 +106,10 @@
 		<legend class="sr-only">Filters</legend>
 		<div class="filter-row">
 			{#each filters as filter (filter.key)}
-				<div class="filter-field" class:filter-text={filter.type === 'text'} class:filter-toggle={filter.type === 'toggle'}>
-					{#if filter.type === 'text'}
+				<div class="filter-field" class:filter-text={filter.type === 'text' || filter.type === 'custom'} class:filter-toggle={filter.type === 'toggle'}>
+					{#if filter.type === 'custom' && customFilter}
+						{@render customFilter(filter)}
+					{:else if filter.type === 'text'}
 						<input
 							type="search"
 							id="filter-{filter.key}"

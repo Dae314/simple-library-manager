@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const gameTitle = url.searchParams.get('gameTitle') || '';
 	const attendeeName = url.searchParams.get('attendeeName') || '';
 	const status = url.searchParams.get('status') || '';
-	const gameType = url.searchParams.get('gameType') || '';
+	const prizeType = url.searchParams.get('prizeType') || url.searchParams.get('gameType') || '';
 	const groupByBgg = url.searchParams.get('groupByBgg') === 'true';
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
 	const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
@@ -57,8 +57,8 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters.availabilityStatus = status;
 	}
 
-	if (gameType === 'standard' || gameType === 'play_and_win' || gameType === 'play_and_take') {
-		filters.gameType = gameType;
+	if (prizeType === 'standard' || prizeType === 'play_and_win' || prizeType === 'play_and_take') {
+		filters.gameType = prizeType;
 	}
 
 	if (groupByBgg) {
@@ -72,6 +72,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		: undefined;
 
 	const statistics = await statisticsService.getStatistics(filters, { page, pageSize }, topGamesSort);
+	const topAttendees = await statisticsService.getTopAttendees(filters);
 
 	// Derive convention days from config dates
 	const conventionDays: { value: string; label: string }[] = [];
@@ -92,6 +93,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	return {
 		statistics,
+		topAttendees,
 		conventionDays,
 		filters: {
 			timeRangeStart,
@@ -100,7 +102,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			gameTitle,
 			attendeeName,
 			status,
-			gameType,
+			prizeType,
 			groupByBgg,
 			page,
 			pageSize,

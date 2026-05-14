@@ -4,6 +4,7 @@
 	import { getContext, onMount } from 'svelte';
 	import SortableTable from '$lib/components/SortableTable.svelte';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
+	import AttendeeAutofill from '$lib/components/AttendeeAutofill.svelte';
 	import toast from 'svelte-hot-french-toast';
 	import { formatDateTime, formatWeight } from '$lib/utils/formatting.js';
 	import { getPreferredPageSize, savePreferredPageSize } from '$lib/utils/page-size.js';
@@ -68,7 +69,7 @@
 
 	const filterConfigs = [
 		{ key: 'gameTitle', label: 'Game Title', type: 'text' as const, placeholder: 'Search by game title...' },
-		{ key: 'attendeeName', label: 'Attendee', type: 'text' as const, placeholder: 'Search by attendee...' },
+		{ key: 'attendeeName', label: 'Attendee', type: 'custom' as const, placeholder: 'Search by attendee...' },
 		{
 			key: 'type', label: 'Type', type: 'select' as const,
 			options: [
@@ -83,6 +84,38 @@
 		type: data.filters.type,
 		attendeeName: data.filters.attendeeName
 	});
+
+	// Local state for the attendee autofill input
+	let attendeeNameValue = $state('');
+
+	// Sync attendee search value when server data changes (e.g. after navigation)
+	$effect(() => {
+		attendeeNameValue = data.filters.attendeeName ?? '';
+	});
+
+	// Debounce attendee name text input to also filter when user types without selecting
+	let attendeeNameTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const val = attendeeNameValue;
+		if (attendeeNameTimer) clearTimeout(attendeeNameTimer);
+		attendeeNameTimer = setTimeout(() => {
+			const currentUrlValue = new URL(window.location.href).searchParams.get('attendeeName') ?? '';
+			if (val !== currentUrlValue) {
+				updateUrl({ attendeeName: val });
+			}
+		}, 300);
+		return () => {
+			if (attendeeNameTimer) clearTimeout(attendeeNameTimer);
+		};
+	});
+
+	function handleAttendeeSelect(attendee: { firstName: string; lastName: string }) {
+		const fullName = `${attendee.firstName} ${attendee.lastName}`;
+		attendeeNameValue = fullName;
+		// Clear any pending debounce and apply immediately
+		if (attendeeNameTimer) clearTimeout(attendeeNameTimer);
+		updateUrl({ attendeeName: fullName });
+	}
 
 	function updateUrl(params: Record<string, string>) {
 		const url = new URL(window.location.href);
@@ -171,6 +204,16 @@
 		onPageChange={handlePageChange}
 		onPageSizeChange={handlePageSizeChange}
 	>
+		{#snippet customFilter(filter)}
+			{#if filter.key === 'attendeeName'}
+				<AttendeeAutofill
+					bind:value={attendeeNameValue}
+					field="firstName"
+					onSelect={handleAttendeeSelect}
+					placeholder={filter.placeholder ?? 'Search by attendee...'}
+				/>
+			{/if}
+		{/snippet}
 		{#snippet row(tx)}
 			<tr
 				class="expandable-row"

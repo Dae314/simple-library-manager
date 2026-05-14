@@ -8,6 +8,8 @@
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import CheckoutDialog from '$lib/components/CheckoutDialog.svelte';
 	import CheckinDialog from '$lib/components/CheckinDialog.svelte';
+	import SwapDialog from '$lib/components/SwapDialog.svelte';
+	import AttendeeAutofill from '$lib/components/AttendeeAutofill.svelte';
 	import { formatDuration, formatWeight, formatDateTime } from '$lib/utils/formatting.js';
 	import { getPreferredPageSize, savePreferredPageSize } from '$lib/utils/page-size.js';
 	import type { LibraryGameRecord } from '$lib/server/services/games.js';
@@ -35,7 +37,8 @@
 			sortField: string;
 			sortDir: string;
 			activeStatus: string;
-			activeGameType: string;
+			activePrizeType: string;
+			activeShelfCategory: string;
 			activeSearch: string;
 			activeAttendeeSearch: string;
 		};
@@ -81,6 +84,10 @@
 	let checkinFormErrors: Record<string, string> = $state({});
 	let checkinFormValues: Record<string, unknown> = $state({});
 
+	// Swap dialog state
+	let swapDialogOpen = $state(false);
+	let swapGame: LibraryGameRecord | null = $state(null);
+
 	// Sync selectedGame with refreshed data by matching game ID
 	$effect(() => {
 		const items = data.games.items;
@@ -105,6 +112,7 @@
 	const columns = [
 		{ key: 'title', label: 'Title', sortField: 'title' },
 		{ key: 'type', label: 'Type', sortField: 'game_type' },
+		{ key: 'shelfCategory', label: 'Shelf', sortField: 'shelf_category' },
 		{ key: 'status', label: 'Status', sortField: 'status' },
 		{ key: 'bggId', label: 'BGG', sortField: 'bgg_id' },
 		{ key: 'attendee', label: 'Attendee' },
@@ -115,7 +123,7 @@
 
 	const filters = [
 		{ key: 'search', label: 'Game Title', type: 'text' as const, placeholder: 'Search by game title...' },
-		{ key: 'attendeeSearch', label: 'Attendee', type: 'text' as const, placeholder: 'Search by attendee name...' },
+		{ key: 'attendeeSearch', label: 'Attendee', type: 'custom' as const, placeholder: 'Search by attendee name...' },
 		{
 			key: 'status', label: 'Status', type: 'select' as const,
 			options: [
@@ -124,11 +132,19 @@
 			]
 		},
 		{
-			key: 'gameType', label: 'Type', type: 'select' as const,
+			key: 'prizeType', label: 'Type', type: 'select' as const,
 			options: [
 				{ value: 'standard', label: 'Standard' },
 				{ value: 'play_and_win', label: 'Play & Win' },
 				{ value: 'play_and_take', label: 'Play & Take' }
+			]
+		},
+		{
+			key: 'shelfCategory', label: 'Shelf Category', type: 'select' as const,
+			options: [
+				{ value: 'family', label: 'Family' },
+				{ value: 'small', label: 'Small' },
+				{ value: 'standard', label: 'Standard' }
 			]
 		}
 	];
@@ -137,8 +153,41 @@
 		search: data.activeSearch,
 		attendeeSearch: data.activeAttendeeSearch,
 		status: data.activeStatus,
-		gameType: data.activeGameType
+		prizeType: data.activePrizeType,
+		shelfCategory: data.activeShelfCategory
 	});
+
+	// Local state for the attendee autofill input
+	let attendeeSearchValue = $state('');
+
+	// Sync attendee search value when server data changes (e.g. after navigation)
+	$effect(() => {
+		attendeeSearchValue = data.activeAttendeeSearch ?? '';
+	});
+
+	// Debounce attendee search text input to also filter when user types without selecting
+	let attendeeSearchTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const val = attendeeSearchValue;
+		if (attendeeSearchTimer) clearTimeout(attendeeSearchTimer);
+		attendeeSearchTimer = setTimeout(() => {
+			const currentUrlValue = new URL(window.location.href).searchParams.get('attendeeSearch') ?? '';
+			if (val !== currentUrlValue) {
+				updateUrl({ attendeeSearch: val });
+			}
+		}, 300);
+		return () => {
+			if (attendeeSearchTimer) clearTimeout(attendeeSearchTimer);
+		};
+	});
+
+	function handleAttendeeSelect(attendee: { firstName: string; lastName: string }) {
+		const fullName = `${attendee.firstName} ${attendee.lastName}`;
+		attendeeSearchValue = fullName;
+		// Clear any pending debounce and apply immediately
+		if (attendeeSearchTimer) clearTimeout(attendeeSearchTimer);
+		updateUrl({ attendeeSearch: fullName });
+	}
 
 	function updateUrl(params: Record<string, string>) {
 		const url = new URL(window.location.href);
@@ -204,6 +253,15 @@
 		}
 	}
 
+	function shelfCategoryLabel(category: string): string {
+		switch (category) {
+			case 'family': return 'Family';
+			case 'small': return 'Small';
+			case 'standard': return 'Standard';
+			default: return category;
+		}
+	}
+
 	function attendeeName(game: LibraryGameRecord): string {
 		const parts = [game.attendeeFirstName, game.attendeeLastName].filter(Boolean);
 		return parts.join(' ') || '—';
@@ -232,6 +290,11 @@
 		checkinFormErrors = {};
 		checkinFormValues = {};
 		triggerButtonRef = button;
+	}
+
+	function openSwapDialog(game: LibraryGameRecord) {
+		swapGame = game;
+		swapDialogOpen = true;
 	}
 
 	function closeDialog() {
@@ -333,12 +396,23 @@
 	onPageChange={handlePageChange}
 	onPageSizeChange={handlePageSizeChange}
 >
+	{#snippet customFilter(filter)}
+		{#if filter.key === 'attendeeSearch'}
+			<AttendeeAutofill
+				bind:value={attendeeSearchValue}
+				field="firstName"
+				onSelect={handleAttendeeSelect}
+				placeholder={filter.placeholder ?? 'Search by attendee name...'}
+			/>
+		{/if}
+	{/snippet}
 	{#snippet row(game)}
 		<tr>
 			<td>
 				<span class="game-title">{gameDisplayTitle(game)}</span>
 			</td>
-			<td><GameTypeBadge gameType={game.gameType} /></td>
+			<td><GameTypeBadge prizeType={game.prizeType} /></td>
+			<td>{shelfCategoryLabel(game.shelfCategory)}</td>
 			<td>
 				<span class="status-indicator {game.status}">
 					{statusLabel(game.status)}
@@ -382,12 +456,20 @@
 						Checkout
 					</button>
 				{:else if game.status === 'checked_out'}
-					<button
-						class="btn-checkin"
-						onclick={(e) => openCheckinDialog(game, e.currentTarget as HTMLButtonElement)}
-					>
-						Check In
-					</button>
+					<div class="action-buttons">
+						<button
+							class="btn-checkin"
+							onclick={(e) => openCheckinDialog(game, e.currentTarget as HTMLButtonElement)}
+						>
+							Check In
+						</button>
+						<button
+							class="btn-swap"
+							onclick={() => openSwapDialog(game)}
+						>
+							Swap
+						</button>
+					</div>
 				{/if}
 			</td>
 		</tr>
@@ -422,6 +504,14 @@
 		formValues={checkinFormValues}
 		onClose={closeDialog}
 		onSubmit={handleCheckinSubmit}
+	/>
+{/if}
+
+{#if swapGame}
+	<SwapDialog
+		returnGame={swapGame}
+		bind:open={swapDialogOpen}
+		onSuccess={() => { swapGame = null; }}
 	/>
 {/if}
 
@@ -504,5 +594,28 @@
 
 	.btn-checkin:hover {
 		background-color: #059669;
+	}
+
+	.btn-swap {
+		padding: 0.35rem 0.75rem;
+		background-color: #f59e0b;
+		color: #fff;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.8rem;
+		font-weight: 500;
+		cursor: pointer;
+		white-space: nowrap;
+		transition: background-color 0.15s;
+	}
+
+	.btn-swap:hover {
+		background-color: #d97706;
+	}
+
+	.action-buttons {
+		display: flex;
+		gap: 0.35rem;
+		align-items: center;
 	}
 </style>

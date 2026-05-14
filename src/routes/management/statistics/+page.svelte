@@ -6,7 +6,7 @@
 	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
 	import { formatDuration } from '$lib/utils/formatting.js';
 
-	import type { StatisticsResult } from '$lib/server/services/statistics.js';
+	import type { StatisticsResult, TopAttendeeItem } from '$lib/server/services/statistics.js';
 
 	type FilterValues = {
 		timeRangeStart: string;
@@ -15,7 +15,7 @@
 		gameTitle: string;
 		attendeeName: string;
 		status: string;
-		gameType: string;
+		prizeType: string;
 		groupByBgg: boolean;
 		page: number;
 		pageSize: number;
@@ -26,6 +26,7 @@
 	let { data }: {
 		data: {
 			statistics: StatisticsResult;
+			topAttendees: TopAttendeeItem[];
 			conventionDays: { value: string; label: string }[];
 			filters: FilterValues;
 		};
@@ -45,7 +46,7 @@
 			: []),
 		{ key: 'gameTitle', label: 'Game Title', type: 'text' as const, placeholder: 'Search by title...' },
 		{
-			key: 'gameType', label: 'Game Type', type: 'select' as const,
+			key: 'prizeType', label: 'Prize Type', type: 'select' as const,
 			options: [
 				{ value: 'standard', label: 'Standard' },
 				{ value: 'play_and_win', label: 'Play & Win' },
@@ -60,7 +61,7 @@
 		timeRangeEnd: data.filters.timeRangeEnd,
 		conventionDay: data.filters.conventionDay,
 		gameTitle: data.filters.gameTitle,
-		gameType: data.filters.gameType,
+		prizeType: data.filters.prizeType,
 		groupByBgg: data.filters.groupByBgg
 	});
 
@@ -219,7 +220,7 @@
 				{#snippet row(game)}
 					<tr>
 						<td><span class="game-title">{game.title}</span></td>
-						<td><GameTypeBadge gameType={game.gameType} /></td>
+						<td><GameTypeBadge prizeType={game.prizeType} /></td>
 						<td>
 							<span class="status-indicator {game.status}">
 								{statusLabel(game.status)}
@@ -229,6 +230,32 @@
 					</tr>
 				{/snippet}
 			</SortableTable>
+		</section>
+
+		<section class="top-attendees" aria-label="Top attendees by checkouts">
+			<h2>Attendees with Most Checkouts</h2>
+			{#if data.topAttendees.length === 0}
+				<p class="empty-message">No attendee checkout data available.</p>
+			{:else}
+				<table class="attendees-table">
+					<thead>
+						<tr>
+							<th>Rank</th>
+							<th>Name</th>
+							<th>Checkouts</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each data.topAttendees as attendee, i}
+							<tr>
+								<td class="rank-cell">{i + 1}</td>
+								<td><span class="attendee-name">{attendee.firstName} {attendee.lastName}</span></td>
+								<td class="checkout-count">{attendee.checkoutCount}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{/if}
 		</section>
 
 		<section class="chart-section" aria-label="Checkouts over time">
@@ -365,6 +392,50 @@
 
 	.chart-section {
 		margin: 1.5rem 0;
+	}
+
+	.top-attendees {
+		margin: 1.5rem 0;
+	}
+
+	.attendees-table {
+		width: 100%;
+		border-collapse: collapse;
+		background: #fff;
+		border: 1px solid #e5e7eb;
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	.attendees-table th {
+		text-align: left;
+		padding: 0.6rem 0.75rem;
+		font-size: 0.8rem;
+		font-weight: 600;
+		color: #6b7280;
+		background: #f9fafb;
+		border-bottom: 1px solid #e5e7eb;
+	}
+
+	.attendees-table td {
+		padding: 0.6rem 0.75rem;
+		font-size: 0.875rem;
+		border-bottom: 1px solid #f3f4f6;
+	}
+
+	.attendees-table tr:last-child td {
+		border-bottom: none;
+	}
+
+	.rank-cell {
+		color: #6b7280;
+		font-weight: 600;
+		width: 3rem;
+	}
+
+	.attendee-name {
+		font-weight: 600;
+		color: #111827;
 	}
 
 	@media (max-width: 640px) {

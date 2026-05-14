@@ -2,14 +2,14 @@
 	import GameTypeBadge from './GameTypeBadge.svelte';
 	import type { Snippet } from 'svelte';
 
-	type GameType = 'standard' | 'play_and_win' | 'play_and_take';
+	type PrizeType = 'standard' | 'play_and_win' | 'play_and_take';
 
 	let {
 		title,
 		bggId,
 		copyNumber,
 		totalCopies = 1,
-		gameType,
+		prizeType,
 		selected = false,
 		children
 	}: {
@@ -17,7 +17,7 @@
 		bggId: number;
 		copyNumber: number;
 		totalCopies?: number;
-		gameType: GameType;
+		prizeType: PrizeType;
 		selected?: boolean;
 		children?: Snippet;
 	} = $props();
@@ -31,7 +31,7 @@
 	<div class="game-info">
 		<div class="game-title-row">
 			<span class="game-title">{displayTitle}</span>
-			<GameTypeBadge {gameType} />
+			<GameTypeBadge {prizeType} />
 		</div>
 		<div class="game-meta">
 			<a

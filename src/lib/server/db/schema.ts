@@ -8,8 +8,10 @@ import {
 	timestamp,
 	date,
 	index,
+	uniqueIndex,
 	type AnyPgColumn
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const conventionConfig = pgTable('convention_config', {
 	id: serial('id').primaryKey(),
@@ -27,6 +29,26 @@ export const idTypes = pgTable('id_types', {
 	name: text('name').notNull().unique()
 });
 
+export const attendees = pgTable(
+	'attendees',
+	{
+		id: serial('id').primaryKey(),
+		firstName: text('first_name').notNull(),
+		lastName: text('last_name').notNull(),
+		idType: text('id_type').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(table) => [
+		uniqueIndex('idx_attendees_name_unique').on(
+			sql`LOWER(TRIM(${table.firstName}))`,
+			sql`LOWER(TRIM(${table.lastName}))`
+		),
+		index('idx_attendees_first_name').on(table.firstName),
+		index('idx_attendees_last_name').on(table.lastName)
+	]
+);
+
 export const games = pgTable(
 	'games',
 	{
@@ -35,7 +57,8 @@ export const games = pgTable(
 		bggId: integer('bgg_id').notNull(),
 		copyNumber: integer('copy_number').notNull(),
 		status: text('status').notNull().default('available'),
-		gameType: text('game_type').notNull().default('standard'),
+		prizeType: text('prize_type').notNull().default('standard'),
+		shelfCategory: text('shelf_category').notNull().default('standard'),
 		version: integer('version').notNull().default(1),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
@@ -43,7 +66,8 @@ export const games = pgTable(
 	(table) => [
 		index('idx_games_bgg_id').on(table.bggId),
 		index('idx_games_status').on(table.status),
-		index('idx_games_game_type').on(table.gameType)
+		index('idx_games_prize_type').on(table.prizeType),
+		index('idx_games_shelf_category').on(table.shelfCategory)
 	]
 );
 
@@ -58,6 +82,7 @@ export const transactions = pgTable(
 		attendeeFirstName: text('attendee_first_name'),
 		attendeeLastName: text('attendee_last_name'),
 		idType: text('id_type'),
+		attendeeId: integer('attendee_id').references(() => attendees.id, { onDelete: 'cascade' }),
 		checkoutWeight: real('checkout_weight'),
 		checkinWeight: real('checkin_weight'),
 		note: text('note'),
@@ -69,6 +94,7 @@ export const transactions = pgTable(
 		index('idx_transactions_game_id').on(table.gameId),
 		index('idx_transactions_type').on(table.type),
 		index('idx_transactions_created_at').on(table.createdAt),
-		index('idx_transactions_attendee').on(table.attendeeFirstName, table.attendeeLastName)
+		index('idx_transactions_attendee').on(table.attendeeFirstName, table.attendeeLastName),
+		index('idx_transactions_attendee_id').on(table.attendeeId)
 	]
 );

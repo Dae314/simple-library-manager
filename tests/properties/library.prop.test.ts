@@ -10,7 +10,7 @@ interface LibraryGameRecord {
 	copyNumber: number;
 	totalCopies: number;
 	status: string;
-	gameType: string;
+	prizeType: string;
 	version: number;
 	attendeeFirstName: string | null;
 	attendeeLastName: string | null;
@@ -21,13 +21,13 @@ interface LibraryGameRecord {
 
 interface LibraryFilters {
 	status?: 'available' | 'checked_out';
-	gameType?: 'standard' | 'play_and_win' | 'play_and_take';
+	prizeType?: 'standard' | 'play_and_win' | 'play_and_take';
 	titleSearch?: string;
 	attendeeSearch?: string;
 }
 
 interface LibrarySortParams {
-	field: 'title' | 'game_type' | 'status' | 'bgg_id';
+	field: 'title' | 'prize_type' | 'status' | 'bgg_id';
 	direction: 'asc' | 'desc';
 }
 
@@ -57,8 +57,8 @@ function applyFilters(games: LibraryGameRecord[], filters: LibraryFilters): Libr
 	if (filters.status) {
 		result = result.filter((g) => g.status === filters.status);
 	}
-	if (filters.gameType) {
-		result = result.filter((g) => g.gameType === filters.gameType);
+	if (filters.prizeType) {
+		result = result.filter((g) => g.prizeType === filters.prizeType);
 	}
 	if (filters.titleSearch) {
 		const search = filters.titleSearch.toLowerCase();
@@ -93,9 +93,9 @@ function applySort(games: LibraryGameRecord[], sort: LibrarySortParams): Library
 				aVal = a.title;
 				bVal = b.title;
 				break;
-			case 'game_type':
-				aVal = a.gameType;
-				bVal = b.gameType;
+			case 'prize_type':
+				aVal = a.prizeType;
+				bVal = b.prizeType;
 				break;
 			case 'status':
 				aVal = a.status;
@@ -134,8 +134,8 @@ function paginate<T>(items: T[], page: number, pageSize: number): PaginatedResul
 
 const gameStatuses = ['available', 'checked_out', 'retired'] as const;
 const nonRetiredStatuses = ['available', 'checked_out'] as const;
-const gameTypes = ['standard', 'play_and_win', 'play_and_take'] as const;
-const sortFields = ['title', 'game_type', 'status', 'bgg_id'] as const;
+const prizeTypes = ['standard', 'play_and_win', 'play_and_take'] as const;
+const sortFields = ['title', 'prize_type', 'status', 'bgg_id'] as const;
 const sortDirections = ['asc', 'desc'] as const;
 
 /** Generate a non-empty, non-whitespace-only title */
@@ -155,7 +155,7 @@ function gameRecordArb(status: 'available' | 'checked_out' | 'retired'): fc.Arbi
 		bggId: fc.integer({ min: 1, max: 999999 }),
 		copyNumber: fc.integer({ min: 1, max: 10 }),
 		totalCopies: fc.integer({ min: 1, max: 10 }),
-		gameType: fc.constantFrom(...gameTypes),
+		prizeType: fc.constantFrom(...prizeTypes),
 		version: fc.integer({ min: 1, max: 100 })
 	});
 
@@ -330,9 +330,9 @@ describe('Property 2: Sort correctness', () => {
 							prev = sorted[i - 1].title;
 							curr = sorted[i].title;
 							break;
-						case 'game_type':
-							prev = sorted[i - 1].gameType;
-							curr = sorted[i].gameType;
+						case 'prize_type':
+							prev = sorted[i - 1].prizeType;
+							curr = sorted[i].prizeType;
 							break;
 						case 'status':
 							prev = sorted[i - 1].status;
@@ -384,7 +384,7 @@ describe('Property 2: Sort correctness', () => {
 					const getKey = (g: LibraryGameRecord) => {
 						switch (field) {
 							case 'title': return g.title;
-							case 'game_type': return g.gameType;
+							case 'prize_type': return g.prizeType;
 							case 'status': return g.status;
 							case 'bgg_id': return g.bggId;
 						}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { LibraryGameRecord } from '$lib/server/services/games.js';
+	import AttendeeAutofill from './AttendeeAutofill.svelte';
 
 	let {
 		open,
@@ -28,6 +29,22 @@
 	} = $props();
 
 	let dialogEl: HTMLDialogElement | undefined = $state();
+	let firstName = $state('');
+	let lastName = $state('');
+	let idType = $state('');
+
+	// Sync state when formValues change (e.g., after form submission with errors)
+	$effect(() => {
+		firstName = (formValues?.attendeeFirstName as string) ?? '';
+		lastName = (formValues?.attendeeLastName as string) ?? '';
+		idType = (formValues?.idType as string) ?? '';
+	});
+
+	function handleAttendeeSelect(attendee: { firstName: string; lastName: string; idType: string }) {
+		firstName = attendee.firstName;
+		lastName = attendee.lastName;
+		idType = attendee.idType;
+	}
 
 	$effect(() => {
 		if (!dialogEl) return;
@@ -80,30 +97,28 @@
 			<input type="hidden" name="gameId" value={game.id} />
 			<input type="hidden" name="gameVersion" value={game.version} />
 
-			<div class="form-group">
+			<div class="form-group" class:field-invalid-group={formErrors?.attendeeFirstName}>
 				<label for="checkout-attendeeFirstName">First Name</label>
-				<input
-					id="checkout-attendeeFirstName"
-					name="attendeeFirstName"
-					type="text"
-					required
-					value={formValues?.attendeeFirstName ?? ''}
-					class:field-invalid={formErrors?.attendeeFirstName}
+				<input type="hidden" name="attendeeFirstName" value={firstName} />
+				<AttendeeAutofill
+					bind:value={firstName}
+					field="firstName"
+					onSelect={handleAttendeeSelect}
+					placeholder="First Name"
 				/>
 				{#if formErrors?.attendeeFirstName}
 					<span class="field-error">{formErrors.attendeeFirstName}</span>
 				{/if}
 			</div>
 
-			<div class="form-group">
+			<div class="form-group" class:field-invalid-group={formErrors?.attendeeLastName}>
 				<label for="checkout-attendeeLastName">Last Name</label>
-				<input
-					id="checkout-attendeeLastName"
-					name="attendeeLastName"
-					type="text"
-					required
-					value={formValues?.attendeeLastName ?? ''}
-					class:field-invalid={formErrors?.attendeeLastName}
+				<input type="hidden" name="attendeeLastName" value={lastName} />
+				<AttendeeAutofill
+					bind:value={lastName}
+					field="lastName"
+					onSelect={handleAttendeeSelect}
+					placeholder="Last Name"
 				/>
 				{#if formErrors?.attendeeLastName}
 					<span class="field-error">{formErrors.attendeeLastName}</span>
@@ -116,11 +131,12 @@
 					id="checkout-idType"
 					name="idType"
 					required
+					bind:value={idType}
 					class:field-invalid={formErrors?.idType}
 				>
 					<option value="">Select ID type...</option>
-					{#each idTypes as idType (idType)}
-						<option value={idType} selected={formValues?.idType === idType}>{idType}</option>
+					{#each idTypes as idTypeOption (idTypeOption)}
+						<option value={idTypeOption}>{idTypeOption}</option>
 					{/each}
 				</select>
 				{#if formErrors?.idType}
@@ -237,6 +253,10 @@
 	}
 
 	.field-invalid {
+		border-color: #ef4444;
+	}
+
+	.field-invalid-group :global(input[type='text']) {
 		border-color: #ef4444;
 	}
 

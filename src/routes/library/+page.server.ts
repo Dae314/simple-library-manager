@@ -3,7 +3,7 @@ import { fail } from '@sveltejs/kit';
 import { gameService } from '$lib/server/services/games.js';
 import { transactionService } from '$lib/server/services/transactions.js';
 import { configService } from '$lib/server/services/config.js';
-import { validateCheckoutInput, validateCheckinInput } from '$lib/server/validation.js';
+import { validateCheckoutInput, validateCheckinInput, validateSwapInput } from '$lib/server/validation.js';
 import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
 import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
 import type { LibraryFilters, LibrarySortParams } from '$lib/server/services/games.js';
@@ -12,7 +12,8 @@ export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || undefined;
 	const attendeeSearch = url.searchParams.get('attendeeSearch') || undefined;
 	const status = url.searchParams.get('status') as 'available' | 'checked_out' | null;
-	const gameType = url.searchParams.get('gameType') as 'standard' | 'play_and_win' | 'play_and_take' | null;
+	const prizeType = (url.searchParams.get('prizeType') || url.searchParams.get('gameType') || null) as 'standard' | 'play_and_win' | 'play_and_take' | null;
+	const shelfCategory = url.searchParams.get('shelfCategory') as 'family' | 'small' | 'standard' | null;
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
 	const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
 	const sortField = url.searchParams.get('sortField') || 'title';
@@ -23,8 +24,11 @@ export const load: PageServerLoad = async ({ url }) => {
 	if (status === 'available' || status === 'checked_out') {
 		filters.status = status;
 	}
-	if (gameType === 'standard' || gameType === 'play_and_win' || gameType === 'play_and_take') {
-		filters.gameType = gameType;
+	if (prizeType === 'standard' || prizeType === 'play_and_win' || prizeType === 'play_and_take') {
+		filters.prizeType = prizeType;
+	}
+	if (shelfCategory === 'family' || shelfCategory === 'small' || shelfCategory === 'standard') {
+		filters.shelfCategory = shelfCategory;
 	}
 	if (search) {
 		filters.titleSearch = search;
@@ -33,7 +37,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters.attendeeSearch = attendeeSearch;
 	}
 
-	const validSortFields = ['title', 'game_type', 'status', 'bgg_id'] as const;
+	const validSortFields = ['title', 'prize_type', 'game_type', 'shelf_category', 'status', 'bgg_id'] as const;
 	const sort: LibrarySortParams = {
 		field: validSortFields.includes(sortField as any) ? (sortField as LibrarySortParams['field']) : 'title',
 		direction: sortDir === 'desc' ? 'desc' : 'asc'
@@ -58,7 +62,8 @@ export const load: PageServerLoad = async ({ url }) => {
 		sortField: sort.field,
 		sortDir: sort.direction,
 		activeStatus: status || '',
-		activeGameType: gameType || '',
+		activePrizeType: prizeType || '',
+		activeShelfCategory: shelfCategory || '',
 		activeSearch: search || '',
 		activeAttendeeSearch: attendeeSearch || ''
 	};
@@ -166,6 +171,59 @@ export const actions: Actions = {
 				});
 			}
 			return fail(500, { error: getUserFriendlyDbMessage(err), gameId });
+		}
+	},
+
+	swap: async ({ request }) => {
+		const formData = await request.formData();
+
+		const rawReturnGameId = formData.get('returnGameId');
+		const rawNewGameId = formData.get('newGameId');
+		const rawCheckinWeight = formData.get('checkinWeight');
+		const rawCheckoutWeight = formData.get('checkoutWeight');
+
+		const returnGameId = rawReturnGameId ? parseInt(rawReturnGameId.toString(), 10) : undefined;
+		const newGameId = rawNewGameId ? parseInt(rawNewGameId.toString(), 10) : undefined;
+		const checkinWeight = rawCheckinWeight ? parseFloat(rawCheckinWeight.toString()) : undefined;
+		const checkoutWeight = rawCheckoutWeight ? parseFloat(rawCheckoutWeight.toString()) : undefined;
+
+		const validation = validateSwapInput({
+			returnGameId,
+			newGameId,
+			checkinWeight,
+			checkoutWeight
+		});
+
+		if (!validation.valid) {
+			return fail(400, { errors: validation.errors });
+		}
+
+		try {
+			const result = await transactionService.swap(validation.data!);
+
+			// Get config for weight unit in warning display
+			const config = await configService.get();
+
+			if (result.weightWarning) {
+				return {
+					success: true,
+					weightWarning: {
+						...result.weightWarning,
+						weightUnit: config.weightUnit
+					}
+				};
+			}
+
+			return { success: true };
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : String(err);
+			if (message.includes('Conflict') || message.includes('not currently checked out') || message.includes('not available')) {
+				return fail(409, {
+					conflict: true,
+					message: message
+				});
+			}
+			return fail(500, { error: getUserFriendlyDbMessage(err) });
 		}
 	}
 };

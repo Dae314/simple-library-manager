@@ -17,7 +17,8 @@
 		copyNumber: number;
 		totalCopies: number;
 		status: string;
-		gameType: 'standard' | 'play_and_win' | 'play_and_take';
+		prizeType: 'standard' | 'play_and_win' | 'play_and_take';
+		shelfCategory: 'family' | 'small' | 'standard';
 		version: number;
 	};
 
@@ -39,7 +40,8 @@
 	// When non-null, the user has touched the field and their value takes priority.
 	let localTitle: string | null = $state(null);
 	let localBggId: string | null = $state(null);
-	let localGameType: string | null = $state(null);
+	let localPrizeType: string | null = $state(null);
+	let localShelfCategory: string | null = $state(null);
 
 	$effect(() => {
 		wsClient.setGetCurrentEditGameId(() => data.game.id);
@@ -57,7 +59,8 @@
 		showConflictWarning = false;
 		localTitle = null;
 		localBggId = null;
-		localGameType = null;
+		localPrizeType = null;
+		localShelfCategory = null;
 		invalidateAll();
 	}
 
@@ -71,7 +74,8 @@
 	const toggleLabel = $derived(data.game.status === 'available' ? 'Mark as Checked Out' : 'Mark as Available');
 	const effectiveTitle = $derived(localTitle ?? form?.values?.title ?? data.game.title);
 	const effectiveBggId = $derived(localBggId ?? form?.values?.bggId ?? String(data.game.bggId));
-	const currentGameType = $derived(localGameType ?? form?.values?.gameType ?? data.game.gameType);
+	const currentPrizeType = $derived(localPrizeType ?? form?.values?.prizeType ?? data.game.prizeType);
+	const currentShelfCategory = $derived(localShelfCategory ?? form?.values?.shelfCategory ?? data.game.shelfCategory);
 
 	// Delete dialog state
 	let showDeleteDialog = $state(false);
@@ -158,7 +162,7 @@
 			{#if data.game.totalCopies > 1}
 				<span class="copy-number">Copy #{data.game.copyNumber}</span>
 			{/if}
-			<GameTypeBadge gameType={data.game.gameType} />
+			<GameTypeBadge prizeType={data.game.prizeType} />
 			<span class="status-badge {statusColor}">{statusLabel}</span>
 		</div>
 		<a
@@ -217,14 +221,26 @@
 		</div>
 
 		<div class="form-group">
-			<label for="gameType">Game Type</label>
-			<select id="gameType" name="gameType" onchange={(e) => { localGameType = e.currentTarget.value; }}>
-				<option value="standard" selected={currentGameType === 'standard'}>Standard</option>
-				<option value="play_and_win" selected={currentGameType === 'play_and_win'}>Play & Win</option>
-				<option value="play_and_take" selected={currentGameType === 'play_and_take'}>Play & Take</option>
+			<label for="prizeType">Prize Type</label>
+			<select id="prizeType" name="prizeType" onchange={(e) => { localPrizeType = e.currentTarget.value; }}>
+				<option value="standard" selected={currentPrizeType === 'standard'}>Standard</option>
+				<option value="play_and_win" selected={currentPrizeType === 'play_and_win'}>Play & Win</option>
+				<option value="play_and_take" selected={currentPrizeType === 'play_and_take'}>Play & Take</option>
 			</select>
-			{#if form?.errors?.gameType}
-				<span class="field-error">{form.errors.gameType}</span>
+			{#if form?.errors?.prizeType}
+				<span class="field-error">{form.errors.prizeType}</span>
+			{/if}
+		</div>
+
+		<div class="form-group">
+			<label for="shelfCategory">Shelf Category</label>
+			<select id="shelfCategory" name="shelfCategory" onchange={(e) => { localShelfCategory = e.currentTarget.value; }}>
+				<option value="standard" selected={currentShelfCategory === 'standard'}>Standard</option>
+				<option value="family" selected={currentShelfCategory === 'family'}>Family</option>
+				<option value="small" selected={currentShelfCategory === 'small'}>Small</option>
+			</select>
+			{#if form?.errors?.shelfCategory}
+				<span class="field-error">{form.errors.shelfCategory}</span>
 			{/if}
 		</div>
 

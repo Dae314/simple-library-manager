@@ -11,7 +11,8 @@ const totalCopiesExpr = sql<number>`COUNT(*) FILTER (WHERE ${games.status} != 'r
 // --- Types ---
 
 export type GameStatus = 'available' | 'checked_out' | 'retired';
-export type GameType = 'standard' | 'play_and_win' | 'play_and_take';
+export type PrizeType = 'standard' | 'play_and_win' | 'play_and_take';
+export type ShelfCategory = 'family' | 'small' | 'standard';
 
 export interface GameRecord {
 	id: number;
@@ -20,7 +21,8 @@ export interface GameRecord {
 	copyNumber: number;
 	totalCopies: number;
 	status: string;
-	gameType: string;
+	prizeType: string;
+	shelfCategory: string;
 	version: number;
 	createdAt: Date;
 	updatedAt: Date;
@@ -30,7 +32,8 @@ export interface GameRecord {
 export interface GameFilters {
 	status?: GameStatus;
 	excludeStatus?: GameStatus;
-	gameType?: GameType;
+	prizeType?: PrizeType;
+	shelfCategory?: ShelfCategory;
 	titleSearch?: string;
 	createdSince?: Date;
 	lastCheckedOutBefore?: Date;
@@ -45,7 +48,7 @@ export interface PaginationParams {
 }
 
 export interface SortParams {
-	field: 'title' | 'bgg_id' | 'status' | 'game_type' | 'last_transaction_date' | 'created_at' | 'checkout_time' | 'attendee';
+	field: 'title' | 'bgg_id' | 'status' | 'prize_type' | 'game_type' | 'shelf_category' | 'last_transaction_date' | 'created_at' | 'checkout_time' | 'attendee';
 	direction: 'asc' | 'desc';
 }
 
@@ -56,7 +59,8 @@ export interface LibraryGameRecord {
 	copyNumber: number;
 	totalCopies: number;
 	status: string;
-	gameType: string;
+	prizeType: string;
+	shelfCategory: string;
 	version: number;
 	attendeeFirstName: string | null;
 	attendeeLastName: string | null;
@@ -67,13 +71,14 @@ export interface LibraryGameRecord {
 
 export interface LibraryFilters {
 	status?: 'available' | 'checked_out';
-	gameType?: GameType;
+	prizeType?: PrizeType;
+	shelfCategory?: ShelfCategory;
 	titleSearch?: string;
 	attendeeSearch?: string;
 }
 
 export interface LibrarySortParams {
-	field: 'title' | 'game_type' | 'status' | 'bgg_id';
+	field: 'title' | 'prize_type' | 'game_type' | 'shelf_category' | 'status' | 'bgg_id';
 	direction: 'asc' | 'desc';
 }
 
@@ -95,8 +100,11 @@ function buildGameWhereConditions(filters: GameFilters): SQL[] {
 	if (filters.excludeStatus) {
 		conditions.push(ne(games.status, filters.excludeStatus));
 	}
-	if (filters.gameType) {
-		conditions.push(eq(games.gameType, filters.gameType));
+	if (filters.prizeType) {
+		conditions.push(eq(games.prizeType, filters.prizeType));
+	}
+	if (filters.shelfCategory) {
+		conditions.push(eq(games.shelfCategory, filters.shelfCategory));
 	}
 	if (filters.titleSearch) {
 		conditions.push(ilike(games.title, `%${filters.titleSearch}%`));
@@ -120,8 +128,11 @@ function buildSortExpression(sort?: SortParams) {
 			return [dir(games.bggId)];
 		case 'status':
 			return [dir(games.status)];
+		case 'prize_type':
 		case 'game_type':
-			return [dir(games.gameType)];
+			return [dir(games.prizeType)];
+		case 'shelf_category':
+			return [dir(games.shelfCategory)];
 		case 'created_at':
 			return [dir(games.createdAt)];
 		case 'last_transaction_date':
@@ -142,7 +153,8 @@ export const gameService = {
 	async create(data: {
 		title: string;
 		bggId: number;
-		gameType?: GameType;
+		prizeType?: PrizeType;
+		shelfCategory?: ShelfCategory;
 	}): Promise<GameRecord> {
 		return await db.transaction(async (tx) => {
 			// Get next copy number for this BGG_ID
@@ -160,7 +172,8 @@ export const gameService = {
 					bggId: data.bggId,
 					copyNumber: nextCopyNumber,
 					status: 'available',
-					gameType: data.gameType ?? 'standard'
+					prizeType: data.prizeType ?? 'standard',
+					shelfCategory: data.shelfCategory ?? 'standard'
 				})
 				.returning();
 
@@ -175,17 +188,18 @@ export const gameService = {
 	},
 
 	/**
-	 * Update an existing game's title, bggId, or gameType.
+	 * Update an existing game's title, bggId, prizeType, or shelfCategory.
 	 */
 	async update(
 		id: number,
-		data: Partial<{ title: string; bggId: number; gameType: GameType }>
+		data: Partial<{ title: string; bggId: number; prizeType: PrizeType; shelfCategory: ShelfCategory }>
 	): Promise<GameRecord> {
 		const updateValues: Record<string, unknown> = { updatedAt: new Date() };
 
 		if (data.title !== undefined) updateValues.title = data.title.trim();
 		if (data.bggId !== undefined) updateValues.bggId = data.bggId;
-		if (data.gameType !== undefined) updateValues.gameType = data.gameType;
+		if (data.prizeType !== undefined) updateValues.prizeType = data.prizeType;
+		if (data.shelfCategory !== undefined) updateValues.shelfCategory = data.shelfCategory;
 
 		const [updated] = await db
 			.update(games)
@@ -251,7 +265,8 @@ export const gameService = {
 				copyNumber: games.copyNumber,
 				totalCopies: totalCopiesExpr,
 				status: games.status,
-				gameType: games.gameType,
+				prizeType: games.prizeType,
+				shelfCategory: games.shelfCategory,
 				version: games.version,
 				createdAt: games.createdAt,
 				updatedAt: games.updatedAt,
@@ -344,8 +359,12 @@ export const gameService = {
 				case 'status':
 					orderExpr = dir(sql`MIN(${games.status})`);
 					break;
+				case 'prize_type':
 				case 'game_type':
-					orderExpr = dir(sql`MIN(${games.gameType})`);
+					orderExpr = dir(sql`MIN(${games.prizeType})`);
+					break;
+				case 'shelf_category':
+					orderExpr = dir(sql`MIN(${games.shelfCategory})`);
 					break;
 				case 'last_transaction_date':
 					orderExpr = dir(sql`MAX(${transactions.createdAt})`);
@@ -362,7 +381,8 @@ export const gameService = {
 					copyNumber: sql<number>`1`.mapWith(Number),
 					totalCopies: count(),
 					status: sql<string>`MIN(${games.status})`,
-					gameType: sql<string>`MIN(${games.gameType})`,
+					prizeType: sql<string>`MIN(${games.prizeType})`,
+					shelfCategory: sql<string>`MIN(${games.shelfCategory})`,
 					version: sql<number>`MIN(${games.version})`.mapWith(Number),
 					createdAt: sql<Date>`MIN(${games.createdAt})`,
 					updatedAt: sql<Date>`MAX(${games.updatedAt})`,
@@ -399,7 +419,8 @@ export const gameService = {
 					copyNumber: games.copyNumber,
 					totalCopies: totalCopiesExpr,
 					status: games.status,
-					gameType: games.gameType,
+					prizeType: games.prizeType,
+					shelfCategory: games.shelfCategory,
 					version: games.version,
 					createdAt: games.createdAt,
 					updatedAt: games.updatedAt,
@@ -426,7 +447,8 @@ export const gameService = {
 				copyNumber: games.copyNumber,
 				totalCopies: totalCopiesExpr,
 				status: games.status,
-				gameType: games.gameType,
+				prizeType: games.prizeType,
+				shelfCategory: games.shelfCategory,
 				version: games.version,
 				createdAt: games.createdAt,
 				updatedAt: games.updatedAt,
@@ -472,7 +494,8 @@ export const gameService = {
 				copyNumber: games.copyNumber,
 				totalCopies: totalCopiesExpr,
 				status: games.status,
-				gameType: games.gameType,
+				prizeType: games.prizeType,
+				shelfCategory: games.shelfCategory,
 				version: games.version,
 				createdAt: games.createdAt,
 				updatedAt: games.updatedAt,
@@ -542,8 +565,12 @@ export const gameService = {
 				case 'title':
 					orderClause = [dir(games.title)];
 					break;
+				case 'prize_type':
 				case 'game_type':
-					orderClause = [dir(games.gameType)];
+					orderClause = [dir(games.prizeType)];
+					break;
+				case 'shelf_category':
+					orderClause = [dir(games.shelfCategory)];
 					break;
 				default:
 					orderClause = [asc(games.title)];
@@ -560,7 +587,8 @@ export const gameService = {
 				copyNumber: games.copyNumber,
 				totalCopies: totalCopiesExpr,
 				status: games.status,
-				gameType: games.gameType,
+				prizeType: games.prizeType,
+				shelfCategory: games.shelfCategory,
 				version: games.version,
 				createdAt: games.createdAt,
 				updatedAt: games.updatedAt,
@@ -612,8 +640,11 @@ export const gameService = {
 		if (filters.status) {
 			conditions.push(eq(games.status, filters.status));
 		}
-		if (filters.gameType) {
-			conditions.push(eq(games.gameType, filters.gameType));
+		if (filters.prizeType) {
+			conditions.push(eq(games.prizeType, filters.prizeType));
+		}
+		if (filters.shelfCategory) {
+			conditions.push(eq(games.shelfCategory, filters.shelfCategory));
 		}
 		if (filters.titleSearch) {
 			conditions.push(ilike(games.title, `%${filters.titleSearch}%`));
@@ -649,8 +680,12 @@ export const gameService = {
 				case 'title':
 					orderClause = [dir(games.title)];
 					break;
+				case 'prize_type':
 				case 'game_type':
-					orderClause = [dir(games.gameType)];
+					orderClause = [dir(games.prizeType)];
+					break;
+				case 'shelf_category':
+					orderClause = [dir(games.shelfCategory)];
 					break;
 				case 'status':
 					orderClause = [dir(games.status)];
@@ -673,7 +708,8 @@ export const gameService = {
 				copyNumber: games.copyNumber,
 				totalCopies: totalCopiesExpr,
 				status: games.status,
-				gameType: games.gameType,
+				prizeType: games.prizeType,
+				shelfCategory: games.shelfCategory,
 				version: games.version,
 				attendeeFirstName: latestCheckout.attendeeFirstName,
 				attendeeLastName: latestCheckout.attendeeLastName,

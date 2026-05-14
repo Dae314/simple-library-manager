@@ -20,7 +20,7 @@ function bggUrl(bggId: number): string {
  * **Validates: Requirements 1.2, 1.3, 1.4, 2.2, 2.3**
  */
 describe('Property 1: Game record validation rejects invalid input', () => {
-	const validGameTypes = ['standard', 'play_and_win', 'play_and_take'] as const;
+	const validPrizeTypes = ['standard', 'play_and_win', 'play_and_take'] as const;
 
 	// Arbitrary for valid titles (non-empty, non-whitespace-only)
 	const validTitle = fc.string({ minLength: 1 }).filter((s) => s.trim().length > 0);
@@ -28,10 +28,10 @@ describe('Property 1: Game record validation rejects invalid input', () => {
 	// Arbitrary for valid BGG IDs (positive integers, up to 32-bit max)
 	const validBggId = fc.integer({ min: 1, max: 2_147_483_647 });
 
-	// Arbitrary for valid game types (including undefined)
-	const validGameType = fc.oneof(
+	// Arbitrary for valid prize types (including undefined)
+	const validPrizeType = fc.oneof(
 		fc.constant(undefined),
-		fc.constantFrom(...validGameTypes)
+		fc.constantFrom(...validPrizeTypes)
 	);
 
 	// --- Invalid title generators ---
@@ -52,15 +52,15 @@ describe('Property 1: Game record validation rejects invalid input', () => {
 	);
 	const invalidBggId = fc.oneof(nullBggId, undefinedBggId, zeroBggId, negativeBggId, floatBggId);
 
-	// --- Invalid game type generator ---
-	const invalidGameType = fc
+	// --- Invalid prize type generator ---
+	const invalidPrizeType = fc
 		.string({ minLength: 1 })
-		.filter((s) => !validGameTypes.includes(s as typeof validGameTypes[number]));
+		.filter((s) => !validPrizeTypes.includes(s as typeof validPrizeTypes[number]));
 
 	it('rejects inputs with invalid titles (empty, whitespace-only, or missing)', () => {
 		fc.assert(
-			fc.property(invalidTitle, validBggId, validGameType, (title, bggId, gameType) => {
-				const result = validateGameInput({ title: title as string | undefined, bggId, gameType } as any);
+			fc.property(invalidTitle, validBggId, validPrizeType, (title, bggId, prizeType) => {
+				const result = validateGameInput({ title: title as string | undefined, bggId, prizeType } as any);
 				expect(result.valid).toBe(false);
 				expect(result.errors).toHaveProperty('title');
 				expect(result.data).toBeUndefined();
@@ -70,8 +70,8 @@ describe('Property 1: Game record validation rejects invalid input', () => {
 
 	it('rejects inputs with invalid BGG IDs (null, undefined, zero, negative, or float)', () => {
 		fc.assert(
-			fc.property(validTitle, invalidBggId, validGameType, (title, bggId, gameType) => {
-				const result = validateGameInput({ title, bggId: bggId as any, gameType } as any);
+			fc.property(validTitle, invalidBggId, validPrizeType, (title, bggId, prizeType) => {
+				const result = validateGameInput({ title, bggId: bggId as any, prizeType } as any);
 				expect(result.valid).toBe(false);
 				expect(result.errors).toHaveProperty('bggId');
 				expect(result.data).toBeUndefined();
@@ -79,12 +79,12 @@ describe('Property 1: Game record validation rejects invalid input', () => {
 		);
 	});
 
-	it('rejects inputs with invalid game types', () => {
+	it('rejects inputs with invalid prize types', () => {
 		fc.assert(
-			fc.property(validTitle, validBggId, invalidGameType, (title, bggId, gameType) => {
-				const result = validateGameInput({ title, bggId, gameType: gameType as any });
+			fc.property(validTitle, validBggId, invalidPrizeType, (title, bggId, prizeType) => {
+				const result = validateGameInput({ title, bggId, prizeType: prizeType as any });
 				expect(result.valid).toBe(false);
-				expect(result.errors).toHaveProperty('gameType');
+				expect(result.errors).toHaveProperty('prizeType');
 				expect(result.data).toBeUndefined();
 			})
 		);
@@ -92,24 +92,24 @@ describe('Property 1: Game record validation rejects invalid input', () => {
 
 	it('accepts valid inputs with all fields correct', () => {
 		fc.assert(
-			fc.property(validTitle, validBggId, validGameType, (title, bggId, gameType) => {
-				const result = validateGameInput({ title, bggId, gameType });
+			fc.property(validTitle, validBggId, validPrizeType, (title, bggId, prizeType) => {
+				const result = validateGameInput({ title, bggId, prizeType });
 				expect(result.valid).toBe(true);
 				expect(result.errors).toEqual({});
 				expect(result.data).toBeDefined();
 				expect(result.data!.title).toBe(title.trim());
 				expect(result.data!.bggId).toBe(bggId);
-				expect(result.data!.gameType).toBe(gameType ?? 'standard');
+				expect(result.data!.prizeType).toBe(prizeType ?? 'standard');
 			})
 		);
 	});
 
-	it('accepts valid inputs and defaults gameType to standard when omitted', () => {
+	it('accepts valid inputs and defaults prizeType to standard when omitted', () => {
 		fc.assert(
 			fc.property(validTitle, validBggId, (title, bggId) => {
 				const result = validateGameInput({ title, bggId });
 				expect(result.valid).toBe(true);
-				expect(result.data!.gameType).toBe('standard');
+				expect(result.data!.prizeType).toBe('standard');
 			})
 		);
 	});

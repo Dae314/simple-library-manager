@@ -1,7 +1,7 @@
 import { db } from '../db/index.js';
-import { games, transactions, conventionConfig } from '../db/schema.js';
+import { games, transactions, conventionConfig, attendees } from '../db/schema.js';
 import { eq, and, sql, ilike, gte, lte, lt, count, desc, asc, type SQL } from 'drizzle-orm';
-import type { PaginationParams, PaginatedResult, GameType } from './games.js';
+import type { PaginationParams, PaginatedResult, PrizeType } from './games.js';
 
 // --- Types ---
 
@@ -18,7 +18,7 @@ export interface StatisticsFilters {
 	gameTitle?: string;
 	attendeeName?: string;
 	availabilityStatus?: 'available' | 'checked_out';
-	gameType?: GameType;
+	gameType?: PrizeType;
 	groupByBggTitle?: boolean;
 }
 
@@ -36,8 +36,14 @@ export interface TimeDistribution {
 
 export interface TopGameItem {
 	title: string;
-	gameType: string;
+	prizeType: string;
 	status: string;
+	checkoutCount: number;
+}
+
+export interface TopAttendeeItem {
+	firstName: string;
+	lastName: string;
 	checkoutCount: number;
 }
 
@@ -129,7 +135,7 @@ function buildCheckoutConditions(filters: StatisticsFilters): SQL[] {
 	}
 
 	if (filters.gameType) {
-		conditions.push(eq(games.gameType, filters.gameType));
+		conditions.push(eq(games.prizeType, filters.gameType));
 	}
 
 	return conditions;
@@ -183,7 +189,7 @@ async function getCompletedPairs(filters: StatisticsFilters): Promise<CompletedP
 		gameConditions.push(ilike(games.title, `%${filters.gameTitle}%`));
 	}
 	if (filters.gameType) {
-		gameConditions.push(eq(games.gameType, filters.gameType));
+		gameConditions.push(eq(games.prizeType, filters.gameType));
 	}
 	if (filters.availabilityStatus) {
 		gameConditions.push(eq(games.status, filters.availabilityStatus));
@@ -310,7 +316,7 @@ export const statisticsService = {
 
 		const gameConditions: SQL[] = [];
 		if (filters.gameTitle) gameConditions.push(ilike(games.title, `%${filters.gameTitle}%`));
-		if (filters.gameType) gameConditions.push(eq(games.gameType, filters.gameType));
+		if (filters.gameType) gameConditions.push(eq(games.prizeType, filters.gameType));
 
 		const [{ currentCheckedOut }] = await db
 			.select({ currentCheckedOut: count() })
@@ -382,9 +388,9 @@ export const statisticsService = {
 		const titleExpr = filters.groupByBggTitle
 			? sql<string>`MIN(${games.title})`
 			: games.title;
-		const gameTypeExpr = filters.groupByBggTitle
-			? sql<string>`MIN(${games.gameType})`
-			: games.gameType;
+		const prizeTypeExpr = filters.groupByBggTitle
+			? sql<string>`MIN(${games.prizeType})`
+			: games.prizeType;
 		const statusExpr = filters.groupByBggTitle
 			? sql<string>`MIN(${games.status})`
 			: games.status;
@@ -409,8 +415,8 @@ export const statisticsService = {
 					break;
 				case 'game_type':
 					orderByClause = filters.groupByBggTitle
-						? [dir(sql`MIN(${games.gameType})`), desc(count())]
-						: [dir(games.gameType), desc(count())];
+						? [dir(sql`MIN(${games.prizeType})`), desc(count())]
+						: [dir(games.prizeType), desc(count())];
 					break;
 				case 'status':
 					orderByClause = filters.groupByBggTitle
@@ -429,7 +435,7 @@ export const statisticsService = {
 		const items = await db
 			.select({
 				title: titleExpr,
-				gameType: gameTypeExpr,
+				prizeType: prizeTypeExpr,
 				status: statusExpr,
 				checkoutCount: count()
 			})
@@ -444,7 +450,7 @@ export const statisticsService = {
 		return {
 			items: items.map((r) => ({
 				title: String(r.title),
-				gameType: String(r.gameType),
+				prizeType: String(r.prizeType),
 				status: String(r.status),
 				checkoutCount: Number(r.checkoutCount)
 			})),
@@ -452,6 +458,77 @@ export const statisticsService = {
 			page: pagination.page,
 			pageSize: pagination.pageSize
 		};
+	},
+
+	async getTopAttendees(
+		filters: StatisticsFilters,
+		limit: number = 10
+	): Promise<TopAttendeeItem[]> {
+		// Build conditions: type='checkout' AND isCorrection=false, plus same filters
+		const conditions: SQL[] = [
+			eq(transactions.type, 'checkout'),
+			eq(transactions.isCorrection, false)
+		];
+
+		if (filters.timeRange) {
+			conditions.push(gte(transactions.createdAt, filters.timeRange.start));
+			conditions.push(lte(transactions.createdAt, filters.timeRange.end));
+		}
+
+		if (filters.timeOfDay) {
+			conditions.push(
+				sql`EXTRACT(HOUR FROM ${transactions.createdAt}) >= ${filters.timeOfDay.startHour}`
+			);
+			conditions.push(
+				sql`EXTRACT(HOUR FROM ${transactions.createdAt}) < ${filters.timeOfDay.endHour}`
+			);
+		}
+
+		if (filters.gameTitle) {
+			conditions.push(ilike(games.title, `%${filters.gameTitle}%`));
+		}
+
+		if (filters.attendeeName) {
+			const search = `%${filters.attendeeName}%`;
+			conditions.push(
+				sql`(${ilike(transactions.attendeeFirstName, search)} OR ${ilike(transactions.attendeeLastName, search)})`
+			);
+		}
+
+		if (filters.availabilityStatus) {
+			conditions.push(eq(games.status, filters.availabilityStatus));
+		}
+
+		if (filters.gameType) {
+			conditions.push(eq(games.prizeType, filters.gameType));
+		}
+
+		if (filters.conventionDay != null) {
+			const dayCondition = await getConventionDayCondition(filters.conventionDay);
+			if (dayCondition) conditions.push(dayCondition);
+		}
+
+		const where = and(...conditions);
+
+		const results = await db
+			.select({
+				firstName: attendees.firstName,
+				lastName: attendees.lastName,
+				checkoutCount: count()
+			})
+			.from(transactions)
+			.innerJoin(games, eq(transactions.gameId, games.id))
+			.innerJoin(attendees, eq(transactions.attendeeId, attendees.id))
+			.where(where)
+			.groupBy(attendees.id, attendees.firstName, attendees.lastName)
+			.orderBy(desc(count()), asc(attendees.lastName), asc(attendees.firstName))
+			.limit(limit);
+
+		return results.map((r) => ({
+			firstName: r.firstName,
+			lastName: r.lastName,
+			checkoutCount: Number(r.checkoutCount)
+		}));
 	}
 };
 

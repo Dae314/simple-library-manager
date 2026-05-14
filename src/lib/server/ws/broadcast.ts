@@ -1,5 +1,5 @@
 import { connectionManager } from './connection-manager.js';
-import type { GameEventMessage } from './events.js';
+import type { AttendeeEventMessage, GameEventMessage } from './events.js';
 
 /** Broadcast a single game change event. */
 export function broadcastGameEvent(type: GameEventMessage['type'], gameId: number): void {
@@ -14,6 +14,11 @@ export function broadcastBatchGameEvent(gameIds: number[]): void {
 /** Broadcast a transaction creation event. */
 export function broadcastTransactionEvent(transactionId: number, gameId: number): void {
 	connectionManager.broadcast({ type: 'transaction_created', transactionId, gameId });
+}
+
+/** Broadcast an attendee change event. */
+export function broadcastAttendeeEvent(type: AttendeeEventMessage['type'], attendeeId: number): void {
+	connectionManager.broadcast({ type, attendeeId });
 }
 
 /** Broadcast a full resync event (after backup restore). */

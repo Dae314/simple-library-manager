@@ -32,7 +32,8 @@ export const POST: RequestHandler = async ({ request }) => {
 				const game = await gameService.create({
 					title: body.title,
 					bggId: body.bggId ?? 99999,
-					gameType: body.gameType ?? 'standard'
+					prizeType: body.gameType ?? body.prizeType ?? 'standard',
+					shelfCategory: body.shelfCategory ?? 'standard'
 				});
 				return json({ id: game.id, version: game.version, copyNumber: game.copyNumber });
 			}

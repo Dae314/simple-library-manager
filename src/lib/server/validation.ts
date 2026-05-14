@@ -13,10 +13,12 @@ export interface ValidationResult<T = unknown> {
 export interface GameInput {
 	title: string;
 	bggId: number;
-	gameType?: 'standard' | 'play_and_win' | 'play_and_take';
+	prizeType?: 'standard' | 'play_and_win' | 'play_and_take';
+	shelfCategory?: 'family' | 'small' | 'standard';
 }
 
-const VALID_GAME_TYPES = ['standard', 'play_and_win', 'play_and_take'] as const;
+const VALID_PRIZE_TYPES = ['standard', 'play_and_win', 'play_and_take'] as const;
+const VALID_SHELF_CATEGORIES = ['family', 'small', 'standard'] as const;
 
 export function validateGameInput(input: Partial<GameInput>): ValidationResult<GameInput> {
 	const errors: ValidationErrors = {};
@@ -31,8 +33,12 @@ export function validateGameInput(input: Partial<GameInput>): ValidationResult<G
 		errors.bggId = 'BGG ID must be a positive integer';
 	}
 
-	if (input.gameType != null && !VALID_GAME_TYPES.includes(input.gameType as typeof VALID_GAME_TYPES[number])) {
-		errors.gameType = 'Game type must be standard, play_and_win, or play_and_take';
+	if (input.prizeType != null && !VALID_PRIZE_TYPES.includes(input.prizeType as typeof VALID_PRIZE_TYPES[number])) {
+		errors.prizeType = 'Prize type must be standard, play_and_win, or play_and_take';
+	}
+
+	if (input.shelfCategory != null && !VALID_SHELF_CATEGORIES.includes(input.shelfCategory as typeof VALID_SHELF_CATEGORIES[number])) {
+		errors.shelfCategory = 'Shelf category must be family, small, or standard';
 	}
 
 	if (Object.keys(errors).length > 0) {
@@ -45,7 +51,98 @@ export function validateGameInput(input: Partial<GameInput>): ValidationResult<G
 		data: {
 			title: input.title!.trim(),
 			bggId: input.bggId!,
-			gameType: input.gameType ?? 'standard'
+			prizeType: input.prizeType ?? 'standard',
+			shelfCategory: input.shelfCategory ?? 'standard'
+		}
+	};
+}
+
+// --- Attendee Input ---
+
+export interface AttendeeInput {
+	firstName: string;
+	lastName: string;
+	idType: string;
+}
+
+export function validateAttendeeInput(input: Partial<AttendeeInput>): ValidationResult<AttendeeInput> {
+	const errors: ValidationErrors = {};
+
+	if (!input.firstName || input.firstName.trim().length === 0) {
+		errors.firstName = 'First name is required';
+	} else if (input.firstName.trim().length > 100) {
+		errors.firstName = 'First name must be 100 characters or fewer';
+	}
+
+	if (!input.lastName || input.lastName.trim().length === 0) {
+		errors.lastName = 'Last name is required';
+	} else if (input.lastName.trim().length > 100) {
+		errors.lastName = 'Last name must be 100 characters or fewer';
+	}
+
+	if (!input.idType || input.idType.trim().length === 0) {
+		errors.idType = 'ID type is required';
+	}
+
+	if (Object.keys(errors).length > 0) {
+		return { valid: false, errors };
+	}
+
+	return {
+		valid: true,
+		errors: {},
+		data: {
+			firstName: input.firstName!.trim(),
+			lastName: input.lastName!.trim(),
+			idType: input.idType!.trim()
+		}
+	};
+}
+
+// --- Swap Input ---
+
+export interface SwapInput {
+	returnGameId: number;
+	newGameId: number;
+	checkinWeight: number;
+	checkoutWeight: number;
+}
+
+export function validateSwapInput(input: Partial<SwapInput>): ValidationResult<SwapInput> {
+	const errors: ValidationErrors = {};
+
+	if (input.returnGameId == null || !Number.isInteger(input.returnGameId)) {
+		errors.returnGameId = 'Return game ID is required and must be an integer';
+	}
+
+	if (input.newGameId == null || !Number.isInteger(input.newGameId)) {
+		errors.newGameId = 'New game ID is required and must be an integer';
+	}
+
+	if (input.checkinWeight == null) {
+		errors.checkinWeight = 'Checkin weight is required';
+	} else if (typeof input.checkinWeight !== 'number' || !isFinite(input.checkinWeight) || input.checkinWeight <= 0) {
+		errors.checkinWeight = 'Checkin weight must be a positive number';
+	}
+
+	if (input.checkoutWeight == null) {
+		errors.checkoutWeight = 'Checkout weight is required';
+	} else if (typeof input.checkoutWeight !== 'number' || !isFinite(input.checkoutWeight) || input.checkoutWeight <= 0) {
+		errors.checkoutWeight = 'Checkout weight must be a positive number';
+	}
+
+	if (Object.keys(errors).length > 0) {
+		return { valid: false, errors };
+	}
+
+	return {
+		valid: true,
+		errors: {},
+		data: {
+			returnGameId: input.returnGameId!,
+			newGameId: input.newGameId!,
+			checkinWeight: input.checkinWeight!,
+			checkoutWeight: input.checkoutWeight!
 		}
 	};
 }
@@ -209,7 +306,8 @@ export interface CsvRow {
 	bggId: number;
 	copyCount: number;
 	copyNumber?: number;
-	gameType?: 'standard' | 'play_and_win' | 'play_and_take';
+	prizeType?: 'standard' | 'play_and_win' | 'play_and_take';
+	shelfCategory?: 'family' | 'small' | 'standard';
 	newTitle?: string;
 	newBggId?: number;
 	sourceRow: number;
@@ -247,14 +345,25 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 			errors.push({ row: rowNum, message: 'BGG ID must be a positive integer' });
 		}
 
-		// Parse game_type (optional, defaults to 'standard' for add)
-		const rawGameType = (row.game_type ?? row.gameType ?? row.game_Type ?? '').trim().toLowerCase();
-		let gameType: 'standard' | 'play_and_win' | 'play_and_take' | undefined;
-		if (rawGameType) {
-			if (!VALID_GAME_TYPES.includes(rawGameType as typeof VALID_GAME_TYPES[number])) {
-				errors.push({ row: rowNum, message: `Invalid game type "${rawGameType}". Must be standard, play_and_win, or play_and_take` });
+		// Parse prize_type (accepts both prizeType and gameType as legacy alias, optional, defaults to 'standard' for add)
+		const rawPrizeType = (row.prize_type ?? row.prizeType ?? row.game_type ?? row.gameType ?? row.game_Type ?? '').trim().toLowerCase();
+		let prizeType: 'standard' | 'play_and_win' | 'play_and_take' | undefined;
+		if (rawPrizeType) {
+			if (!VALID_PRIZE_TYPES.includes(rawPrizeType as typeof VALID_PRIZE_TYPES[number])) {
+				errors.push({ row: rowNum, message: `Invalid prize type "${rawPrizeType}". Must be standard, play_and_win, or play_and_take` });
 			} else {
-				gameType = rawGameType as typeof VALID_GAME_TYPES[number];
+				prizeType = rawPrizeType as typeof VALID_PRIZE_TYPES[number];
+			}
+		}
+
+		// Parse shelf_category (optional, defaults to 'standard' when omitted or empty)
+		const rawShelfCategory = (row.shelf_category ?? row.shelfCategory ?? '').trim().toLowerCase();
+		let shelfCategory: 'family' | 'small' | 'standard' | undefined;
+		if (rawShelfCategory) {
+			if (!VALID_SHELF_CATEGORIES.includes(rawShelfCategory as typeof VALID_SHELF_CATEGORIES[number])) {
+				errors.push({ row: rowNum, message: `Invalid shelf category "${rawShelfCategory}". Must be family, small, or standard` });
+			} else {
+				shelfCategory = rawShelfCategory as typeof VALID_SHELF_CATEGORIES[number];
 			}
 		}
 
@@ -271,7 +380,8 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 					title,
 					bggId,
 					copyCount,
-					gameType: gameType ?? 'standard',
+					prizeType: prizeType ?? 'standard',
+					shelfCategory: shelfCategory ?? 'standard',
 					sourceRow: rowNum
 				});
 			}
@@ -300,8 +410,8 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 				}
 
 				// At least one change must be specified for modify
-				if (!gameType && !newTitle && !newBggId) {
-					errors.push({ row: rowNum, message: 'Modify action requires at least one change (game_type, new_title, or new_bgg_id)' });
+				if (!prizeType && !shelfCategory && !newTitle && !newBggId) {
+					errors.push({ row: rowNum, message: 'Modify action requires at least one change (prize_type, shelf_category, new_title, or new_bgg_id)' });
 				}
 			}
 
@@ -312,7 +422,8 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 					bggId,
 					copyCount: 1,
 					copyNumber,
-					gameType,
+					prizeType,
+					shelfCategory,
 					newTitle,
 					newBggId,
 					sourceRow: rowNum

@@ -22,6 +22,20 @@
       "when": 1777961809176,
       "tag": "0002_luxuriant_corsair",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778728926627,
+      "tag": "0003_calm_legion",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778730820987,
+      "tag": "0004_thankful_captain_america",
+      "breakpoints": true
     }
   ]
 }

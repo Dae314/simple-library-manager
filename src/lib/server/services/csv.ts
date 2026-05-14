@@ -159,7 +159,8 @@ export const csvService = {
 								bggId: row.bggId,
 								copyNumber: nextCopyNumber,
 								status: 'available',
-								gameType: row.gameType ?? 'standard'
+								prizeType: row.prizeType ?? 'standard',
+								shelfCategory: row.shelfCategory ?? 'standard'
 							}).returning({ id: games.id });
 							gameIds.push(inserted.id);
 							nextCopyNumber++;
@@ -187,7 +188,8 @@ export const csvService = {
 						const updateValues: Record<string, unknown> = { updatedAt: new Date() };
 						if (row.newTitle) updateValues.title = row.newTitle;
 						if (row.newBggId) updateValues.bggId = row.newBggId;
-						if (row.gameType) updateValues.gameType = row.gameType;
+						if (row.prizeType) updateValues.prizeType = row.prizeType;
+						if (row.shelfCategory) updateValues.shelfCategory = row.shelfCategory;
 
 						await tx
 							.update(games)
@@ -234,7 +236,7 @@ export const csvService = {
 
 	/**
 	 * Export all games as a CSV string.
-	 * Columns: title, BGG_ID, copy_number, status, game_type
+	 * Columns: title, BGG_ID, copy_number, status, prize_type, shelf_category
 	 */
 	async exportGames(): Promise<string> {
 		const allGames = await db
@@ -243,7 +245,8 @@ export const csvService = {
 				bggId: games.bggId,
 				copyNumber: games.copyNumber,
 				status: games.status,
-				gameType: games.gameType
+				prizeType: games.prizeType,
+				shelfCategory: games.shelfCategory
 			})
 			.from(games)
 			.orderBy(asc(games.title), asc(games.copyNumber));
@@ -254,7 +257,8 @@ export const csvService = {
 				BGG_ID: g.bggId,
 				copy_number: g.copyNumber,
 				status: g.status,
-				game_type: g.gameType
+				prize_type: g.prizeType,
+				shelf_category: g.shelfCategory
 			}))
 		);
 	}

@@ -4,6 +4,8 @@ import { eq, and, sql, ilike, desc, asc, count, type SQL } from 'drizzle-orm';
 import { shouldWarnWeight, getWeightWarningLevel } from '../validation.js';
 import type { WeightWarningLevel } from '../validation.js';
 import type { PaginationParams, PaginatedResult } from './games.js';
+import { attendeeService } from './attendees.js';
+import { broadcastGameEvent, broadcastTransactionEvent } from '../ws/broadcast.js';
 
 // --- Types ---
 
@@ -109,6 +111,13 @@ export const transactionService = {
 				throw new Error('Conflict: game was modified by another user or is not available');
 			}
 
+			// Upsert attendee (always for normal checkouts, never for corrections)
+			const attendeeId = await attendeeService.upsert({
+				firstName: data.attendeeFirstName,
+				lastName: data.attendeeLastName,
+				idType: data.idType
+			});
+
 			// Create checkout transaction
 			const [transaction] = await tx
 				.insert(transactions)
@@ -118,6 +127,7 @@ export const transactionService = {
 					attendeeFirstName: data.attendeeFirstName,
 					attendeeLastName: data.attendeeLastName,
 					idType: data.idType,
+					attendeeId,
 					checkoutWeight: data.checkoutWeight,
 					note: data.note || null
 				})
@@ -153,7 +163,7 @@ export const transactionService = {
 			}
 
 			// Determine new status based on play_and_take logic
-			const isPlayAndTake = game.gameType === 'play_and_take' && data.attendeeTakesGame === true;
+			const isPlayAndTake = game.prizeType === 'play_and_take' && data.attendeeTakesGame === true;
 			const newStatus = isPlayAndTake ? 'retired' : 'available';
 
 			// Build note
@@ -235,6 +245,175 @@ export const transactionService = {
 
 			return { transaction, weightWarning };
 		});
+	},
+
+	/**
+	 * Atomically swap: checkin returnGame, checkout newGame to same attendee.
+	 * Records standard checkin and checkout transactions. Performs weight comparison on checkin.
+	 * Broadcasts WebSocket events for both games.
+	 */
+	async swap(data: {
+		returnGameId: number;
+		newGameId: number;
+		checkinWeight: number;
+		checkoutWeight: number;
+	}): Promise<{
+		checkinTransaction: CheckinTransaction;
+		checkoutTransaction: CheckoutTransaction;
+		weightWarning?: WeightWarning;
+	}> {
+		// 1. Verify return game is checked_out
+		const [returnGame] = await db
+			.select()
+			.from(games)
+			.where(eq(games.id, data.returnGameId));
+
+		if (!returnGame) {
+			throw new Error(`Game with id ${data.returnGameId} not found`);
+		}
+		if (returnGame.status !== 'checked_out') {
+			throw new Error('Return game is not currently checked out');
+		}
+
+		// 2. Verify new game is available
+		const [newGame] = await db
+			.select()
+			.from(games)
+			.where(eq(games.id, data.newGameId));
+
+		if (!newGame) {
+			throw new Error(`Game with id ${data.newGameId} not found`);
+		}
+		if (newGame.status !== 'available') {
+			throw new Error('Selected game is not available');
+		}
+
+		// 3. Get the latest checkout transaction for the return game to get attendee info
+		const [lastCheckout] = await db
+			.select()
+			.from(transactions)
+			.where(
+				and(
+					eq(transactions.gameId, data.returnGameId),
+					eq(transactions.type, 'checkout')
+				)
+			)
+			.orderBy(desc(transactions.createdAt))
+			.limit(1);
+
+		if (!lastCheckout) {
+			throw new Error('No checkout transaction found for the return game');
+		}
+
+		const attendeeFirstName = lastCheckout.attendeeFirstName || '';
+		const attendeeLastName = lastCheckout.attendeeLastName || '';
+		const idType = lastCheckout.idType || '';
+
+		// 4. Execute in a single db.transaction()
+		const { checkinTransaction, checkoutTransaction } = await db.transaction(async (tx) => {
+			// 4a. Update return game status to available, increment version
+			const [updatedReturnGame] = await tx
+				.update(games)
+				.set({
+					status: 'available',
+					version: sql`${games.version} + 1`,
+					updatedAt: new Date()
+				})
+				.where(eq(games.id, data.returnGameId))
+				.returning();
+
+			if (!updatedReturnGame) {
+				throw new Error('Failed to update return game status');
+			}
+
+			// 4b. Create checkin transaction for return game
+			const [checkinTx] = await tx
+				.insert(transactions)
+				.values({
+					gameId: data.returnGameId,
+					type: 'checkin',
+					attendeeFirstName,
+					attendeeLastName,
+					idType,
+					checkoutWeight: lastCheckout.checkoutWeight,
+					checkinWeight: data.checkinWeight
+				})
+				.returning();
+
+			// 4c. Update new game status to checked_out, increment version
+			const [updatedNewGame] = await tx
+				.update(games)
+				.set({
+					status: 'checked_out',
+					version: sql`${games.version} + 1`,
+					updatedAt: new Date()
+				})
+				.where(
+					and(
+						eq(games.id, data.newGameId),
+						eq(games.status, 'available')
+					)
+				)
+				.returning();
+
+			if (!updatedNewGame) {
+				throw new Error('Conflict: new game was modified by another user or is not available');
+			}
+
+			// 4d. Call attendeeService.upsert with the attendee info
+			const attendeeId = await attendeeService.upsert({
+				firstName: attendeeFirstName,
+				lastName: attendeeLastName,
+				idType
+			});
+
+			// 4e. Create checkout transaction for new game
+			const [checkoutTx] = await tx
+				.insert(transactions)
+				.values({
+					gameId: data.newGameId,
+					type: 'checkout',
+					attendeeFirstName,
+					attendeeLastName,
+					idType,
+					attendeeId,
+					checkoutWeight: data.checkoutWeight
+				})
+				.returning();
+
+			return { checkinTransaction: checkinTx, checkoutTransaction: checkoutTx };
+		});
+
+		// 5. Compare weights (return game's original checkout weight vs provided checkinWeight)
+		let weightWarning: WeightWarning | undefined;
+		if (lastCheckout.checkoutWeight != null) {
+			const [config] = await db
+				.select({ weightTolerance: conventionConfig.weightTolerance })
+				.from(conventionConfig)
+				.where(eq(conventionConfig.id, 1));
+
+			const tolerance = config?.weightTolerance ?? 0.5;
+			const level = getWeightWarningLevel(lastCheckout.checkoutWeight, data.checkinWeight, tolerance);
+
+			if (level !== 'none') {
+				weightWarning = {
+					checkoutWeight: lastCheckout.checkoutWeight,
+					checkinWeight: data.checkinWeight,
+					difference: Math.abs(data.checkinWeight - lastCheckout.checkoutWeight),
+					tolerance,
+					level
+				};
+			}
+		}
+
+		// 6. Broadcast WebSocket events for both games
+		broadcastGameEvent('game_checked_in', data.returnGameId);
+		broadcastTransactionEvent(checkinTransaction.id, data.returnGameId);
+		broadcastGameEvent('game_checked_out', data.newGameId);
+		broadcastTransactionEvent(checkoutTransaction.id, data.newGameId);
+
+		// 7. Return both transactions and optional weight warning
+		return { checkinTransaction, checkoutTransaction, weightWarning };
 	},
 
 	/**

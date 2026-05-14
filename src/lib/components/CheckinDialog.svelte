@@ -80,7 +80,7 @@
 		}
 		clientWeightError = '';
 
-		if (game.gameType === 'play_and_take') {
+		if (game.prizeType === 'play_and_take') {
 			pendingFormData = formData;
 			showPlayAndTakeDialog = true;
 			return;
@@ -142,7 +142,7 @@
 			<strong>Reminder:</strong> Return {attendeeName()}'s {game.idType || 'ID'}
 		</div>
 
-		{#if game.gameType === 'play_and_win'}
+		{#if game.prizeType === 'play_and_win'}
 			<div class="raffle-reminder" role="alert">
 				<strong>Play & Win:</strong> Remember to collect raffle entries from {attendeeName()}
 			</div>

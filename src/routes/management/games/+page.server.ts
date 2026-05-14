@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { gameService } from '$lib/server/services/games.js';
-import type { GameStatus, GameType, GameFilters, SortParams } from '$lib/server/services/games.js';
+import type { GameStatus, PrizeType, ShelfCategory, GameFilters, SortParams } from '$lib/server/services/games.js';
 import { csvService } from '$lib/server/services/csv.js';
 import { fail } from '@sveltejs/kit';
 import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
@@ -11,7 +11,8 @@ import { authService } from '$lib/server/services/auth.js';
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || '';
 	const status = url.searchParams.get('status') || '';
-	const gameType = url.searchParams.get('gameType') || '';
+	const prizeType = url.searchParams.get('prizeType') || url.searchParams.get('gameType') || '';
+	const shelfCategory = url.searchParams.get('shelfCategory') || '';
 	const sortField = url.searchParams.get('sortField') || 'title';
 	const sortDir = url.searchParams.get('sortDir') || 'asc';
 	const createdSince = url.searchParams.get('createdSince') || '';
@@ -30,8 +31,11 @@ export const load: PageServerLoad = async ({ url }) => {
 		// By default, hide retired games unless explicitly filtered
 		filters.excludeStatus = 'retired';
 	}
-	if (gameType === 'standard' || gameType === 'play_and_win' || gameType === 'play_and_take') {
-		filters.gameType = gameType as GameType;
+	if (prizeType === 'standard' || prizeType === 'play_and_win' || prizeType === 'play_and_take') {
+		filters.prizeType = prizeType as PrizeType;
+	}
+	if (shelfCategory === 'family' || shelfCategory === 'small' || shelfCategory === 'standard') {
+		filters.shelfCategory = shelfCategory as ShelfCategory;
 	}
 	if (search) {
 		filters.titleSearch = search;
@@ -52,7 +56,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters.groupByBgg = true;
 	}
 
-	const validSortFields = ['title', 'bgg_id', 'status', 'game_type', 'last_transaction_date', 'created_at'] as const;
+	const validSortFields = ['title', 'bgg_id', 'status', 'prize_type', 'game_type', 'shelf_category', 'last_transaction_date', 'created_at'] as const;
 	const sort: SortParams = {
 		field: validSortFields.includes(sortField as any) ? (sortField as SortParams['field']) : 'title',
 		direction: sortDir === 'desc' ? 'desc' : 'asc'
@@ -65,7 +69,8 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters: {
 			search,
 			status,
-			gameType,
+			prizeType,
+			shelfCategory,
 			sortField: sort.field,
 			sortDir: sort.direction,
 			createdSince,

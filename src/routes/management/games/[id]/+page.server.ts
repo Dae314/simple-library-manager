@@ -30,16 +30,18 @@ export const actions: Actions = {
 
 		const title = formData.get('title')?.toString() || '';
 		const rawBggId = formData.get('bggId');
-		const gameType = formData.get('gameType')?.toString() || 'standard';
+		const prizeType = formData.get('prizeType')?.toString() || formData.get('gameType')?.toString() || 'standard';
+		const shelfCategory = formData.get('shelfCategory')?.toString() || 'standard';
 
 		const bggId = rawBggId ? parseInt(rawBggId.toString(), 10) : undefined;
 
-		const values = { title, bggId: rawBggId?.toString() ?? '', gameType };
+		const values = { title, bggId: rawBggId?.toString() ?? '', prizeType, shelfCategory };
 
 		const validation = validateGameInput({
 			title,
 			bggId: bggId !== undefined && !isNaN(bggId) ? bggId : undefined,
-			gameType: gameType as 'standard' | 'play_and_win' | 'play_and_take'
+			prizeType: prizeType as 'standard' | 'play_and_win' | 'play_and_take',
+			shelfCategory: shelfCategory as 'family' | 'small' | 'standard'
 		});
 
 		if (!validation.valid) {

@@ -59,14 +59,26 @@
 		</div>
 
 		<div class="form-group">
-			<label for="gameType">Game Type</label>
-			<select id="gameType" name="gameType">
-				<option value="standard" selected={(!form?.values?.gameType) || form?.values?.gameType === 'standard'}>Standard</option>
-				<option value="play_and_win" selected={form?.values?.gameType === 'play_and_win'}>Play & Win</option>
-				<option value="play_and_take" selected={form?.values?.gameType === 'play_and_take'}>Play & Take</option>
+			<label for="prizeType">Prize Type</label>
+			<select id="prizeType" name="prizeType">
+				<option value="standard" selected={(!form?.values?.prizeType) || form?.values?.prizeType === 'standard'}>Standard</option>
+				<option value="play_and_win" selected={form?.values?.prizeType === 'play_and_win'}>Play & Win</option>
+				<option value="play_and_take" selected={form?.values?.prizeType === 'play_and_take'}>Play & Take</option>
 			</select>
-			{#if form?.errors?.gameType}
-				<span class="field-error">{form.errors.gameType}</span>
+			{#if form?.errors?.prizeType}
+				<span class="field-error">{form.errors.prizeType}</span>
+			{/if}
+		</div>
+
+		<div class="form-group">
+			<label for="shelfCategory">Shelf Category</label>
+			<select id="shelfCategory" name="shelfCategory">
+				<option value="standard" selected={(!form?.values?.shelfCategory) || form?.values?.shelfCategory === 'standard'}>Standard</option>
+				<option value="family" selected={form?.values?.shelfCategory === 'family'}>Family</option>
+				<option value="small" selected={form?.values?.shelfCategory === 'small'}>Small</option>
+			</select>
+			{#if form?.errors?.shelfCategory}
+				<span class="field-error">{form.errors.shelfCategory}</span>
 			{/if}
 		</div>
 

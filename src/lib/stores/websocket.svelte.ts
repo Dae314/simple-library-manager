@@ -6,7 +6,8 @@ import type { EventMessage } from '$lib/server/ws/events.js';
 export const LIVE_UPDATE_PAGES = [
 	'/library',
 	'/management/games',
-	'/management/transactions'
+	'/management/transactions',
+	'/management/attendees'
 ] as const;
 
 export const STATIC_PAGES = [
