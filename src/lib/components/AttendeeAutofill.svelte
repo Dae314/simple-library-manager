@@ -24,25 +24,18 @@
 
 	let suggestions: AttendeeRecord[] = $state([]);
 	let showSuggestions = $state(false);
-	let inputEl: HTMLInputElement | undefined = $state();
-	let lastFetchedQuery = '';
+	let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-	$effect(() => {
-		const query = value;
+	function fetchSuggestions(query: string) {
+		clearTimeout(debounceTimer);
 
 		if (query.length < 2) {
 			suggestions = [];
 			showSuggestions = false;
-			lastFetchedQuery = '';
 			return;
 		}
 
-		// Don't re-fetch if the query hasn't changed (e.g. parent re-render)
-		if (query === lastFetchedQuery && suggestions.length > 0) {
-			return;
-		}
-
-		const timeout = setTimeout(async () => {
+		debounceTimer = setTimeout(async () => {
 			try {
 				const res = await fetch(
 					`/api/attendees/search?q=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}`
@@ -55,18 +48,24 @@
 				const data = await res.json();
 				suggestions = data.suggestions ?? [];
 				showSuggestions = suggestions.length > 0;
-				lastFetchedQuery = query;
 			} catch {
 				suggestions = [];
 				showSuggestions = false;
 			}
 		}, 300);
+	}
 
-		return () => clearTimeout(timeout);
-	});
+	// Only fetch/show suggestions in response to user typing — never on
+	// programmatic value changes (e.g. selecting an attendee populates the
+	// sibling field), so other autofill overlays don't pop open and block the UI.
+	function handleInput() {
+		fetchSuggestions(value);
+	}
 
 	function handleSelect(attendee: AttendeeRecord) {
+		clearTimeout(debounceTimer);
 		showSuggestions = false;
+		suggestions = [];
 		onSelect(attendee);
 	}
 
@@ -86,13 +85,13 @@
 
 <div class="attendee-autofill">
 	<input
-		bind:this={inputEl}
 		type="text"
 		bind:value
 		{id}
 		{placeholder}
 		aria-label={placeholder}
 		autocomplete="off"
+		oninput={handleInput}
 		onfocus={handleFocus}
 		onblur={handleBlur}
 	/>
