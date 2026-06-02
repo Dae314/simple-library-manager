@@ -257,6 +257,8 @@ export const transactionService = {
 		newGameId: number;
 		checkinWeight: number;
 		checkoutWeight: number;
+		checkinNote?: string;
+		checkoutNote?: string;
 	}): Promise<{
 		checkinTransaction: CheckinTransaction;
 		checkoutTransaction: CheckoutTransaction;
@@ -336,7 +338,8 @@ export const transactionService = {
 					attendeeLastName,
 					idType,
 					checkoutWeight: lastCheckout.checkoutWeight,
-					checkinWeight: data.checkinWeight
+					checkinWeight: data.checkinWeight,
+					note: data.checkinNote?.trim() || null
 				})
 				.returning();
 
@@ -377,7 +380,8 @@ export const transactionService = {
 					attendeeLastName,
 					idType,
 					attendeeId,
-					checkoutWeight: data.checkoutWeight
+					checkoutWeight: data.checkoutWeight,
+					note: data.checkoutNote?.trim() || null
 				})
 				.returning();
 

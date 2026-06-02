@@ -181,11 +181,15 @@ export const actions: Actions = {
 		const rawNewGameId = formData.get('newGameId');
 		const rawCheckinWeight = formData.get('checkinWeight');
 		const rawCheckoutWeight = formData.get('checkoutWeight');
+		const rawCheckinNote = formData.get('checkinNote');
+		const rawCheckoutNote = formData.get('checkoutNote');
 
 		const returnGameId = rawReturnGameId ? parseInt(rawReturnGameId.toString(), 10) : undefined;
 		const newGameId = rawNewGameId ? parseInt(rawNewGameId.toString(), 10) : undefined;
 		const checkinWeight = rawCheckinWeight ? parseFloat(rawCheckinWeight.toString()) : undefined;
 		const checkoutWeight = rawCheckoutWeight ? parseFloat(rawCheckoutWeight.toString()) : undefined;
+		const checkinNote = rawCheckinNote ? rawCheckinNote.toString() : undefined;
+		const checkoutNote = rawCheckoutNote ? rawCheckoutNote.toString() : undefined;
 
 		const validation = validateSwapInput({
 			returnGameId,
@@ -199,7 +203,11 @@ export const actions: Actions = {
 		}
 
 		try {
-			const result = await transactionService.swap(validation.data!);
+			const result = await transactionService.swap({
+				...validation.data!,
+				checkinNote,
+				checkoutNote
+			});
 
 			// Get config for weight unit in warning display
 			const config = await configService.get();

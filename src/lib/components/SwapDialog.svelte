@@ -51,6 +51,10 @@
 	let checkinWeightError = $state('');
 	let checkoutWeightError = $state('');
 
+	// Notes
+	let checkinNote = $state('');
+	let checkoutNote = $state('');
+
 	// Submission state
 	let submitting = $state(false);
 	let formError = $state('');
@@ -127,6 +131,8 @@
 		checkoutWeightInput = '';
 		checkinWeightError = '';
 		checkoutWeightError = '';
+		checkinNote = '';
+		checkoutNote = '';
 		formError = '';
 		weightWarning = null;
 		statusChangeWarning = false;
@@ -236,6 +242,8 @@
 			formData.set('newGameId', String(selectedGame.id));
 			formData.set('checkinWeight', String(checkinWeightInput));
 			formData.set('checkoutWeight', String(checkoutWeightInput));
+			formData.set('checkinNote', checkinNote);
+			formData.set('checkoutNote', checkoutNote);
 
 			const response = await fetch('/library?/swap', {
 				method: 'POST',
@@ -358,6 +366,10 @@
 			{/if}
 		</div>
 
+		<div class="id-reminder" role="alert">
+			<strong>Reminder:</strong> Return {attendeeName()}'s {returnGame.idType || 'ID'}
+		</div>
+
 		<!-- Available games list -->
 		<div class="available-games-section">
 			<h3 class="section-label">Select New Game</h3>
@@ -459,6 +471,15 @@
 				</div>
 
 				<div class="form-group">
+					<label for="swap-checkinNote">Checkin Note (optional)</label>
+					<textarea
+						id="swap-checkinNote"
+						rows="2"
+						bind:value={checkinNote}
+					></textarea>
+				</div>
+
+				<div class="form-group">
 					<label for="swap-checkoutWeight">Checkout Weight ({weightUnit})</label>
 					<input
 						id="swap-checkoutWeight"
@@ -473,6 +494,15 @@
 					{#if checkoutWeightError}
 						<span class="field-error">{checkoutWeightError}</span>
 					{/if}
+				</div>
+
+				<div class="form-group">
+					<label for="swap-checkoutNote">Checkout Note (optional)</label>
+					<textarea
+						id="swap-checkoutNote"
+						rows="2"
+						bind:value={checkoutNote}
+					></textarea>
 				</div>
 			</div>
 
@@ -548,6 +578,16 @@
 		padding: 0.5rem 0.75rem;
 		margin-bottom: 1rem;
 		line-height: 1.4;
+	}
+
+	.id-reminder {
+		padding: 0.6rem 0.75rem;
+		background-color: #dbeafe;
+		border: 1px solid #3b82f6;
+		border-radius: 6px;
+		color: #1e40af;
+		font-size: 0.85rem;
+		margin-bottom: 1rem;
 	}
 
 	.section-label {
@@ -738,6 +778,23 @@
 	}
 
 	.form-group input[type='number']:focus {
+		border-color: #6366f1;
+		box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+	}
+
+	.form-group textarea {
+		width: 100%;
+		padding: 0.45rem 0.6rem;
+		border: 1px solid #d1d5db;
+		border-radius: 6px;
+		font-size: 0.9rem;
+		outline: none;
+		transition: border-color 0.15s;
+		resize: vertical;
+		font-family: inherit;
+	}
+
+	.form-group textarea:focus {
 		border-color: #6366f1;
 		box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
 	}
