@@ -14,8 +14,8 @@ import { validateCsvRows } from '$lib/server/validation.js';
 describe('Property 10: CSV shelf category round-trip', () => {
 	const validTitle = fc.string({ minLength: 1 }).filter((s) => s.trim().length > 0);
 	const validBggId = fc.integer({ min: 1, max: 2_147_483_647 });
-	const validShelfCategory = fc.constantFrom('family', 'small', 'standard');
-	const validPrizeType = fc.constantFrom('standard', 'play_and_win', 'play_and_take');
+	const validShelfCategory = fc.constantFrom('family', 'small', 'standard', 'oversized');
+	const validPrizeType = fc.constantFrom('normal', 'play_and_win', 'play_and_take');
 
 	it('preserves valid shelf categories through validateCsvRows', () => {
 		fc.assert(
@@ -41,7 +41,7 @@ describe('Property 10: CSV shelf category round-trip', () => {
 
 	it('rejects invalid shelf category values with row-identifying error', () => {
 		const invalidShelfCategory = fc.string({ minLength: 1 })
-			.filter((s) => !['family', 'small', 'standard', ''].includes(s.trim().toLowerCase()));
+			.filter((s) => !['family', 'small', 'standard', 'oversized', ''].includes(s.trim().toLowerCase()));
 
 		fc.assert(
 			fc.property(
@@ -115,7 +115,7 @@ describe('Property 10: CSV shelf category round-trip', () => {
 
 	it('identifies the correct row number in error for invalid shelf category in multi-row CSV', () => {
 		const invalidShelfCategory = fc.string({ minLength: 1 })
-			.filter((s) => !['family', 'small', 'standard', ''].includes(s.trim().toLowerCase()));
+			.filter((s) => !['family', 'small', 'standard', 'oversized', ''].includes(s.trim().toLowerCase()));
 
 		fc.assert(
 			fc.property(
@@ -154,7 +154,7 @@ describe('Property 10: CSV shelf category round-trip', () => {
 describe('Property 11: CSV prizeType/gameType backward compatibility', () => {
 	const validTitle = fc.string({ minLength: 1 }).filter((s) => s.trim().length > 0);
 	const validBggId = fc.integer({ min: 1, max: 2_147_483_647 });
-	const validPrizeType = fc.constantFrom('standard', 'play_and_win', 'play_and_take');
+	const validPrizeType = fc.constantFrom('normal', 'play_and_win', 'play_and_take');
 
 	it('produces same result with prize_type header as with game_type header', () => {
 		fc.assert(
@@ -233,7 +233,7 @@ describe('Property 11: CSV prizeType/gameType backward compatibility', () => {
 		);
 	});
 
-	it('defaults prizeType to standard when neither prize_type nor game_type is provided', () => {
+	it('defaults prizeType to normal when neither prize_type nor game_type is provided', () => {
 		fc.assert(
 			fc.property(
 				validTitle,
@@ -246,7 +246,7 @@ describe('Property 11: CSV prizeType/gameType backward compatibility', () => {
 					}];
 					const result = validateCsvRows(rows);
 					expect(result.valid).toBe(true);
-					expect(result.rows[0].prizeType).toBe('standard');
+					expect(result.rows[0].prizeType).toBe('normal');
 				}
 			),
 			{ numRuns: 100 }
@@ -272,6 +272,28 @@ describe('Property 11: CSV prizeType/gameType backward compatibility', () => {
 					expect(result.valid).toBe(true);
 					// prize_type should take precedence since it's checked first
 					expect(result.rows[0].prizeType).toBe(prizeTypeVal);
+				}
+			),
+			{ numRuns: 100 }
+		);
+	});
+
+	it('maps legacy "standard" prize type to "normal" for backward compatibility', () => {
+		fc.assert(
+			fc.property(
+				validTitle,
+				validBggId,
+				fc.constantFrom('prize_type', 'game_type', 'prizeType', 'gameType'),
+				(title, bggId, columnKey) => {
+					const rows = [{
+						title,
+						bgg_id: String(bggId),
+						copy_count: '1',
+						[columnKey]: 'standard'
+					}];
+					const result = validateCsvRows(rows);
+					expect(result.valid).toBe(true);
+					expect(result.rows[0].prizeType).toBe('normal');
 				}
 			),
 			{ numRuns: 100 }

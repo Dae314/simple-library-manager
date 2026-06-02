@@ -11,8 +11,8 @@ const totalCopiesExpr = sql<number>`COUNT(*) FILTER (WHERE ${games.status} != 'r
 // --- Types ---
 
 export type GameStatus = 'available' | 'checked_out' | 'retired';
-export type PrizeType = 'standard' | 'play_and_win' | 'play_and_take';
-export type ShelfCategory = 'family' | 'small' | 'standard';
+export type PrizeType = 'normal' | 'play_and_win' | 'play_and_take';
+export type ShelfCategory = 'family' | 'small' | 'standard' | 'oversized';
 
 export interface GameRecord {
 	id: number;
@@ -172,7 +172,7 @@ export const gameService = {
 					bggId: data.bggId,
 					copyNumber: nextCopyNumber,
 					status: 'available',
-					prizeType: data.prizeType ?? 'standard',
+					prizeType: data.prizeType ?? 'normal',
 					shelfCategory: data.shelfCategory ?? 'standard'
 				})
 				.returning();

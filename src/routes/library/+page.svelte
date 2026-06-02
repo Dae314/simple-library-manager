@@ -134,7 +134,7 @@
 		{
 			key: 'prizeType', label: 'Type', type: 'select' as const,
 			options: [
-				{ value: 'standard', label: 'Standard' },
+				{ value: 'normal', label: 'Normal' },
 				{ value: 'play_and_win', label: 'Play & Win' },
 				{ value: 'play_and_take', label: 'Play & Take' }
 			]
@@ -144,7 +144,8 @@
 			options: [
 				{ value: 'family', label: 'Family' },
 				{ value: 'small', label: 'Small' },
-				{ value: 'standard', label: 'Standard' }
+				{ value: 'standard', label: 'Standard' },
+				{ value: 'oversized', label: 'Oversized' }
 			]
 		}
 	];
@@ -266,6 +267,7 @@
 			case 'family': return 'Family';
 			case 'small': return 'Small';
 			case 'standard': return 'Standard';
+			case 'oversized': return 'Oversized';
 			default: return category;
 		}
 	}

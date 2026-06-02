@@ -1,10 +1,10 @@
 <script lang="ts">
-	type PrizeType = 'standard' | 'play_and_win' | 'play_and_take';
+	type PrizeType = 'normal' | 'play_and_win' | 'play_and_take';
 
 	let { prizeType }: { prizeType: PrizeType } = $props();
 
 	const labels: Record<PrizeType, string> = {
-		standard: 'Standard',
+		normal: 'Normal',
 		play_and_win: 'Play & Win',
 		play_and_take: 'Play & Take'
 	};
@@ -24,7 +24,7 @@
 		vertical-align: middle;
 	}
 
-	.standard {
+	.normal {
 		background-color: #e5e7eb;
 		color: #374151;
 	}

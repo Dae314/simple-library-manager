@@ -162,7 +162,7 @@ describe('Property 20: CSV validation reports all errors', () => {
 						expect(result.rows[i].bggId).toBe(Number(rows[i].bgg_id));
 						expect(result.rows[i].copyCount).toBe(Number(rows[i].copy_count));
 						expect(result.rows[i].action).toBe('add');
-						expect(result.rows[i].prizeType).toBe('standard');
+						expect(result.rows[i].prizeType).toBe('normal');
 					}
 				}
 			),
@@ -202,7 +202,7 @@ describe('Property 21: CSV action column parsing and validation', () => {
 	const validTitle = fc.string({ minLength: 1 }).filter((s) => s.trim().length > 0);
 	const validBggId = fc.integer({ min: 1, max: 2_147_483_647 });
 	const validCopyNumber = fc.integer({ min: 1, max: 1000 });
-	const validPrizeType = fc.constantFrom('standard', 'play_and_win', 'play_and_take');
+	const validPrizeType = fc.constantFrom('normal', 'play_and_win', 'play_and_take');
 
 	it('defaults action to "add" when the action column is absent', () => {
 		fc.assert(
@@ -286,7 +286,7 @@ describe('Property 21: CSV action column parsing and validation', () => {
  * Property 22: CSV game_type validation
  *
  * The game_type column SHALL accept the three valid prize types, default to
- * "standard" for add rows when omitted, and reject any invalid prize type string.
+ * "normal" for add rows when omitted, and reject any invalid prize type string.
  * Note: game_type is accepted as a legacy CSV column alias; the result uses prizeType.
  *
  * **Validates: CSV prize type export/import**
@@ -294,7 +294,7 @@ describe('Property 21: CSV action column parsing and validation', () => {
 describe('Property 22: CSV game_type validation', () => {
 	const validTitle = fc.string({ minLength: 1 }).filter((s) => s.trim().length > 0);
 	const validBggId = fc.integer({ min: 1, max: 2_147_483_647 });
-	const validPrizeType = fc.constantFrom('standard', 'play_and_win', 'play_and_take');
+	const validPrizeType = fc.constantFrom('normal', 'play_and_win', 'play_and_take');
 
 	it('accepts valid game_type values for add rows', () => {
 		fc.assert(
@@ -318,7 +318,7 @@ describe('Property 22: CSV game_type validation', () => {
 		);
 	});
 
-	it('defaults prizeType to "standard" when omitted for add rows', () => {
+	it('defaults prizeType to "normal" when omitted for add rows', () => {
 		fc.assert(
 			fc.property(
 				validTitle,
@@ -331,7 +331,7 @@ describe('Property 22: CSV game_type validation', () => {
 					}];
 					const result = validateCsvRows(rows);
 					expect(result.valid).toBe(true);
-					expect(result.rows[0].prizeType).toBe('standard');
+					expect(result.rows[0].prizeType).toBe('normal');
 				}
 			),
 			{ numRuns: 100 }
@@ -340,7 +340,7 @@ describe('Property 22: CSV game_type validation', () => {
 
 	it('rejects invalid game_type values', () => {
 		const badPrizeType = fc.string({ minLength: 1 })
-			.filter((s) => !['standard', 'play_and_win', 'play_and_take', ''].includes(s.trim().toLowerCase()));
+			.filter((s) => !['normal', 'standard', 'play_and_win', 'play_and_take', ''].includes(s.trim().toLowerCase()));
 
 		fc.assert(
 			fc.property(
@@ -376,7 +376,7 @@ describe('Property 23: CSV modify action validation', () => {
 	const validTitle = fc.string({ minLength: 1 }).filter((s) => s.trim().length > 0);
 	const validBggId = fc.integer({ min: 1, max: 2_147_483_647 });
 	const validCopyNumber = fc.integer({ min: 1, max: 1000 });
-	const validPrizeType = fc.constantFrom('standard', 'play_and_win', 'play_and_take');
+	const validPrizeType = fc.constantFrom('normal', 'play_and_win', 'play_and_take');
 
 	it('accepts modify rows with copy_number and a game_type change', () => {
 		fc.assert(
@@ -597,7 +597,7 @@ describe('Property 25: Mixed-action CSV batches', () => {
 	const validBggId = fc.integer({ min: 1, max: 2_147_483_647 });
 	const validCopyNumber = fc.integer({ min: 1, max: 1000 });
 	const validCopyCount = fc.integer({ min: 1, max: 100 });
-	const validPrizeType = fc.constantFrom('standard', 'play_and_win', 'play_and_take');
+	const validPrizeType = fc.constantFrom('normal', 'play_and_win', 'play_and_take');
 
 	const validAddRow = fc.record({
 		action: fc.constant('add'),

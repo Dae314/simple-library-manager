@@ -2,7 +2,7 @@
 	import GameTypeBadge from './GameTypeBadge.svelte';
 	import type { Snippet } from 'svelte';
 
-	type PrizeType = 'standard' | 'play_and_win' | 'play_and_take';
+	type PrizeType = 'normal' | 'play_and_win' | 'play_and_take';
 
 	let {
 		title,

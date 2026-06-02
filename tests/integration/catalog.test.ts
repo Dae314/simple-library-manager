@@ -33,14 +33,14 @@ test.describe('Library Page — Catalog Browsing', () => {
 	});
 
 	test('game type badges are correct for each game type', async ({ page, helpers }) => {
-		await helpers.createGame(`${helpers.prefix}_StdGame`, { gameType: 'standard' });
+		await helpers.createGame(`${helpers.prefix}_StdGame`, { gameType: 'normal' });
 		await helpers.createGame(`${helpers.prefix}_PwGame`, { gameType: 'play_and_win' });
 		await helpers.createGame(`${helpers.prefix}_PtGame`, { gameType: 'play_and_take' });
 
 		await page.goto(`/library?search=${helpers.prefix}_`);
 
 		const stdRow = helpers.tableRow(page, `${helpers.prefix}_StdGame`);
-		await expect(stdRow.locator('.badge.standard')).toHaveText('Standard');
+		await expect(stdRow.locator('.badge.normal')).toHaveText('Normal');
 
 		const pwRow = helpers.tableRow(page, `${helpers.prefix}_PwGame`);
 		await expect(pwRow.locator('.badge.play_and_win')).toHaveText('Play & Win');
@@ -72,7 +72,7 @@ test.describe('Library Page — Catalog Browsing', () => {
 
 	test('filter by game type shows only matching games', async ({ page, helpers }) => {
 		await helpers.createGame(`${helpers.prefix}_PwOnly`, { gameType: 'play_and_win' });
-		await helpers.createGame(`${helpers.prefix}_StdOnly`, { gameType: 'standard' });
+		await helpers.createGame(`${helpers.prefix}_StdOnly`, { gameType: 'normal' });
 
 		await page.goto(`/library?search=${helpers.prefix}_&gameType=play_and_win`);
 

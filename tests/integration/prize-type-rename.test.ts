@@ -22,7 +22,7 @@ test.describe('Prize Type Rename (gameType → prizeType)', () => {
 		const titlePW = `${helpers.prefix}_PrizeBadgePW`;
 		const titlePT = `${helpers.prefix}_PrizeBadgePT`;
 
-		await helpers.createGame(titleStd, { bggId: 90010, gameType: 'standard' });
+		await helpers.createGame(titleStd, { bggId: 90010, gameType: 'normal' });
 		await helpers.createGame(titlePW, { bggId: 90011, gameType: 'play_and_win' });
 		await helpers.createGame(titlePT, { bggId: 90012, gameType: 'play_and_take' });
 
@@ -36,7 +36,7 @@ test.describe('Prize Type Rename (gameType → prizeType)', () => {
 		await expect(rowPW).toBeVisible();
 		await expect(rowPT).toBeVisible();
 
-		await expect(rowStd.locator('.badge')).toContainText('Standard');
+		await expect(rowStd.locator('.badge')).toContainText('Normal');
 		await expect(rowPW.locator('.badge')).toContainText('Play & Win');
 		await expect(rowPT.locator('.badge')).toContainText('Play & Take');
 	});
@@ -45,7 +45,7 @@ test.describe('Prize Type Rename (gameType → prizeType)', () => {
 		const titleStd = `${helpers.prefix}_PrizeFilterStd`;
 		const titlePW = `${helpers.prefix}_PrizeFilterPW`;
 
-		await helpers.createGame(titleStd, { bggId: 90020, gameType: 'standard' });
+		await helpers.createGame(titleStd, { bggId: 90020, gameType: 'normal' });
 		await helpers.createGame(titlePW, { bggId: 90021, gameType: 'play_and_win' });
 
 		// Filter by play_and_win
@@ -55,8 +55,8 @@ test.describe('Prize Type Rename (gameType → prizeType)', () => {
 		await expect(helpers.tableRow(page, titlePW).first()).toBeVisible();
 		await expect(helpers.tableRow(page, titleStd)).toHaveCount(0);
 
-		// Filter by standard
-		await page.goto(`/library?search=${helpers.prefix}_PrizeFilter&prizeType=standard`);
+		// Filter by normal
+		await page.goto(`/library?search=${helpers.prefix}_PrizeFilter&prizeType=normal`);
 
 		await expect(helpers.tableRow(page, titleStd).first()).toBeVisible();
 		await expect(helpers.tableRow(page, titlePW)).toHaveCount(0);
@@ -136,5 +136,36 @@ test.describe('Prize Type Rename (gameType → prizeType)', () => {
 		expect(gameRow).toContain('play_and_win');
 
 		await expect(page.getByText('CSV exported successfully')).toBeVisible();
+	});
+
+	test('CSV import with legacy "standard" prize type maps to normal', async ({ page, helpers }) => {
+		const title = `${helpers.prefix}_LegacyStd`;
+		const csvContent = [
+			'action,title,BGG_ID,copy_count,game_type',
+			`add,${title},90050,1,standard`
+		].join('\n');
+		const tmpFile = path.join(TMP_DIR, `${helpers.prefix}-legacy-standard.csv`);
+		fs.writeFileSync(tmpFile, csvContent, 'utf-8');
+
+		try {
+			await page.goto('/management/games');
+
+			const fileInput = page.locator('input[type="file"][accept=".csv"].hidden-input');
+			await fileInput.setInputFiles(tmpFile);
+
+			const dialog = page.locator('dialog.confirm-dialog[aria-label="Import CSV"]');
+			await expect(dialog).toBeVisible({ timeout: 10_000 });
+			await dialog.locator('.btn-confirm').click();
+
+			await expect(page.getByText('CSV import complete')).toBeVisible({ timeout: 10_000 });
+
+			// The legacy "standard" prize type should display as "Normal"
+			await page.goto(`/management/games?search=${encodeURIComponent(title)}`);
+			const row = helpers.tableRow(page, title).first();
+			await expect(row).toBeVisible();
+			await expect(row.locator('.badge')).toContainText('Normal');
+		} finally {
+			if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
+		}
 	});
 });

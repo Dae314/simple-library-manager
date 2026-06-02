@@ -48,7 +48,7 @@
 		{
 			key: 'prizeType', label: 'Prize Type', type: 'select' as const,
 			options: [
-				{ value: 'standard', label: 'Standard' },
+				{ value: 'normal', label: 'Normal' },
 				{ value: 'play_and_win', label: 'Play & Win' },
 				{ value: 'play_and_take', label: 'Play & Take' }
 			]

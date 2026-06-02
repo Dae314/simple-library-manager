@@ -23,6 +23,24 @@ test.describe('Shelf Category', () => {
 		await expect(row).toContainText('Family');
 	});
 
+	test('create game with oversized shelf category via management form', async ({ page, helpers }) => {
+		const title = `${helpers.prefix}_ShelfOversized`;
+
+		await page.goto('/management/games/new');
+		await page.locator('#title').fill(title);
+		await page.locator('#bggId').fill('88050');
+		await page.locator('#shelfCategory').selectOption('oversized');
+		await page.getByRole('button', { name: 'Add Game' }).click();
+
+		await expect(page).toHaveURL(/\/management\/games$/);
+
+		// Verify the game appears with the oversized shelf category
+		await page.goto(`/management/games?search=${encodeURIComponent(title)}`);
+		const row = helpers.tableRow(page, title).first();
+		await expect(row).toBeVisible();
+		await expect(row).toContainText('Oversized');
+	});
+
 	test('edit game shelf category', async ({ page, helpers }) => {
 		const title = `${helpers.prefix}_ShelfEdit`;
 		const game = await helpers.createGame(title, { bggId: 88002, shelfCategory: 'family' });

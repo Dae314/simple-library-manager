@@ -20,7 +20,7 @@ function bggUrl(bggId: number): string {
  * **Validates: Requirements 1.2, 1.3, 1.4, 2.2, 2.3**
  */
 describe('Property 1: Game record validation rejects invalid input', () => {
-	const validPrizeTypes = ['standard', 'play_and_win', 'play_and_take'] as const;
+	const validPrizeTypes = ['normal', 'play_and_win', 'play_and_take'] as const;
 
 	// Arbitrary for valid titles (non-empty, non-whitespace-only)
 	const validTitle = fc.string({ minLength: 1 }).filter((s) => s.trim().length > 0);
@@ -99,17 +99,17 @@ describe('Property 1: Game record validation rejects invalid input', () => {
 				expect(result.data).toBeDefined();
 				expect(result.data!.title).toBe(title.trim());
 				expect(result.data!.bggId).toBe(bggId);
-				expect(result.data!.prizeType).toBe(prizeType ?? 'standard');
+				expect(result.data!.prizeType).toBe(prizeType ?? 'normal');
 			})
 		);
 	});
 
-	it('accepts valid inputs and defaults prizeType to standard when omitted', () => {
+	it('accepts valid inputs and defaults prizeType to normal when omitted', () => {
 		fc.assert(
 			fc.property(validTitle, validBggId, (title, bggId) => {
 				const result = validateGameInput({ title, bggId });
 				expect(result.valid).toBe(true);
-				expect(result.data!.prizeType).toBe('standard');
+				expect(result.data!.prizeType).toBe('normal');
 			})
 		);
 	});

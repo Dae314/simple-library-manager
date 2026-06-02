@@ -20,8 +20,8 @@
 		copyNumber: number;
 		totalCopies: number;
 		status: string;
-		prizeType: 'standard' | 'play_and_win' | 'play_and_take';
-		shelfCategory: 'family' | 'small' | 'standard';
+		prizeType: 'normal' | 'play_and_win' | 'play_and_take';
+		shelfCategory: 'family' | 'small' | 'standard' | 'oversized';
 		version: number;
 		createdAt: string;
 		lastTransactionDate: string | null;
@@ -117,7 +117,7 @@
 		{
 			key: 'prizeType', label: 'Type', type: 'select' as const,
 			options: [
-				{ value: 'standard', label: 'Standard' },
+				{ value: 'normal', label: 'Normal' },
 				{ value: 'play_and_win', label: 'Play & Win' },
 				{ value: 'play_and_take', label: 'Play & Take' }
 			]
@@ -127,7 +127,8 @@
 			options: [
 				{ value: 'family', label: 'Family' },
 				{ value: 'small', label: 'Small' },
-				{ value: 'standard', label: 'Standard' }
+				{ value: 'standard', label: 'Standard' },
+				{ value: 'oversized', label: 'Oversized' }
 			]
 		},
 		{ key: 'createdSince', label: 'Added Since', type: 'date' as const },
@@ -294,6 +295,7 @@
 			case 'family': return 'Family';
 			case 'small': return 'Small';
 			case 'standard': return 'Standard';
+			case 'oversized': return 'Oversized';
 			default: return category;
 		}
 	}

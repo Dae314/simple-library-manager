@@ -3,16 +3,16 @@ import { db } from './index.js';
 import { games, conventionConfig, idTypes } from './schema.js';
 
 const SEED_GAMES = [
-	{ title: 'Catan', bggId: 13, prizeType: 'standard' },
-	{ title: 'Catan', bggId: 13, prizeType: 'standard' },
-	{ title: 'Ticket to Ride', bggId: 9209, prizeType: 'standard' },
-	{ title: 'Ticket to Ride', bggId: 9209, prizeType: 'standard' },
-	{ title: 'Pandemic', bggId: 30549, prizeType: 'standard' },
-	{ title: 'Azul', bggId: 230802, prizeType: 'standard' },
+	{ title: 'Catan', bggId: 13, prizeType: 'normal' },
+	{ title: 'Catan', bggId: 13, prizeType: 'normal' },
+	{ title: 'Ticket to Ride', bggId: 9209, prizeType: 'normal' },
+	{ title: 'Ticket to Ride', bggId: 9209, prizeType: 'normal' },
+	{ title: 'Pandemic', bggId: 30549, prizeType: 'normal' },
+	{ title: 'Azul', bggId: 230802, prizeType: 'normal' },
 	{ title: 'Codenames', bggId: 178900, prizeType: 'play_and_win' },
-	{ title: 'Wingspan', bggId: 266192, prizeType: 'standard' },
+	{ title: 'Wingspan', bggId: 266192, prizeType: 'normal' },
 	{ title: '7 Wonders', bggId: 68448, prizeType: 'play_and_take' },
-	{ title: 'Splendor', bggId: 148228, prizeType: 'standard' }
+	{ title: 'Splendor', bggId: 148228, prizeType: 'normal' }
 ] as const;
 
 export async function seed(): Promise<void> {

@@ -13,12 +13,12 @@ export interface ValidationResult<T = unknown> {
 export interface GameInput {
 	title: string;
 	bggId: number;
-	prizeType?: 'standard' | 'play_and_win' | 'play_and_take';
-	shelfCategory?: 'family' | 'small' | 'standard';
+	prizeType?: 'normal' | 'play_and_win' | 'play_and_take';
+	shelfCategory?: 'family' | 'small' | 'standard' | 'oversized';
 }
 
-const VALID_PRIZE_TYPES = ['standard', 'play_and_win', 'play_and_take'] as const;
-const VALID_SHELF_CATEGORIES = ['family', 'small', 'standard'] as const;
+const VALID_PRIZE_TYPES = ['normal', 'play_and_win', 'play_and_take'] as const;
+const VALID_SHELF_CATEGORIES = ['family', 'small', 'standard', 'oversized'] as const;
 
 export function validateGameInput(input: Partial<GameInput>): ValidationResult<GameInput> {
 	const errors: ValidationErrors = {};
@@ -34,11 +34,11 @@ export function validateGameInput(input: Partial<GameInput>): ValidationResult<G
 	}
 
 	if (input.prizeType != null && !VALID_PRIZE_TYPES.includes(input.prizeType as typeof VALID_PRIZE_TYPES[number])) {
-		errors.prizeType = 'Prize type must be standard, play_and_win, or play_and_take';
+		errors.prizeType = 'Prize type must be normal, play_and_win, or play_and_take';
 	}
 
 	if (input.shelfCategory != null && !VALID_SHELF_CATEGORIES.includes(input.shelfCategory as typeof VALID_SHELF_CATEGORIES[number])) {
-		errors.shelfCategory = 'Shelf category must be family, small, or standard';
+		errors.shelfCategory = 'Shelf category must be family, small, standard, or oversized';
 	}
 
 	if (Object.keys(errors).length > 0) {
@@ -51,7 +51,7 @@ export function validateGameInput(input: Partial<GameInput>): ValidationResult<G
 		data: {
 			title: input.title!.trim(),
 			bggId: input.bggId!,
-			prizeType: input.prizeType ?? 'standard',
+			prizeType: input.prizeType ?? 'normal',
 			shelfCategory: input.shelfCategory ?? 'standard'
 		}
 	};
@@ -306,8 +306,8 @@ export interface CsvRow {
 	bggId: number;
 	copyCount: number;
 	copyNumber?: number;
-	prizeType?: 'standard' | 'play_and_win' | 'play_and_take';
-	shelfCategory?: 'family' | 'small' | 'standard';
+	prizeType?: 'normal' | 'play_and_win' | 'play_and_take';
+	shelfCategory?: 'family' | 'small' | 'standard' | 'oversized';
 	newTitle?: string;
 	newBggId?: number;
 	sourceRow: number;
@@ -345,12 +345,16 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 			errors.push({ row: rowNum, message: 'BGG ID must be a positive integer' });
 		}
 
-		// Parse prize_type (accepts both prizeType and gameType as legacy alias, optional, defaults to 'standard' for add)
-		const rawPrizeType = (row.prize_type ?? row.prizeType ?? row.game_type ?? row.gameType ?? row.game_Type ?? '').trim().toLowerCase();
-		let prizeType: 'standard' | 'play_and_win' | 'play_and_take' | undefined;
+		// Parse prize_type (accepts both prizeType and gameType as legacy alias, optional, defaults to 'normal' for add)
+		// Legacy CSVs used 'standard' for the prize type; map it to 'normal' for backward compatibility.
+		let rawPrizeType = (row.prize_type ?? row.prizeType ?? row.game_type ?? row.gameType ?? row.game_Type ?? '').trim().toLowerCase();
+		if (rawPrizeType === 'standard') {
+			rawPrizeType = 'normal';
+		}
+		let prizeType: 'normal' | 'play_and_win' | 'play_and_take' | undefined;
 		if (rawPrizeType) {
 			if (!VALID_PRIZE_TYPES.includes(rawPrizeType as typeof VALID_PRIZE_TYPES[number])) {
-				errors.push({ row: rowNum, message: `Invalid prize type "${rawPrizeType}". Must be standard, play_and_win, or play_and_take` });
+				errors.push({ row: rowNum, message: `Invalid prize type "${rawPrizeType}". Must be normal, play_and_win, or play_and_take` });
 			} else {
 				prizeType = rawPrizeType as typeof VALID_PRIZE_TYPES[number];
 			}
@@ -358,10 +362,10 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 
 		// Parse shelf_category (optional, defaults to 'standard' when omitted or empty)
 		const rawShelfCategory = (row.shelf_category ?? row.shelfCategory ?? '').trim().toLowerCase();
-		let shelfCategory: 'family' | 'small' | 'standard' | undefined;
+		let shelfCategory: 'family' | 'small' | 'standard' | 'oversized' | undefined;
 		if (rawShelfCategory) {
 			if (!VALID_SHELF_CATEGORIES.includes(rawShelfCategory as typeof VALID_SHELF_CATEGORIES[number])) {
-				errors.push({ row: rowNum, message: `Invalid shelf category "${rawShelfCategory}". Must be family, small, or standard` });
+				errors.push({ row: rowNum, message: `Invalid shelf category "${rawShelfCategory}". Must be family, small, standard, or oversized` });
 			} else {
 				shelfCategory = rawShelfCategory as typeof VALID_SHELF_CATEGORIES[number];
 			}
@@ -380,7 +384,7 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 					title,
 					bggId,
 					copyCount,
-					prizeType: prizeType ?? 'standard',
+					prizeType: prizeType ?? 'normal',
 					shelfCategory: shelfCategory ?? 'standard',
 					sourceRow: rowNum
 				});

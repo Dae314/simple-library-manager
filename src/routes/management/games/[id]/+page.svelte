@@ -17,8 +17,8 @@
 		copyNumber: number;
 		totalCopies: number;
 		status: string;
-		prizeType: 'standard' | 'play_and_win' | 'play_and_take';
-		shelfCategory: 'family' | 'small' | 'standard';
+		prizeType: 'normal' | 'play_and_win' | 'play_and_take';
+		shelfCategory: 'family' | 'small' | 'standard' | 'oversized';
 		version: number;
 	};
 
@@ -223,7 +223,7 @@
 		<div class="form-group">
 			<label for="prizeType">Prize Type</label>
 			<select id="prizeType" name="prizeType" onchange={(e) => { localPrizeType = e.currentTarget.value; }}>
-				<option value="standard" selected={currentPrizeType === 'standard'}>Standard</option>
+				<option value="normal" selected={currentPrizeType === 'normal'}>Normal</option>
 				<option value="play_and_win" selected={currentPrizeType === 'play_and_win'}>Play & Win</option>
 				<option value="play_and_take" selected={currentPrizeType === 'play_and_take'}>Play & Take</option>
 			</select>
@@ -238,6 +238,7 @@
 				<option value="standard" selected={currentShelfCategory === 'standard'}>Standard</option>
 				<option value="family" selected={currentShelfCategory === 'family'}>Family</option>
 				<option value="small" selected={currentShelfCategory === 'small'}>Small</option>
+				<option value="oversized" selected={currentShelfCategory === 'oversized'}>Oversized</option>
 			</select>
 			{#if form?.errors?.shelfCategory}
 				<span class="field-error">{form.errors.shelfCategory}</span>

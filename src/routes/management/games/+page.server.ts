@@ -31,10 +31,10 @@ export const load: PageServerLoad = async ({ url }) => {
 		// By default, hide retired games unless explicitly filtered
 		filters.excludeStatus = 'retired';
 	}
-	if (prizeType === 'standard' || prizeType === 'play_and_win' || prizeType === 'play_and_take') {
+	if (prizeType === 'normal' || prizeType === 'play_and_win' || prizeType === 'play_and_take') {
 		filters.prizeType = prizeType as PrizeType;
 	}
-	if (shelfCategory === 'family' || shelfCategory === 'small' || shelfCategory === 'standard') {
+	if (shelfCategory === 'family' || shelfCategory === 'small' || shelfCategory === 'standard' || shelfCategory === 'oversized') {
 		filters.shelfCategory = shelfCategory as ShelfCategory;
 	}
 	if (search) {

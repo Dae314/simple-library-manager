@@ -121,7 +121,7 @@ test.describe('CSV Import & Export', () => {
 
 	test('CSV import — modify action changes game_type', async ({ page, helpers }) => {
 		const title = `${helpers.prefix}_CsvMod`;
-		const game = await helpers.createGame(title, { bggId: 70301, gameType: 'standard' });
+		const game = await helpers.createGame(title, { bggId: 70301, gameType: 'normal' });
 
 		const csvContent = [
 			'action,title,bgg_id,copy_number,game_type',
@@ -195,7 +195,7 @@ test.describe('CSV Import & Export', () => {
 		// Pre-create games for modify and delete
 		const modTitle = `${helpers.prefix}_CsvMix_Mod`;
 		const delTitle = `${helpers.prefix}_CsvMix_Del`;
-		const modGame = await helpers.createGame(modTitle, { bggId: 70501, gameType: 'standard' });
+		const modGame = await helpers.createGame(modTitle, { bggId: 70501, gameType: 'normal' });
 		const delGame = await helpers.createGame(delTitle, { bggId: 70502 });
 
 		const addTitle = `${helpers.prefix}_CsvMix_Add`;

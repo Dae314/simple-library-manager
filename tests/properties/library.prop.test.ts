@@ -21,7 +21,7 @@ interface LibraryGameRecord {
 
 interface LibraryFilters {
 	status?: 'available' | 'checked_out';
-	prizeType?: 'standard' | 'play_and_win' | 'play_and_take';
+	prizeType?: 'normal' | 'play_and_win' | 'play_and_take';
 	titleSearch?: string;
 	attendeeSearch?: string;
 }
@@ -134,7 +134,7 @@ function paginate<T>(items: T[], page: number, pageSize: number): PaginatedResul
 
 const gameStatuses = ['available', 'checked_out', 'retired'] as const;
 const nonRetiredStatuses = ['available', 'checked_out'] as const;
-const prizeTypes = ['standard', 'play_and_win', 'play_and_take'] as const;
+const prizeTypes = ['normal', 'play_and_win', 'play_and_take'] as const;
 const sortFields = ['title', 'prize_type', 'status', 'bgg_id'] as const;
 const sortDirections = ['asc', 'desc'] as const;
 

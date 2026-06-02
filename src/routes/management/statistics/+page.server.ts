@@ -57,7 +57,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		filters.availabilityStatus = status;
 	}
 
-	if (prizeType === 'standard' || prizeType === 'play_and_win' || prizeType === 'play_and_take') {
+	if (prizeType === 'normal' || prizeType === 'play_and_win' || prizeType === 'play_and_take') {
 		filters.gameType = prizeType;
 	}
 

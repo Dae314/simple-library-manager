@@ -57,7 +57,7 @@ export const games = pgTable(
 		bggId: integer('bgg_id').notNull(),
 		copyNumber: integer('copy_number').notNull(),
 		status: text('status').notNull().default('available'),
-		prizeType: text('prize_type').notNull().default('standard'),
+		prizeType: text('prize_type').notNull().default('normal'),
 		shelfCategory: text('shelf_category').notNull().default('standard'),
 		version: integer('version').notNull().default(1),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

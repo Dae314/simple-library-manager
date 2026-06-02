@@ -12,8 +12,8 @@ export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || undefined;
 	const attendeeSearch = url.searchParams.get('attendeeSearch') || undefined;
 	const status = url.searchParams.get('status') as 'available' | 'checked_out' | null;
-	const prizeType = (url.searchParams.get('prizeType') || url.searchParams.get('gameType') || null) as 'standard' | 'play_and_win' | 'play_and_take' | null;
-	const shelfCategory = url.searchParams.get('shelfCategory') as 'family' | 'small' | 'standard' | null;
+	const prizeType = (url.searchParams.get('prizeType') || url.searchParams.get('gameType') || null) as 'normal' | 'play_and_win' | 'play_and_take' | null;
+	const shelfCategory = url.searchParams.get('shelfCategory') as 'family' | 'small' | 'standard' | 'oversized' | null;
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
 	const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
 	const sortField = url.searchParams.get('sortField') || 'title';
@@ -24,10 +24,10 @@ export const load: PageServerLoad = async ({ url }) => {
 	if (status === 'available' || status === 'checked_out') {
 		filters.status = status;
 	}
-	if (prizeType === 'standard' || prizeType === 'play_and_win' || prizeType === 'play_and_take') {
+	if (prizeType === 'normal' || prizeType === 'play_and_win' || prizeType === 'play_and_take') {
 		filters.prizeType = prizeType;
 	}
-	if (shelfCategory === 'family' || shelfCategory === 'small' || shelfCategory === 'standard') {
+	if (shelfCategory === 'family' || shelfCategory === 'small' || shelfCategory === 'standard' || shelfCategory === 'oversized') {
 		filters.shelfCategory = shelfCategory;
 	}
 	if (search) {

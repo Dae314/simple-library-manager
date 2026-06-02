@@ -11,8 +11,8 @@ interface TestGame {
 	title: string;
 }
 
-type GameType = 'standard' | 'play_and_win' | 'play_and_take';
-type ShelfCategory = 'family' | 'small' | 'standard';
+type GameType = 'normal' | 'play_and_win' | 'play_and_take';
+type ShelfCategory = 'family' | 'small' | 'standard' | 'oversized';
 
 // ── Low-level API helpers (use request context, not page) ──────────────
 
@@ -26,7 +26,7 @@ async function apiCreateGame(
 			action: 'createGame',
 			title,
 			bggId: opts?.bggId ?? 99999,
-			gameType: opts?.gameType ?? 'standard',
+			gameType: opts?.gameType ?? 'normal',
 			shelfCategory: opts?.shelfCategory ?? 'standard'
 		}
 	});

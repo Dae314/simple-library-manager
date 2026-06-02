@@ -6,13 +6,13 @@ import { validateGameInput } from '$lib/server/validation.js';
  * Feature: attendee-tracking-swaps-categories, Property 8: Shelf category validation
  *
  * For any string value provided as a shelfCategory, the game validation SHALL accept it
- * if and only if it is one of family, small, or standard. All other values SHALL be
+ * if and only if it is one of family, small, standard, or oversized. All other values SHALL be
  * rejected with a validation error.
  *
  * **Validates: Requirements 4.1, 4.4, 4.5**
  */
 describe('Property 8: Shelf category validation', () => {
-	const VALID_SHELF_CATEGORIES = ['family', 'small', 'standard'] as const;
+	const VALID_SHELF_CATEGORIES = ['family', 'small', 'standard', 'oversized'] as const;
 
 	// Arbitraries for valid base game fields (needed to isolate shelfCategory testing)
 	const validTitle = fc.string({ minLength: 1 }).filter((s) => s.trim().length > 0);
@@ -26,7 +26,7 @@ describe('Property 8: Shelf category validation', () => {
 		.string({ minLength: 1 })
 		.filter((s) => !VALID_SHELF_CATEGORIES.includes(s as typeof VALID_SHELF_CATEGORIES[number]));
 
-	it('accepts valid shelf categories (family, small, standard)', () => {
+	it('accepts valid shelf categories (family, small, standard, oversized)', () => {
 		fc.assert(
 			fc.property(validTitle, validBggId, validShelfCategory, (title, bggId, shelfCategory) => {
 				const result = validateGameInput({ title, bggId, shelfCategory });
@@ -38,7 +38,7 @@ describe('Property 8: Shelf category validation', () => {
 		);
 	});
 
-	it('rejects any string value that is not family, small, or standard', () => {
+	it('rejects any string value that is not family, small, standard, or oversized', () => {
 		fc.assert(
 			fc.property(validTitle, validBggId, invalidShelfCategory, (title, bggId, shelfCategory) => {
 				const result = validateGameInput({ title, bggId, shelfCategory: shelfCategory as any });
@@ -71,8 +71,8 @@ describe('Property 8: Shelf category validation', () => {
  * **Validates: Requirements 4.13**
  */
 describe('Property 12: Shelf category and prize type independence', () => {
-	const VALID_SHELF_CATEGORIES = ['family', 'small', 'standard'] as const;
-	const VALID_PRIZE_TYPES = ['standard', 'play_and_win', 'play_and_take'] as const;
+	const VALID_SHELF_CATEGORIES = ['family', 'small', 'standard', 'oversized'] as const;
+	const VALID_PRIZE_TYPES = ['normal', 'play_and_win', 'play_and_take'] as const;
 
 	interface GameRecord {
 		prizeType: string;
@@ -177,7 +177,7 @@ describe('Property 12: Shelf category and prize type independence', () => {
  * **Validates: Requirements 4.8**
  */
 describe('Property 9: Shelf category filtering', () => {
-	const VALID_SHELF_CATEGORIES = ['family', 'small', 'standard'] as const;
+	const VALID_SHELF_CATEGORIES = ['family', 'small', 'standard', 'oversized'] as const;
 	type ShelfCategory = (typeof VALID_SHELF_CATEGORIES)[number];
 
 	interface GameRecord {

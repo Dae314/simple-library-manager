@@ -159,7 +159,7 @@ export const csvService = {
 								bggId: row.bggId,
 								copyNumber: nextCopyNumber,
 								status: 'available',
-								prizeType: row.prizeType ?? 'standard',
+								prizeType: row.prizeType ?? 'normal',
 								shelfCategory: row.shelfCategory ?? 'standard'
 							}).returning({ id: games.id });
 							gameIds.push(inserted.id);

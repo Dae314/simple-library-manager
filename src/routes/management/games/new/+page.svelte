@@ -61,7 +61,7 @@
 		<div class="form-group">
 			<label for="prizeType">Prize Type</label>
 			<select id="prizeType" name="prizeType">
-				<option value="standard" selected={(!form?.values?.prizeType) || form?.values?.prizeType === 'standard'}>Standard</option>
+				<option value="normal" selected={(!form?.values?.prizeType) || form?.values?.prizeType === 'normal'}>Normal</option>
 				<option value="play_and_win" selected={form?.values?.prizeType === 'play_and_win'}>Play & Win</option>
 				<option value="play_and_take" selected={form?.values?.prizeType === 'play_and_take'}>Play & Take</option>
 			</select>
@@ -76,6 +76,7 @@
 				<option value="standard" selected={(!form?.values?.shelfCategory) || form?.values?.shelfCategory === 'standard'}>Standard</option>
 				<option value="family" selected={form?.values?.shelfCategory === 'family'}>Family</option>
 				<option value="small" selected={form?.values?.shelfCategory === 'small'}>Small</option>
+				<option value="oversized" selected={form?.values?.shelfCategory === 'oversized'}>Oversized</option>
 			</select>
 			{#if form?.errors?.shelfCategory}
 				<span class="field-error">{form.errors.shelfCategory}</span>
