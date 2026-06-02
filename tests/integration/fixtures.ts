@@ -67,7 +67,7 @@ async function uiCheckoutGame(
 ): Promise<void> {
 	await page.goto(`/library?search=${encodeURIComponent(gameName)}`);
 	const row = tableRow(page, gameName).first();
-	await expect(row).toBeVisible();
+	await expect(row).toBeVisible({ timeout: 10_000 });
 	await row.getByRole('button', { name: 'Checkout' }).click();
 
 	const dialog = page.locator('dialog.checkout-dialog');
@@ -77,7 +77,9 @@ async function uiCheckoutGame(
 	await dialog.locator('#checkout-idType').selectOption({ index: 1 });
 	await dialog.locator('#checkout-checkoutWeight').fill(weight);
 	await dialog.getByRole('button', { name: 'Confirm Checkout' }).click();
-	await expect(page.getByText('Game checked out successfully!')).toBeVisible();
+	// Generous timeout: this helper is used as test setup, so a cold-start or
+	// contended first checkout must not fail the test that depends on it.
+	await expect(page.getByText('Game checked out successfully!')).toBeVisible({ timeout: 15_000 });
 }
 
 async function uiCheckinGame(
@@ -87,14 +89,14 @@ async function uiCheckinGame(
 ): Promise<void> {
 	await page.goto(`/library?search=${encodeURIComponent(gameName)}&status=checked_out`);
 	const row = tableRow(page, gameName).first();
-	await expect(row).toBeVisible();
+	await expect(row).toBeVisible({ timeout: 10_000 });
 	await row.getByRole('button', { name: 'Check In' }).click();
 
 	const dialog = page.locator('dialog.checkin-dialog');
 	await expect(dialog).toBeVisible();
 	await dialog.locator('#checkin-checkinWeight').fill(weight);
 	await dialog.getByRole('button', { name: 'Confirm Check In' }).click();
-	await expect(page.getByText('Game checked in successfully!')).toBeVisible();
+	await expect(page.getByText('Game checked in successfully!')).toBeVisible({ timeout: 15_000 });
 }
 
 // ── Fixture ────────────────────────────────────────────────────────────

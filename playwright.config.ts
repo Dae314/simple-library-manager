@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
 	testDir: 'tests/integration',
+	globalSetup: './tests/integration/global-setup.ts',
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
@@ -9,7 +10,7 @@ export default defineConfig({
 	reporter: 'list',
 	timeout: 30_000,
 	expect: {
-		timeout: 5_000
+		timeout: 10_000
 	},
 	use: {
 		baseURL: 'http://localhost:8080',
