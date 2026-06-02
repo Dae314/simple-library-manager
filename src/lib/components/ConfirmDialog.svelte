@@ -6,6 +6,7 @@
 		warning = '',
 		confirmLabel = 'Confirm',
 		cancelLabel = 'Cancel',
+		confirmDisabled = false,
 		onConfirm,
 		onCancel
 	}: {
@@ -15,6 +16,7 @@
 		warning?: string;
 		confirmLabel?: string;
 		cancelLabel?: string;
+		confirmDisabled?: boolean;
 		onConfirm: () => void;
 		onCancel: () => void;
 	} = $props();
@@ -60,7 +62,7 @@
 		{/if}
 		<div class="dialog-actions">
 			<button class="btn-cancel" onclick={onCancel}>{cancelLabel}</button>
-			<button class="btn-confirm" onclick={onConfirm}>{confirmLabel}</button>
+			<button class="btn-confirm" onclick={onConfirm} disabled={confirmDisabled}>{confirmLabel}</button>
 		</div>
 	</div>
 </dialog>
@@ -144,5 +146,11 @@
 
 	.btn-confirm:hover {
 		background-color: #dc2626;
+	}
+
+	.btn-confirm:disabled,
+	.btn-confirm:disabled:hover {
+		background-color: #fca5a5;
+		cursor: not-allowed;
 	}
 </style>

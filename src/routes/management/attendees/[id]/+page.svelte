@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import toast from 'svelte-hot-french-toast';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	type AttendeeRecord = {
 		id: number;
@@ -13,10 +14,16 @@
 	};
 
 	let { data, form }: {
-		data: { attendee: AttendeeRecord; idTypes: string[] };
+		data: {
+			attendee: AttendeeRecord;
+			idTypes: string[];
+			transactionCount: number;
+			hasActiveCheckout: boolean;
+		};
 		form: {
 			errors?: Record<string, string>;
 			error?: string;
+			deleteError?: string;
 			values?: Record<string, string>;
 		} | null;
 	} = $props();
@@ -29,6 +36,15 @@
 	const effectiveFirstName = $derived(localFirstName ?? form?.values?.firstName ?? data.attendee.firstName);
 	const effectiveLastName = $derived(localLastName ?? form?.values?.lastName ?? data.attendee.lastName);
 	const effectiveIdType = $derived(localIdType ?? form?.values?.idType ?? data.attendee.idType);
+
+	let showDeleteDialog = $state(false);
+
+	function executeDelete() {
+		if (data.hasActiveCheckout) return;
+		showDeleteDialog = false;
+		const deleteForm = document.getElementById('delete-attendee-form') as HTMLFormElement;
+		if (deleteForm) deleteForm.requestSubmit();
+	}
 </script>
 
 <div class="edit-attendee-page">
@@ -103,7 +119,59 @@
 			<button type="submit" class="btn-submit">Save Changes</button>
 		</div>
 	</form>
+
+	<hr class="divider" />
+
+	<section class="danger-section">
+		<h2>Danger Zone</h2>
+		{#if data.hasActiveCheckout}
+			<p class="danger-description">This attendee has a game checked out and cannot be deleted. Check in all of their games first.</p>
+		{:else}
+			<p class="danger-description">Permanently delete this attendee and all of their transaction history. This action cannot be undone.</p>
+		{/if}
+		<button
+			type="button"
+			class="btn-delete"
+			onclick={() => { showDeleteDialog = true; }}
+			disabled={data.hasActiveCheckout}
+		>
+			Delete Attendee
+		</button>
+	</section>
 </div>
+
+<!-- Delete confirmation dialog -->
+<ConfirmDialog
+	open={showDeleteDialog}
+	title="Delete Attendee"
+	message="Are you sure you want to permanently delete {data.attendee.firstName} {data.attendee.lastName}? This action cannot be undone."
+	warning={data.transactionCount > 0 ? `This attendee has ${data.transactionCount} transaction${data.transactionCount === 1 ? '' : 's'} that will also be permanently deleted.` : ''}
+	confirmLabel="Delete"
+	cancelLabel="Cancel"
+	confirmDisabled={data.hasActiveCheckout}
+	onCancel={() => { showDeleteDialog = false; }}
+	onConfirm={executeDelete}
+/>
+
+<!-- Hidden delete form -->
+<form
+	id="delete-attendee-form"
+	method="POST"
+	action="?/delete"
+	class="hidden-form"
+	use:enhance={() => {
+		return async ({ result, update }) => {
+			if (result.type === 'redirect') {
+				toast.success(`Deleted "${data.attendee.firstName} ${data.attendee.lastName}"`);
+			} else if (result.type === 'failure') {
+				const d = (result as any).data;
+				toast.error(d?.deleteError || 'Failed to delete attendee');
+			}
+			await update();
+		};
+	}}
+>
+</form>
 
 <style>
 	.edit-attendee-page {
@@ -216,5 +284,51 @@
 
 	.btn-submit:hover {
 		background-color: #4f46e5;
+	}
+
+	.divider {
+		border: none;
+		border-top: 1px solid #e5e7eb;
+		margin: 1.75rem 0 1.25rem;
+	}
+
+	/* Danger Zone section */
+	.danger-section h2 {
+		font-size: 1.1rem;
+		font-weight: 600;
+		margin-bottom: 0.35rem;
+		color: #991b1b;
+	}
+
+	.danger-description {
+		font-size: 0.85rem;
+		color: #6b7280;
+		margin-bottom: 0.75rem;
+	}
+
+	.btn-delete {
+		padding: 0.5rem 1rem;
+		background-color: #ef4444;
+		color: #fff;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color 0.15s;
+	}
+
+	.btn-delete:hover:not(:disabled) {
+		background-color: #dc2626;
+	}
+
+	.btn-delete:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	/* Hidden delete form */
+	.hidden-form {
+		display: none;
 	}
 </style>

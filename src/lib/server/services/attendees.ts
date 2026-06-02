@@ -16,6 +16,7 @@ export interface AttendeeRecord {
 
 export interface AttendeeWithCount extends AttendeeRecord {
 	transactionCount: number;
+	hasActiveCheckout: boolean;
 }
 
 export interface AttendeeFilters {
@@ -142,6 +143,16 @@ export const attendeeService = {
 		// Build sort expression
 		const transactionCountExpr = sql<number>`COUNT(${transactions.id})`.mapWith(Number);
 
+		// Whether the attendee currently has at least one active checkout
+		// (a checkout transaction whose game is still in 'checked_out' status).
+		const hasActiveCheckoutExpr = sql<boolean>`EXISTS (
+			SELECT 1 FROM ${transactions} tx
+			INNER JOIN ${games} g ON tx.game_id = g.id
+			WHERE tx.attendee_id = ${attendees.id}
+				AND tx.type = 'checkout'
+				AND g.status = 'checked_out'
+		)`.mapWith(Boolean);
+
 		let orderClause;
 		if (sort) {
 			const dir = sort.direction === 'desc' ? desc : asc;
@@ -174,7 +185,8 @@ export const attendeeService = {
 				idType: attendees.idType,
 				createdAt: attendees.createdAt,
 				updatedAt: attendees.updatedAt,
-				transactionCount: transactionCountExpr
+				transactionCount: transactionCountExpr,
+				hasActiveCheckout: hasActiveCheckoutExpr
 			})
 			.from(attendees)
 			.leftJoin(transactions, eq(attendees.id, transactions.attendeeId))

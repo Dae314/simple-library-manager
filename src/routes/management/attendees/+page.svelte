@@ -16,6 +16,7 @@
 		lastName: string;
 		idType: string;
 		transactionCount: number;
+		hasActiveCheckout: boolean;
 	};
 
 	type PaginatedResult = {
@@ -34,25 +35,18 @@
 		pageSize: number;
 	};
 
-	let { data, form }: {
+	let { data }: {
 		data: {
 			attendees: PaginatedResult;
 			idTypes: string[];
 			filters: FilterValues;
 		};
-		form: any;
 	} = $props();
 
 	let showDeleteDialog = $state(false);
 	let deleteTarget: AttendeeRecord | null = $state(null);
 	let deleteTransactionCount = $state(0);
-
-	// Show error toast from form action
-	$effect(() => {
-		if (form?.error) {
-			toast.error(form.error);
-		}
-	});
+	let deleteHasActiveCheckout = $state(false);
 
 	const columns = [
 		{ key: 'firstName', label: 'First Name', sortField: 'first_name' },
@@ -140,10 +134,12 @@
 	async function confirmDelete(attendee: AttendeeRecord) {
 		deleteTarget = attendee;
 		deleteTransactionCount = attendee.transactionCount;
+		deleteHasActiveCheckout = attendee.hasActiveCheckout;
 		showDeleteDialog = true;
 	}
 
 	function executeDelete() {
+		if (deleteHasActiveCheckout) return;
 		showDeleteDialog = false;
 		const deleteForm = document.getElementById('delete-form') as HTMLFormElement;
 		if (deleteForm) deleteForm.requestSubmit();
@@ -208,10 +204,17 @@
 <ConfirmDialog
 	open={showDeleteDialog}
 	title="Delete Attendee"
-	message="Are you sure you want to delete {deleteTarget?.firstName} {deleteTarget?.lastName}? This will cascade-delete {deleteTransactionCount} transaction(s)."
-	warning={deleteTransactionCount > 0 ? `${deleteTransactionCount} transaction(s) will be permanently deleted.` : ''}
+	message={deleteHasActiveCheckout
+		? `${deleteTarget?.firstName} ${deleteTarget?.lastName} cannot be deleted right now.`
+		: `Are you sure you want to permanently delete ${deleteTarget?.firstName} ${deleteTarget?.lastName}? This action cannot be undone.`}
+	warning={deleteHasActiveCheckout
+		? 'This attendee has a game checked out. Check in all of their games before deleting.'
+		: deleteTransactionCount > 0
+			? `This attendee has ${deleteTransactionCount} transaction${deleteTransactionCount === 1 ? '' : 's'} that will also be permanently deleted.`
+			: ''}
 	confirmLabel="Delete"
 	cancelLabel="Cancel"
+	confirmDisabled={deleteHasActiveCheckout}
 	onCancel={() => { showDeleteDialog = false; deleteTarget = null; }}
 	onConfirm={executeDelete}
 />

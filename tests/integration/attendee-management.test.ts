@@ -104,7 +104,7 @@ test.describe('Attendee Management', () => {
 			// Confirmation dialog should show cascade count
 			const dialog = page.locator('dialog');
 			await expect(dialog).toBeVisible();
-			await expect(dialog).toContainText('cascade-delete');
+			await expect(dialog).toContainText('will also be permanently deleted');
 			await expect(dialog).toContainText('transaction');
 
 			// Confirm deletion
@@ -119,7 +119,7 @@ test.describe('Attendee Management', () => {
 	});
 
 	test.describe('Active Checkout Prevention', () => {
-		test('cannot delete attendee with active checkouts', async ({ page, helpers }) => {
+		test('delete dialog blocks deletion for attendee with active checkouts', async ({ page, helpers }) => {
 			const game = await helpers.createGame(`${helpers.prefix}_ActiveCO`);
 			const firstName = `Active${helpers.prefix.slice(0, 5)}`;
 			const lastName = `Block${helpers.prefix.slice(0, 5)}`;
@@ -132,16 +132,75 @@ test.describe('Attendee Management', () => {
 			const row = helpers.tableRow(page, firstName);
 			await expect(row).toBeVisible();
 
-			// Click delete button
+			// Opening the dialog is allowed, but it warns and disables the confirm button
 			await row.getByRole('button', { name: `Delete ${firstName} ${lastName}` }).click();
 
-			// Confirm in the dialog
 			const dialog = page.locator('dialog');
 			await expect(dialog).toBeVisible();
-			await dialog.locator('button', { hasText: 'Delete' }).click();
+			await expect(dialog).toContainText('game checked out');
 
-			// Should show error about active checkouts
-			await expect(page.getByText('active checkouts').first()).toBeVisible();
+			const confirmButton = dialog.getByRole('button', { name: 'Delete' });
+			await expect(confirmButton).toBeDisabled();
+
+			// Cancel out of the dialog
+			await dialog.getByRole('button', { name: 'Cancel' }).click();
+
+			// After checking the game back in, deletion is allowed
+			await helpers.checkinGame(game.title, '10.0');
+			await page.goto(`/management/attendees?search=${firstName}`);
+			await helpers.tableRow(page, firstName)
+				.getByRole('button', { name: `Delete ${firstName} ${lastName}` })
+				.click();
+			await expect(page.locator('dialog').getByRole('button', { name: 'Delete' })).toBeEnabled();
+		});
+	});
+
+	test.describe('Delete from Edit Page', () => {
+		test('edit page delete removes attendee and redirects to list', async ({ page, helpers }) => {
+			const game = await helpers.createGame(`${helpers.prefix}_EditDel`);
+			const firstName = `EdDel${helpers.prefix.slice(0, 5)}`;
+			const lastName = `Gone${helpers.prefix.slice(0, 5)}`;
+
+			// Create attendee via checkout, then check in so they have no active checkouts
+			await helpers.checkoutGame(game.title, firstName, lastName, '10.0');
+			await helpers.checkinGame(game.title, '10.0');
+
+			// Navigate to the attendee edit page
+			await page.goto(`/management/attendees?search=${firstName}`);
+			await helpers.tableRow(page, firstName).locator('.attendee-name').first().click();
+			await expect(page).toHaveURL(/\/management\/attendees\/\d+/);
+
+			// Danger zone delete button opens the confirm dialog
+			await page.getByRole('button', { name: 'Delete Attendee' }).click();
+			const dialog = page.locator('dialog');
+			await expect(dialog).toBeVisible();
+			await dialog.getByRole('button', { name: 'Delete' }).click();
+
+			// Redirects back to the list with a success toast
+			await expect(page.getByText(`Deleted "${firstName} ${lastName}"`)).toBeVisible();
+			await expect(page).toHaveURL(/\/management\/attendees$/);
+
+			// Attendee no longer appears
+			await page.goto(`/management/attendees?search=${firstName}`);
+			await expect(helpers.tableRow(page, firstName)).not.toBeVisible();
+		});
+
+		test('edit page delete button is disabled for attendee with active checkouts', async ({ page, helpers }) => {
+			const game = await helpers.createGame(`${helpers.prefix}_EditBlk`);
+			const firstName = `EdBlk${helpers.prefix.slice(0, 5)}`;
+			const lastName = `Held${helpers.prefix.slice(0, 5)}`;
+
+			// Create attendee via checkout — game stays checked out
+			await helpers.checkoutGame(game.title, firstName, lastName, '10.0');
+
+			// Navigate to the attendee edit page
+			await page.goto(`/management/attendees?search=${firstName}`);
+			await helpers.tableRow(page, firstName).locator('.attendee-name').first().click();
+			await expect(page).toHaveURL(/\/management\/attendees\/\d+/);
+
+			// Danger zone explains why and disables the delete button
+			await expect(page.getByText('This attendee has a game checked out')).toBeVisible();
+			await expect(page.getByRole('button', { name: 'Delete Attendee' })).toBeDisabled();
 		});
 	});
 });

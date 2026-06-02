@@ -17,8 +17,10 @@ export const load: PageServerLoad = async ({ params }) => {
 	}
 
 	const idTypes = await configService.getIdTypes();
+	const transactionCount = await attendeeService.getTransactionCount(id);
+	const hasActiveCheckout = await attendeeService.hasActiveCheckouts(id);
 
-	return { attendee, idTypes };
+	return { attendee, idTypes, transactionCount, hasActiveCheckout };
 };
 
 export const actions: Actions = {
@@ -50,6 +52,35 @@ export const actions: Actions = {
 				});
 			}
 			return fail(500, { error: message, values });
+		}
+
+		redirect(303, '/management/attendees');
+	},
+
+	delete: async ({ params }) => {
+		const id = parseInt(params.id, 10);
+		if (isNaN(id)) {
+			return fail(400, { deleteError: 'Invalid attendee ID' });
+		}
+
+		const attendee = await attendeeService.getById(id);
+		if (!attendee) {
+			return fail(404, { deleteError: 'Attendee not found' });
+		}
+
+		const hasActive = await attendeeService.hasActiveCheckouts(id);
+		if (hasActive) {
+			return fail(400, {
+				deleteError: 'Cannot delete attendee with active checkouts. Please check in all games first.'
+			});
+		}
+
+		try {
+			await attendeeService.delete(id);
+			broadcastAttendeeEvent('attendee_deleted', id);
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Failed to delete attendee';
+			return fail(500, { deleteError: message });
 		}
 
 		redirect(303, '/management/attendees');
