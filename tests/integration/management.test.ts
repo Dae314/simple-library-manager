@@ -78,7 +78,6 @@ test.describe('Management Area', () => {
 			await expect(row.locator('.status-indicator')).toHaveText('Available');
 			await expect(row.locator('.status-indicator')).toHaveClass(/available/);
 			await expect(row.locator('button', { hasText: 'Retire' })).toBeVisible();
-			await expect(row.locator('a', { hasText: 'Edit' })).toBeVisible();
 		});
 	});
 

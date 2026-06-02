@@ -120,7 +120,7 @@ test.describe('Bad Input Handling', () => {
 
 			await page.goto(`/management/games?search=${helpers.prefix}_EditEmpty`);
 			const row = helpers.tableRow(page, game.title);
-			await row.locator('a', { hasText: 'Edit' }).click();
+			await row.locator('.game-title').click();
 			await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
 			await page.locator('#title').fill('');
@@ -135,7 +135,7 @@ test.describe('Bad Input Handling', () => {
 
 			await page.goto(`/management/games?search=${helpers.prefix}_EditBadBGG`);
 			const row = helpers.tableRow(page, game.title);
-			await row.locator('a', { hasText: 'Edit' }).click();
+			await row.locator('.game-title').click();
 			await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
 			await page.locator('#bggId').fill('-10');

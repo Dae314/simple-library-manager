@@ -458,9 +458,6 @@
 							</button>
 						</form>
 					{/if}
-					<a href="/management/games/{game.id}" class="btn-edit" aria-label="Edit {game.title}">
-						Edit
-					</a>
 				</td>
 			</tr>
 		{/snippet}
@@ -901,20 +898,6 @@
 
 	.btn-inline-restore:hover {
 		background-color: #a7f3d0;
-	}
-
-	.btn-edit {
-		font-size: 0.8rem;
-		color: #6366f1;
-		text-decoration: none;
-		padding: 0.2em 0.5em;
-		border-radius: 4px;
-		transition: background-color 0.15s;
-	}
-
-	.btn-edit:hover {
-		background-color: #eef2ff;
-		text-decoration: underline;
 	}
 
 	.hidden-form {

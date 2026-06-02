@@ -7,7 +7,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await page.goto(`/management/games?search=${helpers.prefix}_EditNav`);
 
 		const row = helpers.tableRow(page, game.title);
-		await row.locator('a', { hasText: 'Edit' }).click();
+		await row.locator('.game-title').click();
 
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 		await expect(page.locator('h1')).toContainText('Edit Game');
@@ -28,7 +28,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await page.goto(`/management/games?search=${helpers.prefix}_EditTitle`);
 
 		const row = helpers.tableRow(page, game.title);
-		await row.locator('a', { hasText: 'Edit' }).click();
+		await row.locator('.game-title').click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
 		await page.locator('#title').fill(newTitle);
@@ -46,7 +46,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await page.goto(`/management/games?search=${helpers.prefix}_EditBgg`);
 
 		const row = helpers.tableRow(page, game.title);
-		await row.locator('a', { hasText: 'Edit' }).click();
+		await row.locator('.game-title').click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
 		await page.locator('#bggId').fill('88888');
@@ -61,7 +61,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await page.goto(`/management/games?search=${helpers.prefix}_EditVal`);
 
 		const row = helpers.tableRow(page, game.title);
-		await row.locator('a', { hasText: 'Edit' }).click();
+		await row.locator('.game-title').click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
 		await page.locator('#title').fill('');
@@ -77,7 +77,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await page.goto(`/management/games?search=${helpers.prefix}_Toggle`);
 
 		const row = helpers.tableRow(page, game.title);
-		await row.locator('a', { hasText: 'Edit' }).click();
+		await row.locator('.game-title').click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
 		await expect(page.locator('.status-badge')).toHaveClass(/status-available/);
@@ -94,7 +94,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await page.goto(`/management/games?search=${helpers.prefix}_ToggleTx`);
 
 		const row = helpers.tableRow(page, game.title);
-		await row.locator('a', { hasText: 'Edit' }).click();
+		await row.locator('.game-title').click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
 		await page.click('.btn-toggle:has-text("Mark as Checked Out")');
@@ -110,7 +110,7 @@ test.describe('Edit Game and Status Toggle', () => {
 		await page.goto(`/management/games?search=${helpers.prefix}_ToggleBack`);
 
 		const row = helpers.tableRow(page, game.title);
-		await row.locator('a', { hasText: 'Edit' }).click();
+		await row.locator('.game-title').click();
 		await expect(page).toHaveURL(/\/management\/games\/\d+/);
 
 		// Mark as checked out

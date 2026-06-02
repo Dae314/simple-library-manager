@@ -63,7 +63,7 @@ test.describe('Real-Time: Management Changes Propagate', () => {
 			await expect(tab1.locator('.connection-indicator .dot.connected')).toBeVisible({ timeout: 10_000 });
 
 			const row = tab1.locator('tbody tr', { hasText: game.title });
-			await row.locator('a', { hasText: 'Edit' }).click();
+			await row.locator('.game-title').click();
 			await expect(tab1).toHaveURL(/\/management\/games\/\d+/);
 
 			// Edit the game title

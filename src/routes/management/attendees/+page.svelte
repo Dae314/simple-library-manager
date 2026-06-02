@@ -191,9 +191,6 @@
 					>
 						Delete
 					</button>
-					<a href="/management/attendees/{attendee.id}" class="btn-edit" aria-label="Edit {attendee.firstName} {attendee.lastName}">
-						Edit
-					</a>
 				</td>
 			</tr>
 		{/snippet}
@@ -307,20 +304,6 @@
 
 	.btn-inline-danger:hover {
 		background-color: #fecaca;
-	}
-
-	.btn-edit {
-		font-size: 0.8rem;
-		color: #6366f1;
-		text-decoration: none;
-		padding: 0.2em 0.5em;
-		border-radius: 4px;
-		transition: background-color 0.15s;
-	}
-
-	.btn-edit:hover {
-		background-color: #eef2ff;
-		text-decoration: underline;
 	}
 
 	.hidden-form {
