@@ -20,18 +20,25 @@ Do NOT use watch mode in automated contexts. Vitest is configured with `vitest r
 
 Location: `tests/properties/*.prop.test.ts`
 
-### Current Test Files (12)
+### Current Test Files (19)
 
 | File | Domain |
 |------|--------|
+| `attendee-search.prop.test.ts` | Attendee autofill prefix matching + partial search |
+| `attendee-statistics.prop.test.ts` | Top-attendee checkout counts (corrections excluded) |
+| `attendee-validation.prop.test.ts` | Attendee name validation, upsert correctness, correction skip, edit uniqueness, delete-blocked-by-active-checkout |
 | `auth.prop.test.ts` | Session cookie HMAC, rate limiting delays |
 | `config-validation.prop.test.ts` | Convention config validation rules |
 | `csv.prop.test.ts` | CSV parsing and validation invariants |
+| `csv-shelf-category.prop.test.ts` | CSV shelfCategory round-trip + prizeType/gameType backward compatibility |
 | `game-deletion.prop.test.ts` | Soft-delete / retire logic |
-| `game-validation.prop.test.ts` | Game creation/update validation |
+| `game-validation.prop.test.ts` | Game creation/update validation (prizeType + shelfCategory) |
 | `library.prop.test.ts` | Library query filtering and pagination |
 | `library-websocket.prop.test.ts` | WebSocket conflict detection in library context |
 | `pagination.prop.test.ts` | Pagination math (offsets, page counts) |
+| `shelf-category.prop.test.ts` | Shelf category validation, filtering, prize-type independence |
+| `swap-conflict.prop.test.ts` | Swap dialog two-game conflict detection |
+| `swap-validation.prop.test.ts` | Swap weight validation, atomicity/correctness, precondition checks |
 | `time-distribution.prop.test.ts` | Statistics time granularity selection |
 | `transaction-validation.prop.test.ts` | Checkout/checkin validation rules |
 | `websocket.prop.test.ts` | Connection manager, broadcast, reconnection, event routing |
@@ -100,10 +107,12 @@ Path aliases (`$lib`, etc.) work in test files via the SvelteKit Vite plugin.
 
 Location: `tests/integration/*.test.ts`
 
-### Current Test Files (24)
+### Current Test Files (28)
 
 | File | Coverage Area |
 |------|---------------|
+| `attendee-autofill.test.ts` | Attendee autofill on checkout dialog, library filter, transactions filter |
+| `attendee-management.test.ts` | Attendee CRUD, search, delete with cascade, active-checkout prevention |
 | `backup-restore.test.ts` | Database export/import flows |
 | `bad-inputs.test.ts` | Validation error handling in UI |
 | `catalog.test.ts` | Game browsing and filtering |
@@ -112,10 +121,11 @@ Location: `tests/integration/*.test.ts`
 | `csv-import-export.test.ts` | CSV upload and download |
 | `edit-game.test.ts` | Game editing with optimistic locking |
 | `game-deletion.test.ts` | Retire/restore game flows |
-| `game-types.test.ts` | Standard, play-and-win, play-and-take behavior |
+| `game-types.test.ts` | Normal, play-and-win, play-and-take behavior |
 | `landing-page.test.ts` | Home page rendering |
 | `management.test.ts` | Admin dashboard and navigation |
 | `password-protection.test.ts` | Login flow and session management |
+| `prize-type-rename.test.ts` | Prize type functionality under renamed column + legacy CSV header |
 | `realtime-checkin.test.ts` | Live updates during checkin |
 | `realtime-checkout.test.ts` | Live updates during checkout |
 | `realtime-conflict.test.ts` | Conflict detection via WebSocket |
@@ -125,8 +135,10 @@ Location: `tests/integration/*.test.ts`
 | `realtime-static.test.ts` | Static pages ignore non-resync events |
 | `responsive-nav.test.ts` | Mobile navigation behavior |
 | `retired-visibility.test.ts` | Retired games hidden from public views |
+| `shelf-category.test.ts` | Shelf category create/edit, filter, sort, CSV import/export |
 | `statistics.test.ts` | Statistics dashboard metrics and filtering |
-| `transactions.test.ts` | Transaction log display and filtering |
+| `swap.test.ts` | Full swap flow, weight warning, conflict detection |
+| `transactions.test.ts` | Transaction log display and filtering (incl. attendee filter) |
 
 ### Setup
 

@@ -40,7 +40,14 @@
 - Use `db.transaction()` for operations that need atomicity
 - Services throw plain `Error` instances with descriptive messages (e.g., `'Conflict: game was modified by another user'`)
 - Validation lives in `src/lib/server/validation.ts`, separate from services
-- Services broadcast WebSocket events after successful mutations (via `broadcastGameEvent()`, `broadcastTransactionEvent()`, etc.)
+- Services broadcast WebSocket events after successful mutations (via `broadcastGameEvent()`, `broadcastTransactionEvent()`, `broadcastAttendeeEvent()`, etc.)
+- `attendeeService.upsert()` is called by the checkout path (and the checkout half of a swap) to create-or-update the attendee record and link the transaction via `attendeeId`. It matches case-insensitively on the trimmed first+last name. Corrections (`isCorrection: true`) skip the upsert.
+- `transactionService.swap()` runs a checkin + checkout in a single `db.transaction()`; it reuses the normal checkout path (and its attendee upsert) rather than introducing a new transaction type.
+
+## Domain Field Naming
+
+- The prize/ownership model is the `prizeType` column (renamed from the former `gameType`). Valid values: `normal`, `play_and_win`, `play_and_take`. Use `prizeType` everywhere in new code; only the CSV importer accepts legacy `gameType`/`game_type` headers for backward compatibility.
+- Shelf size/complexity is the separate `shelfCategory` column. Valid values: `family`, `small`, `standard`, `oversized` (default `standard`). Keep it independent of `prizeType` — never couple the two.
 
 ## Validation
 
@@ -61,8 +68,9 @@
 
 - Server-side modules live in `src/lib/server/ws/`
 - Client-side store in `src/lib/stores/websocket.svelte.ts` uses Svelte 5 runes (`$state()` for `connected`)
-- Event types are defined in `src/lib/server/ws/events.ts` and shared between server and client
+- Event types are defined in `src/lib/server/ws/events.ts` and shared between server and client (game, transaction, and `attendee_created`/`attendee_updated`/`attendee_deleted` events)
 - Broadcast helpers in `src/lib/server/ws/broadcast.ts` provide typed convenience functions
+- `LIVE_UPDATE_PAGES` in the client store includes `/management/attendees`; the attendees page reacts to attendee events via `invalidateAll()`
 - The connection manager is a singleton class tracking active WebSocket connections
 - Production uses a standalone `server.js` that creates the WSS before importing the SvelteKit build
 - Development uses a Vite plugin that attaches to the dev server's HTTP upgrade event (filtering by `/ws` path to avoid breaking Vite HMR)
@@ -74,7 +82,9 @@
 - Keep components focused — one responsibility per component
 - Use semantic HTML and ARIA attributes for accessibility
 - Style with scoped CSS; use the project's indigo accent color (`#6366f1`) for interactive elements
-- Dialog components (`CheckoutDialog`, `CheckinDialog`, `ConfirmDialog`) use the native `<dialog>` element pattern
+- Dialog components (`CheckoutDialog`, `CheckinDialog`, `SwapDialog`, `ConfirmDialog`) use the native `<dialog>` element pattern
+- `SwapDialog` monitors two game IDs (return + selected new game) for WebSocket conflicts; `AttendeeAutofill` is a debounced typeahead that fetches `/api/attendees/search` and suppresses errors silently
+- `GameTypeBadge.svelte` keeps its filename but takes a `prizeType` prop and renders the user-facing prize-type label
 
 ## Error Handling
 
