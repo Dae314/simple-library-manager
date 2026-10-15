@@ -4,14 +4,14 @@
 /**
  * Check if a string value is non-empty after trimming.
  */
-export function isNonEmpty(value: string | null | undefined): boolean {
+function isNonEmpty(value: string | null | undefined): boolean {
 	return value != null && value.trim().length > 0;
 }
 
 /**
  * Check if a value is a positive integer.
  */
-export function isPositiveInteger(value: unknown): boolean {
+function isPositiveInteger(value: unknown): boolean {
 	const n = Number(value);
 	return Number.isInteger(n) && n > 0;
 }
@@ -19,7 +19,7 @@ export function isPositiveInteger(value: unknown): boolean {
 /**
  * Check if a value is a positive finite number.
  */
-export function isPositiveNumber(value: unknown): boolean {
+function isPositiveNumber(value: unknown): boolean {
 	const n = Number(value);
 	return typeof n === 'number' && isFinite(n) && n > 0;
 }
@@ -36,7 +36,7 @@ export function isEndDateValid(startDate: string | null | undefined, endDate: st
 /**
  * Parse a form field value to a number, returning null if invalid.
  */
-export function parseNumber(value: string | null | undefined): number | null {
+function parseNumber(value: string | null | undefined): number | null {
 	if (value == null || value.trim() === '') return null;
 	const n = Number(value);
 	return isFinite(n) ? n : null;

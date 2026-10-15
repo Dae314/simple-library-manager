@@ -107,7 +107,7 @@ function hasGameId(event: EventMessage): event is EventMessage & { gameId: numbe
  * Multiple calls within the window (default 300ms) are coalesced into a single call.
  * Returns an object with `trigger()` to schedule and `cancel()` to clear.
  */
-export function createInvalidateDebouncer(windowMs: number = 300) {
+function createInvalidateDebouncer(windowMs: number = 300) {
 	let timer: ReturnType<typeof setTimeout> | null = null;
 	let callCount = 0;
 

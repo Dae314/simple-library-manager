@@ -40,7 +40,7 @@ export function isDuplicateKeyError(err: unknown): boolean {
 /**
  * Check if an error is a PostgreSQL foreign key violation (code 23503).
  */
-export function isForeignKeyError(err: unknown): boolean {
+function isForeignKeyError(err: unknown): boolean {
 	const dbErr = getDbError(err);
 	return dbErr !== null && dbErr.code === '23503';
 }

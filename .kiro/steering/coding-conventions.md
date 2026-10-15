@@ -83,7 +83,7 @@
 ## Components
 
 - Reusable components live in `src/lib/components/`
-- Components use PascalCase filenames: `GameCard.svelte`, `FilterPanel.svelte`
+- Components use PascalCase filenames: `GameTypeBadge.svelte`, `FilterPanel.svelte`
 - Keep components focused — one responsibility per component
 - Use semantic HTML and ARIA attributes for accessibility
 - Style with scoped CSS; use the project's indigo accent color (`#6366f1`) for interactive elements

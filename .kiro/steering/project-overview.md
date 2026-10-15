@@ -24,7 +24,7 @@ src/
 ├── env.ts                         # defineEnvVars() declarations for $app/env/private (ALLOW_TEST_RESET)
 ├── hooks.server.ts                # Runs migrations, seed, and WebSocket init on startup
 ├── lib/
-│   ├── components/                # Reusable Svelte 5 components (15 total)
+│   ├── components/                # Reusable Svelte 5 components (14 total)
 │   │   ├── AttendeeAutofill.svelte # Debounced typeahead for attendee names
 │   │   ├── BarChart.svelte        # Statistics visualization
 │   │   ├── CheckinDialog.svelte   # Modal dialog for checkin flow
@@ -32,7 +32,6 @@ src/
 │   │   ├── ConfirmDialog.svelte   # Generic confirmation modal
 │   │   ├── ConnectionIndicator.svelte  # WebSocket connection status dot
 │   │   ├── FilterPanel.svelte     # Reusable filter controls
-│   │   ├── GameCard.svelte        # Game display card
 │   │   ├── GameTypeBadge.svelte   # Colored badge for prize types (takes a prizeType prop)
 │   │   ├── Navbar.svelte          # Top navigation bar
 │   │   ├── Pagination.svelte      # Page navigation controls
