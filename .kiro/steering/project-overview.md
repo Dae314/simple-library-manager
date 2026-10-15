@@ -13,6 +13,7 @@ This is a convention board game library management system for tracking game chec
 - **Notifications**: `svelte-hot-french-toast` (Toaster in root layout)
 - **CSV**: `papaparse` for CSV import/export
 - **Testing**: Vitest + fast-check (property-based), Playwright (E2E via Docker)
+- **Static analysis**: Fallow (`fallow`, config in `.fallowrc.json`) for dead code, duplication and complexity
 - **Deployment**: Docker Compose (Caddy reverse proxy + Node app + PostgreSQL)
 
 ## Project Structure
@@ -24,7 +25,7 @@ src/
 ├── env.ts                         # defineEnvVars() declarations for $app/env/private (ALLOW_TEST_RESET)
 ├── hooks.server.ts                # Runs migrations, seed, and WebSocket init on startup
 ├── lib/
-│   ├── components/                # Reusable Svelte 5 components (14 total)
+│   ├── components/                # Reusable Svelte 5 components (13 total)
 │   │   ├── AttendeeAutofill.svelte # Debounced typeahead for attendee names
 │   │   ├── BarChart.svelte        # Statistics visualization
 │   │   ├── CheckinDialog.svelte   # Modal dialog for checkin flow
@@ -35,7 +36,6 @@ src/
 │   │   ├── GameTypeBadge.svelte   # Colored badge for prize types (takes a prizeType prop)
 │   │   ├── Navbar.svelte          # Top navigation bar
 │   │   ├── Pagination.svelte      # Page navigation controls
-│   │   ├── SearchFilter.svelte    # Search input with debounce
 │   │   ├── SortableTable.svelte   # Table with sortable column headers
 │   │   ├── SwapDialog.svelte      # Modal dialog for atomic game swap (checkin + checkout)
 │   │   └── WeightWarning.svelte   # Weight discrepancy alert
@@ -87,6 +87,7 @@ src/
 │       ├── backup/export/         # DB export
 │       └── test-helpers, test-reset  # Test-only support endpoints
 server.js                          # Production entry: WebSocket + adapter-node
+.fallowrc.json                     # Fallow static-analysis config (entry points, ignores, rule severities)
 vite.config.ts                     # Vite + sveltekit({ adapter, preprocess, csrf }) config (no svelte.config.js)
 tests/
 ├── properties/                    # Property-based tests (fast-check) — 19 files

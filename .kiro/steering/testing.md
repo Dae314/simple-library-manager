@@ -164,12 +164,14 @@ The fixture provides a `helpers` object with:
 - `helpers.checkoutGame(gameName, firstName, lastName, weight)` — performs checkout through the UI
 - `helpers.checkinGame(gameName, weight)` — performs checkin through the UI
 
+The fixture also overrides `page` so `page.goto()` resolves only after the SvelteKit client has hydrated (it waits for the root layout's `/ws` WebSocket, which opens from an `$effect` after hydration). Without this, clicks or file selections right after `goto` can land on server-rendered markup with no handlers attached and be silently lost. Pages from `browser.newContext()` don't get this; wait for `.connection-indicator .dot.connected` before interacting with them.
+
 ### Conventions
 
 - Always use `helpers.prefix` in game titles to isolate test data
 - Use `helpers.createGame()` instead of manual UI creation for setup
 - Locate elements with accessible selectors: `getByRole()`, `getByText()`, ARIA labels
-- Use `.locator('.game-card', { hasText: title })` pattern for game cards
+- Use `.locator('tbody tr', { hasText: title })` to find game rows in the library and management tables (the same pattern as the internal `tableRow()` helper in `fixtures.ts`)
 - Assert toast messages for success/error feedback
 - Clean up is automatic via the fixture's teardown
 - For real-time tests, use two browser contexts to simulate multiple users

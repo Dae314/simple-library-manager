@@ -39,6 +39,24 @@ npm run check           # One-shot svelte-check + TypeScript
 npm run check:watch     # Watch mode (for local dev only)
 ```
 
+## Static Analysis (Fallow)
+
+```bash
+npm run fallow                              # Dead code + duplication + complexity (one-shot)
+npm run fallow -- dead-code                 # Dead code only (unused files/exports/deps, unused props)
+npm run fallow -- --quiet -o report.txt     # Write the report to a file (no ANSI codes)
+```
+
+Exit codes: `0` clean, `1` an `error`-severity rule failed, `2` config/runtime error. Pass extra arguments after `--`; `npx fallow` without `--` lets npm swallow flags like `-o`/`--format` on Windows. Don't use `fallow watch` in automation.
+
+`.fallowrc.json` (JSONC) configures it:
+- `entry` lists the runtime entry points explicitly (`server.js`, `hooks.server.ts`, `env.ts`, route files, tool configs, `vite-plugin.ts`, `seed.ts`, tests). `scripts/*.js` is listed because those are standalone operator scripts nothing imports; `scripts/reset-password.js` is the manual password-rescue script and must be kept.
+- `ignorePatterns` skips `.svelte-kit`, `drizzle/migrations` and `.fallow` (`node_modules`/`build` are Fallow defaults).
+- The `complexity-*` rules are `warn`, so complexity findings are reported as a backlog without failing the run. Duplication is reported but not gated.
+- `#lib/*` and `$app/*` resolve automatically (package.json `imports`, tsconfig and the SvelteKit plugin); no alias config is needed.
+
+The `.fallow/` cache directory is git-ignored by its own `.gitignore` and listed in `.dockerignore`.
+
 ## Production Build
 
 ```bash
@@ -93,6 +111,7 @@ npm run test            # Vitest property-based + unit tests (single run)
 npm run test:e2e        # Full E2E: build Docker test env → Playwright → teardown
 npm run test:e2e:setup  # Just start the test Docker environment
 npm run test:e2e:teardown  # Just tear down the test Docker environment
+npm run fallow          # Static analysis: dead code, duplication, complexity
 ```
 
 E2E tests use a separate `docker-compose.test.yml` and run against `http://localhost:8080`.

@@ -56,6 +56,38 @@ function tableRow(page: Page | Locator, text: string): Locator {
 	return ('locator' in page ? page : page).locator('tbody tr', { hasText: text });
 }
 
+// ── Hydration-aware navigation ─────────────────────────────────────────
+
+/**
+ * Make `page.goto` resolve only once the SvelteKit client app has hydrated.
+ *
+ * Pages are server-rendered, so buttons and inputs are visible (and pass
+ * Playwright's actionability checks) before their Svelte event handlers are
+ * attached. `page.goto` resolves on the `load` event, but SvelteKit starts the
+ * client with a dynamic `import()` that `load` does not wait for. A click or
+ * file selection that lands in that window has no handler and is silently
+ * lost (e.g. the Checkout dialog or the Restore dialog never opens). It shows
+ * up under load: the first test on a cold worker, or 4 workers at once.
+ *
+ * The root layout opens the `/ws` WebSocket from an `$effect`, and effects
+ * run only after hydration has finished, so the page's `websocket` event is
+ * a reliable "app is interactive" signal on every route.
+ */
+function waitForHydrationOnGoto(page: Page): void {
+	const goto = page.goto.bind(page);
+	page.goto = async (url, options) => {
+		const hydrated = page.waitForEvent('websocket', {
+			predicate: (ws) => new URL(ws.url()).pathname === '/ws',
+			timeout: 15_000
+		});
+		// Avoid an unhandled rejection if goto itself throws first.
+		hydrated.catch(() => undefined);
+		const response = await goto(url, options);
+		await hydrated;
+		return response;
+	};
+}
+
 // ── UI helpers ─────────────────────────────────────────────────────────
 
 async function uiCheckoutGame(
@@ -119,6 +151,11 @@ export const test = base.extend<{
 		tableRow: (pageOrLocator: Page | Locator, text: string) => Locator;
 	};
 }>({
+	page: async ({ page }, use) => {
+		waitForHydrationOnGoto(page);
+		await use(page);
+	},
+
 	helpers: async ({ page, request }, use, testInfo) => {
 		const createdIds: number[] = [];
 		// Short unique prefix: worker index + random suffix to avoid collisions across runs

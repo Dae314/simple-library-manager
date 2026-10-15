@@ -6,7 +6,7 @@ import { isDuplicateKeyError } from './db-errors.js';
 
 // --- Types ---
 
-export interface ConventionConfig {
+interface ConventionConfig {
 	id: number;
 	conventionName: string;
 	startDate: string | null;

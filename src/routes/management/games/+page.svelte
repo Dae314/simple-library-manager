@@ -50,12 +50,11 @@
 		pageSize: number;
 	};
 
-	let { data, form }: {
+	let { data }: {
 		data: {
 			games: PaginatedResult;
 			filters: FilterValues;
 		};
-		form: any;
 	} = $props();
 
 	let selectedIds: Set<number> = $state(new Set());

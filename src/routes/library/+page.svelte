@@ -27,7 +27,7 @@
 		pageSize: number;
 	};
 
-	let { data, form }: {
+	let { data }: {
 		data: {
 			games: PaginatedResult;
 			idTypes: string[];
@@ -42,23 +42,6 @@
 			activeSearch: string;
 			activeAttendeeSearch: string;
 		};
-		form: {
-			errors?: Record<string, string>;
-			values?: Record<string, unknown>;
-			gameId?: number;
-			success?: boolean;
-			conflict?: boolean;
-			message?: string;
-			error?: string;
-			weightWarning?: {
-				checkoutWeight: number;
-				checkinWeight: number;
-				difference: number;
-				tolerance: number;
-				level: string;
-				weightUnit: string;
-			};
-		} | null;
 	} = $props();
 
 	// Tick counter that increments every minute to force duration recalculation

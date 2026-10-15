@@ -9,7 +9,7 @@ import { broadcastGameEvent, broadcastTransactionEvent } from '../ws/broadcast.j
 
 // --- Types ---
 
-export interface CheckoutTransaction {
+interface CheckoutTransaction {
 	id: number;
 	gameId: number;
 	type: string;
@@ -24,7 +24,7 @@ export interface CheckoutTransaction {
 	createdAt: Date;
 }
 
-export interface CheckinTransaction {
+interface CheckinTransaction {
 	id: number;
 	gameId: number;
 	type: string;
@@ -39,7 +39,7 @@ export interface CheckinTransaction {
 	createdAt: Date;
 }
 
-export interface WeightWarning {
+interface WeightWarning {
 	checkoutWeight: number;
 	checkinWeight: number;
 	difference: number;
@@ -58,7 +58,7 @@ export interface TransactionSortParams {
 	direction: 'asc' | 'desc';
 }
 
-export interface TransactionWithGame {
+interface TransactionWithGame {
 	id: number;
 	gameId: number;
 	type: string;

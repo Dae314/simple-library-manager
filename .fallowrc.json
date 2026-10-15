@@ -1,0 +1,37 @@
+{
+	"$schema": "./node_modules/fallow/schema.json",
+	// Most of these are also detected by Fallow's auto-enabled plugins
+	// (sveltekit, vite, vitest, playwright, drizzle); they are listed explicitly so
+	// the entry points don't depend on plugin heuristics.
+	"entry": [
+		// Production entry (Dockerfile CMD) and SvelteKit runtime files.
+		"server.js",
+		"src/hooks.server.ts",
+		"src/env.ts",
+		"src/routes/**/+*.{ts,js,svelte}",
+		// Tool configs and the dev-only WebSocket plugin loaded by vite.config.ts.
+		"vite.config.ts",
+		"drizzle.config.ts",
+		"playwright.config.ts",
+		"src/lib/server/ws/vite-plugin.ts",
+		"src/lib/server/db/seed.ts",
+		// Standalone operator scripts that nothing imports by design.
+		// reset-password.js is a rescue script run by hand when the management
+		// password is lost (DATABASE_URL=... node scripts/reset-password.js); the
+		// backup page UI tells operators to use it.
+		"scripts/*.js",
+		// Tests.
+		"tests/properties/*.prop.test.ts",
+		"tests/integration/*.test.ts",
+		"tests/integration/fixtures.ts"
+	],
+	// Generated output. node_modules/, build/ and dist/ are already Fallow defaults.
+	"ignorePatterns": [".svelte-kit/**", "drizzle/migrations/**", ".fallow/**"],
+	"rules": {
+		// Complexity is reported as a refactoring backlog, not a failing gate.
+		// CRAP is estimated because the project has no coverage tooling.
+		"complexity-cyclomatic": "warn",
+		"complexity-cognitive": "warn",
+		"complexity-crap": "warn"
+	}
+}

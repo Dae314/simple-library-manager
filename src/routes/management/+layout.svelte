@@ -3,9 +3,8 @@
 	import { refreshAll } from '$app/navigation';
 	import type { Snippet } from 'svelte';
 
-	let { data, form, children }: {
+	let { data, children }: {
 		data: { isPasswordSet: boolean; isAuthenticated: boolean };
-		form: Record<string, any> | null;
 		children: Snippet;
 	} = $props();
 

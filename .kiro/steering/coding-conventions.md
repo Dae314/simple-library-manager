@@ -8,6 +8,7 @@
 - Use `.js` extensions in relative imports (required by ESM): `import { db } from '../db/index.js'`
 - Module resolution is `bundler`; use the `#lib/*` subpath import (package.json `imports` field) for `src/lib/` imports, always with an explicit extension: `import { db } from '#lib/server/db/index.js'`, `import Foo from '#lib/components/Foo.svelte'`
 - `tsconfig.json` extends `$app/tsconfig` (SvelteKit 3) and declares its own `include`/`exclude`. TypeScript stays on 6.x until svelte-check supports TypeScript 7
+- Only `export` types and values that another module consumes; Fallow (`npm run fallow`) reports exports used only inside their own file
 
 ## Svelte 5
 
@@ -23,6 +24,7 @@
   let { children }: { children?: Snippet } = $props();
   ```
 - Render snippets with `{@render children()}`
+- Only destructure props a component actually reads (e.g. don't declare an unused `form` prop; layouts never receive `form`)
 - Scoped `<style>` blocks per component; no CSS frameworks or utility classes
 
 ## SvelteKit Patterns

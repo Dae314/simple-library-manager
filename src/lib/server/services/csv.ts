@@ -7,7 +7,7 @@ import type { CsvValidationResult } from '../validation.js';
 
 // --- Types ---
 
-export interface CsvValidationResponse {
+interface CsvValidationResponse {
 	valid: boolean;
 	errors: { row: number; message: string }[];
 	summary: {
@@ -18,7 +18,7 @@ export interface CsvValidationResponse {
 	rowCount: number;
 }
 
-export interface CsvImportResult {
+interface CsvImportResult {
 	added: number;
 	modified: number;
 	deleted: number;

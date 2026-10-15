@@ -100,4 +100,5 @@ npm run db:studio     # Open Drizzle Studio (database GUI)
 ```bash
 npm run test          # Unit/property tests (Vitest)
 npm run test:e2e      # End-to-end tests (Playwright + Docker)
+npm run fallow        # Static analysis: dead code, duplication, complexity (Fallow)
 ```

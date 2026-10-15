@@ -62,9 +62,9 @@ export interface StatisticsResult {
 }
 
 export type TopGamesSortField = 'title' | 'game_type' | 'status' | 'checkouts';
-export type SortDirection = 'asc' | 'desc';
+type SortDirection = 'asc' | 'desc';
 
-export interface TopGamesSortParams {
+interface TopGamesSortParams {
 	field: TopGamesSortField;
 	direction: SortDirection;
 }

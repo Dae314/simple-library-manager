@@ -14,7 +14,7 @@ export type GameStatus = 'available' | 'checked_out' | 'retired';
 export type PrizeType = 'normal' | 'play_and_win' | 'play_and_take';
 export type ShelfCategory = 'family' | 'small' | 'standard' | 'oversized';
 
-export interface GameRecord {
+interface GameRecord {
 	id: number;
 	title: string;
 	bggId: number;

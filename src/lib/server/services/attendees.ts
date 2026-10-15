@@ -5,7 +5,7 @@ import type { PaginationParams, PaginatedResult } from './games.js';
 
 // --- Types ---
 
-export interface AttendeeRecord {
+interface AttendeeRecord {
 	id: number;
 	firstName: string;
 	lastName: string;
@@ -14,7 +14,7 @@ export interface AttendeeRecord {
 	updatedAt: Date;
 }
 
-export interface AttendeeWithCount extends AttendeeRecord {
+interface AttendeeWithCount extends AttendeeRecord {
 	transactionCount: number;
 	hasActiveCheckout: boolean;
 }
@@ -42,32 +42,42 @@ export const attendeeService = {
 		const trimmedFirst = data.firstName.trim();
 		const trimmedLast = data.lastName.trim();
 
-		// Check if attendee exists (case-insensitive match on trimmed names)
-		const [existing] = await db
-			.select({ id: attendees.id })
-			.from(attendees)
-			.where(
-				and(
-					sql`LOWER(TRIM(${attendees.firstName})) = LOWER(${trimmedFirst})`,
-					sql`LOWER(TRIM(${attendees.lastName})) = LOWER(${trimmedLast})`
+		// Find an existing attendee (case-insensitive match on trimmed names)
+		const findExisting = async () => {
+			const [existing] = await db
+				.select({ id: attendees.id })
+				.from(attendees)
+				.where(
+					and(
+						sql`LOWER(TRIM(${attendees.firstName})) = LOWER(${trimmedFirst})`,
+						sql`LOWER(TRIM(${attendees.lastName})) = LOWER(${trimmedLast})`
+					)
 				)
-			)
-			.limit(1);
+				.limit(1);
+			return existing;
+		};
 
-		if (existing) {
-			// Update idType and updatedAt
+		// Update idType and updatedAt on an existing attendee
+		const touch = async (id: number) => {
 			await db
 				.update(attendees)
 				.set({
 					idType: data.idType,
 					updatedAt: new Date()
 				})
-				.where(eq(attendees.id, existing.id));
+				.where(eq(attendees.id, id));
+			return id;
+		};
 
-			return existing.id;
+		const existing = await findExisting();
+		if (existing) {
+			return touch(existing.id);
 		}
 
-		// Create new attendee
+		// Create new attendee. Two concurrent checkouts for the same new name can
+		// both miss the lookup above; ON CONFLICT DO NOTHING lets the loser fall
+		// through to the row the winner inserted instead of failing on the
+		// case-insensitive unique index (idx_attendees_name_unique).
 		const [created] = await db
 			.insert(attendees)
 			.values({
@@ -75,9 +85,18 @@ export const attendeeService = {
 				lastName: trimmedLast,
 				idType: data.idType
 			})
+			.onConflictDoNothing()
 			.returning({ id: attendees.id });
 
-		return created.id;
+		if (created) {
+			return created.id;
+		}
+
+		const winner = await findExisting();
+		if (!winner) {
+			throw new Error('Failed to create or find attendee');
+		}
+		return touch(winner.id);
 	},
 
 	/**

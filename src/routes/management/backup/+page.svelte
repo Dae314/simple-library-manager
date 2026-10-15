@@ -3,8 +3,6 @@
 	import { page } from '$app/state';
 	import toast from 'svelte-hot-french-toast';
 
-	let { form }: { form: Record<string, any> | null } = $props();
-
 	let showImportDialog = $state(false);
 	let selectedFile: File | null = $state(null);
 	let fileInputEl: HTMLInputElement | undefined = $state();
