@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, refreshAll } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { getContext, untrack, onMount, onDestroy } from 'svelte';
 	import toast from 'svelte-hot-french-toast';
-	import SortableTable from '$lib/components/SortableTable.svelte';
-	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
-	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
-	import CheckoutDialog from '$lib/components/CheckoutDialog.svelte';
-	import CheckinDialog from '$lib/components/CheckinDialog.svelte';
-	import SwapDialog from '$lib/components/SwapDialog.svelte';
-	import AttendeeAutofill from '$lib/components/AttendeeAutofill.svelte';
-	import { formatDuration, formatWeight, formatDateTime } from '$lib/utils/formatting.js';
-	import { getPreferredPageSize, savePreferredPageSize } from '$lib/utils/page-size.js';
-	import type { LibraryGameRecord } from '$lib/server/services/games.js';
-	import type { EventMessage } from '$lib/server/ws/events.js';
+	import SortableTable from '#lib/components/SortableTable.svelte';
+	import GameTypeBadge from '#lib/components/GameTypeBadge.svelte';
+	import ConnectionIndicator from '#lib/components/ConnectionIndicator.svelte';
+	import CheckoutDialog from '#lib/components/CheckoutDialog.svelte';
+	import CheckinDialog from '#lib/components/CheckinDialog.svelte';
+	import SwapDialog from '#lib/components/SwapDialog.svelte';
+	import AttendeeAutofill from '#lib/components/AttendeeAutofill.svelte';
+	import { formatDuration, formatWeight, formatDateTime } from '#lib/utils/formatting.js';
+	import { getPreferredPageSize, savePreferredPageSize } from '#lib/utils/page-size.js';
+	import type { LibraryGameRecord } from '#lib/server/services/games.js';
+	import type { EventMessage } from '#lib/server/ws/events.js';
 
 	const wsClient: {
 		connected: boolean;
@@ -105,7 +105,7 @@
 		const gameId = 'gameId' in event ? (event as any).gameId : undefined;
 		if (gameId !== undefined && selectedGame && gameId === selectedGame.id) {
 			statusChangeWarning = true;
-			invalidateAll();
+			refreshAll();
 		}
 	});
 
@@ -161,11 +161,11 @@
 	// Local state for the attendee autofill input
 	let attendeeSearchValue = $state('');
 
-	// Track the last server-synced value to avoid resetting during invalidateAll
+	// Track the last server-synced value to avoid resetting during refreshAll
 	let lastSyncedAttendeeSearch = '';
 
 	// Sync attendee search value when server data changes (e.g. after navigation)
-	// Only update if the server value actually changed (not just a re-render from invalidateAll)
+	// Only update if the server value actually changed (not just a re-render from refreshAll)
 	$effect(() => {
 		const serverValue = data.activeAttendeeSearch ?? '';
 		if (serverValue !== lastSyncedAttendeeSearch) {
@@ -208,7 +208,7 @@
 			}
 		}
 		url.searchParams.delete('page');
-		goto(url.toString(), { replaceState: true, keepFocus: true });
+		goto(url.toString(), { replace: true, reset: false });
 	}
 
 	function handleFilterChange(values: Record<string, any>) {
@@ -226,7 +226,7 @@
 	function handlePageChange(page: number) {
 		const url = new URL(window.location.href);
 		url.searchParams.set('page', String(page));
-		goto(url.toString(), { replaceState: true });
+		goto(url.toString(), { replace: true });
 	}
 
 	function handlePageSizeChange(size: number) {
@@ -234,7 +234,7 @@
 		const url = new URL(window.location.href);
 		url.searchParams.set('pageSize', String(size));
 		url.searchParams.set('page', '1');
-		goto(url.toString(), { replaceState: true });
+		goto(url.toString(), { replace: true });
 	}
 
 	// Apply stored page size preference when navigating to this page without an explicit pageSize param
@@ -245,7 +245,7 @@
 			if (preferred !== data.games.pageSize) {
 				url.searchParams.set('pageSize', String(preferred));
 				url.searchParams.set('page', '1');
-				goto(url.toString(), { replaceState: true });
+				goto(url.toString(), { replace: true });
 			}
 		}
 	});
@@ -346,8 +346,8 @@
 					checkoutFormValues = resultData.values ?? {};
 				}
 			}
-			const { invalidateAll } = await import('$app/navigation');
-			await invalidateAll();
+			const { refreshAll } = await import('$app/navigation');
+			await refreshAll();
 		});
 	}
 
@@ -375,8 +375,8 @@
 					checkinFormValues = resultData.values ?? {};
 				}
 			}
-			const { invalidateAll } = await import('$app/navigation');
-			await invalidateAll();
+			const { refreshAll } = await import('$app/navigation');
+			await refreshAll();
 		});
 	}
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { validateGameInput } from '$lib/server/validation.js';
+import { validateGameInput } from '#lib/server/validation.js';
 
 /**
  * Helper: generate the BGG URL for a given BGG ID.

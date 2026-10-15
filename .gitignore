@@ -3,6 +3,7 @@ node_modules/
 build/
 dist/
 test-results/
+.vitest/
 .env
 .env.*
 !.env.example

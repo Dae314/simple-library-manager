@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import toast from 'svelte-hot-french-toast';
-	import { isEndDateValid } from '$lib/utils/validation.js';
+	import { isEndDateValid } from '#lib/utils/validation.js';
 
 	type ConventionConfig = {
 		id: number;
@@ -33,7 +33,7 @@
 		endDateInput = form?.configValues?.endDate ?? data.config.endDate ?? '';
 	});
 
-	const isPasswordSet = $derived(($page.data as Record<string, unknown>).isPasswordSet as boolean);
+	const isPasswordSet = $derived((page.data as Record<string, unknown>).isPasswordSet as boolean);
 
 	const endDateError = $derived(
 		!isEndDateValid(startDateInput, endDateInput)

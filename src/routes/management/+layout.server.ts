@@ -1,6 +1,6 @@
 import type { LayoutServerLoad } from './$types';
-import { configService } from '$lib/server/services/config.js';
-import { authService } from '$lib/server/services/auth.js';
+import { configService } from '#lib/server/services/config.js';
+import { authService } from '#lib/server/services/auth.js';
 
 const COOKIE_NAME = 'mgmt_session';
 

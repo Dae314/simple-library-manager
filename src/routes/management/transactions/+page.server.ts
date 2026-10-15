@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
-import { transactionService } from '$lib/server/services/transactions.js';
-import type { TransactionFilters, TransactionSortParams } from '$lib/server/services/transactions.js';
+import { transactionService } from '#lib/server/services/transactions.js';
+import type { TransactionFilters, TransactionSortParams } from '#lib/server/services/transactions.js';
 import { fail } from '@sveltejs/kit';
-import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
+import { broadcastGameEvent, broadcastTransactionEvent } from '#lib/server/ws/broadcast.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const gameTitle = url.searchParams.get('gameTitle') || '';

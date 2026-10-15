@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { LibraryGameRecord } from '$lib/server/services/games.js';
-	import { getWeightWarningLevel } from '$lib/utils/validation.js';
-	import { formatWeight } from '$lib/utils/formatting.js';
+	import type { LibraryGameRecord } from '#lib/server/services/games.js';
+	import { getWeightWarningLevel } from '#lib/utils/validation.js';
+	import { formatWeight } from '#lib/utils/formatting.js';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 
 	let {

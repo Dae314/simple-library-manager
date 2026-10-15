@@ -1,9 +1,9 @@
 import type { PageServerLoad, Actions } from './$types';
-import { attendeeService } from '$lib/server/services/attendees.js';
-import type { AttendeeFilters, AttendeeSortParams } from '$lib/server/services/attendees.js';
-import { configService } from '$lib/server/services/config.js';
+import { attendeeService } from '#lib/server/services/attendees.js';
+import type { AttendeeFilters, AttendeeSortParams } from '#lib/server/services/attendees.js';
+import { configService } from '#lib/server/services/config.js';
 import { fail } from '@sveltejs/kit';
-import { broadcastAttendeeEvent } from '$lib/server/ws/broadcast.js';
+import { broadcastAttendeeEvent } from '#lib/server/ws/broadcast.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || '';

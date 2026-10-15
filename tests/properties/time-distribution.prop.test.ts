@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { determineGranularity } from '$lib/server/services/statistics.js';
+import { determineGranularity } from '#lib/server/services/statistics.js';
 
 /**
  * Tests for the time distribution granularity logic.

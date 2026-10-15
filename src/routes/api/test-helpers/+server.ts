@@ -1,9 +1,9 @@
 import type { RequestHandler } from './$types';
-import { db } from '$lib/server/db/index.js';
-import { games, transactions, conventionConfig } from '$lib/server/db/schema.js';
+import { db } from '#lib/server/db/index.js';
+import { games, transactions, conventionConfig } from '#lib/server/db/schema.js';
 import { eq, inArray } from 'drizzle-orm';
-import { env } from '$env/dynamic/private';
-import { gameService } from '$lib/server/services/games.js';
+import { ALLOW_TEST_RESET } from '$app/env/private';
+import { gameService } from '#lib/server/services/games.js';
 
 /**
  * POST /api/test-helpers
@@ -17,7 +17,7 @@ import { gameService } from '$lib/server/services/games.js';
  *   updateConfig  — update convention config fields directly
  */
 export const POST: RequestHandler = async ({ request }) => {
-	if (env.ALLOW_TEST_RESET !== 'true') {
+	if (ALLOW_TEST_RESET !== 'true') {
 		return new Response(JSON.stringify({ error: 'Not available' }), {
 			status: 404,
 			headers: { 'Content-Type': 'application/json' }

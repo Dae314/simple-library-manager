@@ -1,6 +1,5 @@
-import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { gameService } from '$lib/server/services/games.js';
+import { gameService } from '#lib/server/services/games.js';
 
 export const GET: RequestHandler = async ({ url }) => {
 	const q = url.searchParams.get('q') ?? '';
@@ -21,8 +20,8 @@ export const GET: RequestHandler = async ({ url }) => {
 			copyNumber: game.copyNumber
 		}));
 
-		return json({ games, total: result.total });
+		return Response.json({ games, total: result.total });
 	} catch {
-		return json({ error: 'Failed to fetch available games' }, { status: 500 });
+		return Response.json({ error: 'Failed to fetch available games' }, { status: 500 });
 	}
 };

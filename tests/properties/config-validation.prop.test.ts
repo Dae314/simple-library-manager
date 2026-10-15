@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { validateConfigInput } from '$lib/server/validation.js';
-import { isEndDateValid } from '$lib/utils/validation.js';
+import { validateConfigInput } from '#lib/server/validation.js';
+import { isEndDateValid } from '#lib/utils/validation.js';
 
 /**
  * Property 19: Convention configuration validation

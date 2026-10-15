@@ -445,7 +445,7 @@ export function validateCsvRows(rows: Record<string, string>[]): CsvValidationRe
 
 // --- Weight Warning (re-exported from shared utils for backward compatibility) ---
 
-export { getWeightWarningLevel, shouldWarnWeight, type WeightWarningLevel } from '$lib/utils/validation.js';
+export { getWeightWarningLevel, shouldWarnWeight, type WeightWarningLevel } from '#lib/utils/validation.js';
 
 // --- Password Input ---
 

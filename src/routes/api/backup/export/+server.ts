@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
-import { backupService } from '$lib/server/services/backup.js';
-import { configService } from '$lib/server/services/config.js';
-import { authService } from '$lib/server/services/auth.js';
+import { backupService } from '#lib/server/services/backup.js';
+import { configService } from '#lib/server/services/config.js';
+import { authService } from '#lib/server/services/auth.js';
 
 export const GET: RequestHandler = async ({ cookies }) => {
 	// Auth check: if password is set, require a valid session

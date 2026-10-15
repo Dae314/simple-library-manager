@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { refreshAll } from '$app/navigation';
+	import { page } from '$app/state';
 	import { getContext } from 'svelte';
 	import toast from 'svelte-hot-french-toast';
-	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
-	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
-	import type { EventMessage } from '$lib/server/ws/events.js';
+	import GameTypeBadge from '#lib/components/GameTypeBadge.svelte';
+	import ConnectionIndicator from '#lib/components/ConnectionIndicator.svelte';
+	import type { EventMessage } from '#lib/server/ws/events.js';
 
-	const wsClient: ReturnType<typeof import('$lib/stores/websocket.svelte.js').createWebSocketClient> = getContext('ws');
+	const wsClient: ReturnType<typeof import('#lib/stores/websocket.svelte.js').createWebSocketClient> = getContext('ws');
 
 	type GameRecord = {
 		id: number;
@@ -61,7 +61,7 @@
 		localBggId = null;
 		localPrizeType = null;
 		localShelfCategory = null;
-		invalidateAll();
+		refreshAll();
 	}
 
 	function handleDismiss() {
@@ -81,7 +81,7 @@
 	let showDeleteDialog = $state(false);
 	let confirmPassword = $state('');
 	let deleteDialogEl: HTMLDialogElement | undefined = $state();
-	let isPasswordSet = $derived($page.data.isPasswordSet);
+	let isPasswordSet = $derived(page.data.isPasswordSet);
 	const isCheckedOut = $derived(data.game.status === 'checked_out');
 
 	$effect(() => {
@@ -276,7 +276,7 @@
 						}
 					}
 					await update({ reset: false });
-					await invalidateAll();
+					await refreshAll();
 				};
 			}}
 		>

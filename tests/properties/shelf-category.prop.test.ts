@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { validateGameInput } from '$lib/server/validation.js';
+import { validateGameInput } from '#lib/server/validation.js';
 
 /**
  * Feature: attendee-tracking-swaps-categories, Property 8: Shelf category validation

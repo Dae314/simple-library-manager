@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { validateCheckoutInput, validateCheckinInput } from '$lib/server/validation.js';
+import { validateCheckoutInput, validateCheckinInput } from '#lib/server/validation.js';
 
 // --- Shared generators ---
 

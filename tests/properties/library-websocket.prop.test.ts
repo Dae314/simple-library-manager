@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import fc from 'fast-check';
-import { handleEvent } from '$lib/stores/websocket.svelte.js';
-import type { EventMessage } from '$lib/server/ws/events.js';
+import { handleEvent } from '#lib/stores/websocket.svelte.js';
+import type { EventMessage } from '#lib/server/ws/events.js';
 
 // Mock $app/navigation so the module can be imported without SvelteKit runtime
 vi.mock('$app/navigation', () => ({
-	invalidateAll: vi.fn(() => Promise.resolve())
+	refreshAll: vi.fn(() => Promise.resolve())
 }));
 
 // --- Arbitraries (same shapes as websocket.prop.test.ts) ---

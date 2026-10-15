@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { validateAttendeeInput } from '$lib/server/validation.js';
+import { validateAttendeeInput } from '#lib/server/validation.js';
 
 /**
  * Property 1: Attendee name length validation

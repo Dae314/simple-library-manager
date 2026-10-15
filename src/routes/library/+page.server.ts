@@ -1,12 +1,12 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { gameService } from '$lib/server/services/games.js';
-import { transactionService } from '$lib/server/services/transactions.js';
-import { configService } from '$lib/server/services/config.js';
-import { validateCheckoutInput, validateCheckinInput, validateSwapInput } from '$lib/server/validation.js';
-import { getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
-import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
-import type { LibraryFilters, LibrarySortParams } from '$lib/server/services/games.js';
+import { gameService } from '#lib/server/services/games.js';
+import { transactionService } from '#lib/server/services/transactions.js';
+import { configService } from '#lib/server/services/config.js';
+import { validateCheckoutInput, validateCheckinInput, validateSwapInput } from '#lib/server/validation.js';
+import { getUserFriendlyDbMessage } from '#lib/server/services/db-errors.js';
+import { broadcastGameEvent, broadcastTransactionEvent } from '#lib/server/ws/broadcast.js';
+import type { LibraryFilters, LibrarySortParams } from '#lib/server/services/games.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') || undefined;

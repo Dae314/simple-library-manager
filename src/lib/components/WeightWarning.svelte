@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatWeight } from '$lib/utils/formatting';
+	import { formatWeight } from '#lib/utils/formatting.js';
 
 	let {
 		checkoutWeight,

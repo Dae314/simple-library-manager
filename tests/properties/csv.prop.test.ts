@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { validateCsvRows } from '$lib/server/validation.js';
+import { validateCsvRows } from '#lib/server/validation.js';
 
 /**
  * Property 20: CSV validation reports all errors

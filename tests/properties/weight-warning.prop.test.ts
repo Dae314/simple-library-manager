@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { getWeightWarningLevel, shouldWarnWeight } from '$lib/server/validation.js';
+import { getWeightWarningLevel, shouldWarnWeight } from '#lib/server/validation.js';
 
 /**
  * Property 7: Weight warning correctness (granular levels)

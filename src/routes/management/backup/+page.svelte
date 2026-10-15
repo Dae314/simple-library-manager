@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import toast from 'svelte-hot-french-toast';
 
 	let { form }: { form: Record<string, any> | null } = $props();
@@ -13,7 +13,7 @@
 
 	let importDialogEl: HTMLDialogElement | undefined = $state();
 
-	let isPasswordSet = $derived($page.data.isPasswordSet);
+	let isPasswordSet = $derived(page.data.isPasswordSet);
 
 	$effect(() => {
 		if (!importDialogEl) return;

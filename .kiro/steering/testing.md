@@ -56,7 +56,7 @@ Location: `tests/properties/*.prop.test.ts`
 - Mock `$app/navigation` when importing modules that depend on SvelteKit runtime:
   ```typescript
   vi.mock('$app/navigation', () => ({
-    invalidateAll: vi.fn(() => Promise.resolve())
+    refreshAll: vi.fn(() => Promise.resolve())
   }));
   ```
 
@@ -65,7 +65,7 @@ Location: `tests/properties/*.prop.test.ts`
 ```typescript
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { validateSomething } from '$lib/server/validation.js';
+import { validateSomething } from '#lib/server/validation.js';
 
 describe('Property N: Description of the invariant', () => {
   // Define arbitraries
@@ -101,7 +101,9 @@ Test file patterns (from `vite.config.ts`):
 - `tests/**/*.{test,spec}.{js,ts}`
 - `tests/**/*.prop.test.{js,ts}`
 
-Path aliases (`$lib`, etc.) work in test files via the SvelteKit Vite plugin.
+`#lib/*` imports resolve through the package.json `imports` field; `$app/*` modules resolve via the SvelteKit Vite plugin.
+
+The project runs Vitest 5, where `clearMocks` defaults to `true` (mock call history is cleared before each test). Keep `vi.mock()` calls at the top level of the file.
 
 ## E2E Integration Tests (Playwright)
 

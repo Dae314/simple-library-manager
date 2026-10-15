@@ -1,5 +1,5 @@
-import { invalidateAll } from '$app/navigation';
-import type { EventMessage } from '$lib/server/ws/events.js';
+import { refreshAll } from '$app/navigation';
+import type { EventMessage } from '#lib/server/ws/events.js';
 
 // --- Page Classification ---
 
@@ -103,7 +103,7 @@ function hasGameId(event: EventMessage): event is EventMessage & { gameId: numbe
 // --- Debounce Utility ---
 
 /**
- * Create a debounced version of invalidateAll.
+ * Create a debounced version of refreshAll.
  * Multiple calls within the window (default 300ms) are coalesced into a single call.
  * Returns an object with `trigger()` to schedule and `cancel()` to clear.
  */
@@ -118,7 +118,7 @@ export function createInvalidateDebouncer(windowMs: number = 300) {
 		timer = setTimeout(() => {
 			timer = null;
 			callCount++;
-			invalidateAll();
+			refreshAll();
 		}, windowMs);
 	}
 
@@ -177,8 +177,8 @@ export function createWebSocketClient() {
 				// On reconnection, sync state — but only for live-update pages
 				const pathname = getPathname?.() ?? window.location.pathname;
 				if (!isStaticPage(pathname)) {
-					invalidateAll().catch((err) => {
-						console.warn('[ws] invalidateAll on reconnect failed:', err);
+					refreshAll().catch((err) => {
+						console.warn('[ws] refreshAll on reconnect failed:', err);
 					});
 				}
 			};

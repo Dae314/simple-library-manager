@@ -2,11 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { getContext, onMount } from 'svelte';
-	import SortableTable from '$lib/components/SortableTable.svelte';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
+	import SortableTable from '#lib/components/SortableTable.svelte';
+	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+	import ConnectionIndicator from '#lib/components/ConnectionIndicator.svelte';
 	import toast from 'svelte-hot-french-toast';
-	import { getPreferredPageSize, savePreferredPageSize } from '$lib/utils/page-size.js';
+	import { getPreferredPageSize, savePreferredPageSize } from '#lib/utils/page-size.js';
 
 	const wsClient: { connected: boolean } = getContext('ws');
 
@@ -83,7 +83,7 @@
 			}
 		}
 		url.searchParams.delete('page');
-		goto(url.toString(), { replaceState: true, keepFocus: true });
+		goto(url.toString(), { replace: true, reset: false });
 	}
 
 	function handleFilterChange(values: Record<string, any>) {
@@ -101,7 +101,7 @@
 	function handlePageChange(page: number) {
 		const url = new URL(window.location.href);
 		url.searchParams.set('page', String(page));
-		goto(url.toString(), { replaceState: true });
+		goto(url.toString(), { replace: true });
 	}
 
 	function handlePageSizeChange(size: number) {
@@ -109,7 +109,7 @@
 		const url = new URL(window.location.href);
 		url.searchParams.set('pageSize', String(size));
 		url.searchParams.set('page', '1');
-		goto(url.toString(), { replaceState: true });
+		goto(url.toString(), { replace: true });
 	}
 
 	// Apply stored page size preference when navigating to this page without an explicit pageSize param
@@ -120,7 +120,7 @@
 			if (preferred !== data.attendees.pageSize) {
 				currentUrl.searchParams.set('pageSize', String(preferred));
 				currentUrl.searchParams.set('page', '1');
-				goto(currentUrl.toString(), { replaceState: true });
+				goto(currentUrl.toString(), { replace: true });
 			}
 		}
 	});

@@ -1,9 +1,9 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { backupService } from '$lib/server/services/backup.js';
-import { broadcastFullResync } from '$lib/server/ws/broadcast.js';
-import { configService } from '$lib/server/services/config.js';
-import { authService } from '$lib/server/services/auth.js';
+import { backupService } from '#lib/server/services/backup.js';
+import { broadcastFullResync } from '#lib/server/ws/broadcast.js';
+import { configService } from '#lib/server/services/config.js';
+import { authService } from '#lib/server/services/auth.js';
 
 export const load: PageServerLoad = async () => {
 	return {};

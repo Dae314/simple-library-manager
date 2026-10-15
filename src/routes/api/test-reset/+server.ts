@@ -1,13 +1,13 @@
 import type { RequestHandler } from './$types';
-import { db } from '$lib/server/db/index.js';
-import { games, transactions, conventionConfig, idTypes } from '$lib/server/db/schema.js';
-import { seed } from '$lib/server/db/seed.js';
+import { db } from '#lib/server/db/index.js';
+import { games, transactions, conventionConfig, idTypes } from '#lib/server/db/schema.js';
+import { seed } from '#lib/server/db/seed.js';
 import { sql } from 'drizzle-orm';
-import { env } from '$env/dynamic/private';
+import { ALLOW_TEST_RESET } from '$app/env/private';
 
 export const POST: RequestHandler = async () => {
 	// Only allow in test environments
-	if (env.ALLOW_TEST_RESET !== 'true') {
+	if (ALLOW_TEST_RESET !== 'true') {
 		return new Response(JSON.stringify({ error: 'Not available' }), {
 			status: 404,
 			headers: { 'Content-Type': 'application/json' }

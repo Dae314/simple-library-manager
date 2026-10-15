@@ -49,8 +49,8 @@ npm run preview         # Preview the production build locally
 The production entry point is `server.js` (not the default adapter-node entry). It:
 1. Creates a `WebSocketServer` with `{ noServer: true }`
 2. Stores it on `globalThis.__wss` so `hooks.server.ts` can wire up connection tracking
-3. Imports `./build/index.js` (the adapter-node output) which starts the HTTP server
-4. Attaches an `upgrade` handler on the HTTP server for the `/ws` path
+3. Imports `./build/index.js` (the adapter-node output) which starts the HTTP server and exports it as `server` (adapter-node 6 exports the `node:http` Server directly; there is no Polka wrapper)
+4. Attaches an `upgrade` handler on that HTTP server for the `/ws` path
 5. Listens for `sveltekit:shutdown` to gracefully close WebSocket connections
 
 ## Docker (Production)
@@ -68,12 +68,21 @@ Services:
 
 The app waits for the database health check before starting. Timezone is set to `Pacific/Honolulu`.
 
+adapter-node 6 removed the `ORIGIN` env var. Because the LAN hostname isn't known at build time, the app derives its origin from Caddy's forwarded headers via `PROTOCOL_HEADER=x-forwarded-proto` and `HOST_HEADER=x-forwarded-host` (set in both `docker-compose.yml` and `docker-compose.test.yml`). This is only safe because the app port is `expose`d to Caddy and never published. Without `PROTOCOL_HEADER`, adapter-node assumes `https`.
+
+## Project Configuration
+
+- SvelteKit 3 has no `svelte.config.js`; the adapter (`out: 'build'`), `vitePreprocess()` and `csrf.trustedOrigins` are passed to `sveltekit({...})` in `vite.config.ts`.
+- `tsconfig.json` extends `$app/tsconfig` and declares explicit `include`/`exclude`.
+- `#lib/*` maps to `./src/lib/*` via the package.json `imports` field; it is resolved at build time, so the production image needs nothing extra.
+- TypeScript is held at 6.x: SvelteKit 3.1 peers on `typescript ^6` and svelte-check 4.7 does not support TypeScript 7 (the native port has no JS compiler API).
+
 ## WebSocket in Development vs Production
 
 | Concern | Development | Production |
 |---------|-------------|------------|
 | WSS creation | Vite plugin (`src/lib/server/ws/vite-plugin.ts`) | `server.js` before SvelteKit import |
-| HTTP upgrade | Plugin hooks into `server.httpServer` | `server.js` hooks into Polka's `server.server` |
+| HTTP upgrade | Plugin hooks into `server.httpServer` | `server.js` hooks into the exported `server` (a `node:http` Server in adapter-node 6) |
 | HMR safety | Plugin only handles `/ws` path, leaves other upgrades to Vite | N/A |
 | Connection tracking | `setupWebSocketServer()` called by plugin | `initWebSocket()` in `hooks.server.ts` picks up `globalThis.__wss` |
 

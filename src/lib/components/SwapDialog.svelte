@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { LibraryGameRecord } from '$lib/server/services/games.js';
-	import type { EventMessage } from '$lib/server/ws/events.js';
-	import { getWeightWarningLevel } from '$lib/utils/validation.js';
-	import { formatWeight } from '$lib/utils/formatting.js';
+	import type { LibraryGameRecord } from '#lib/server/services/games.js';
+	import type { EventMessage } from '#lib/server/ws/events.js';
+	import { getWeightWarningLevel } from '#lib/utils/validation.js';
+	import { formatWeight } from '#lib/utils/formatting.js';
 	import { getContext } from 'svelte';
-	import { invalidateAll } from '$app/navigation';
+	import { refreshAll } from '$app/navigation';
 	import toast from 'svelte-hot-french-toast';
 	import WeightWarning from './WeightWarning.svelte';
 
@@ -82,7 +82,7 @@
 
 		if (gameId === returnGameId || (newGameId !== undefined && gameId === newGameId)) {
 			statusChangeWarning = true;
-			invalidateAll();
+			refreshAll();
 		}
 
 		// Auto-update available games list when games become available/unavailable
@@ -267,8 +267,8 @@
 				toast.success('Game swap completed successfully!');
 				open = false;
 				onSuccess();
-				const { invalidateAll } = await import('$app/navigation');
-				await invalidateAll();
+				const { refreshAll } = await import('$app/navigation');
+				await refreshAll();
 			} else if (result.type === 'failure') {
 				const resultData = (result as any).data;
 				if (resultData?.conflict) {

@@ -7,11 +7,9 @@ globalThis.__wss = wss;
 
 // Importing build/index.js starts the HTTP server with all adapter-node
 // features: graceful shutdown, keep-alive timeout, headers timeout, request
-// tracking, and socket activation support.
-const { server } = await import('./build/index.js');
-
-// Access the underlying http.Server from the Polka instance.
-const httpServer = server.server;
+// tracking, and socket activation support. Since adapter-node 6 the exported
+// `server` is the underlying node:http Server itself (no Polka wrapper).
+const { server: httpServer } = await import('./build/index.js');
 
 // Handle HTTP upgrade requests — only accept our /ws path.
 httpServer.on('upgrade', (request, socket, head) => {

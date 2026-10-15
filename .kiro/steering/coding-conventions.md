@@ -6,7 +6,8 @@
 - Use `type` imports for type-only references: `import type { PageServerLoad } from './$types'`
 - Prefer `interface` for object shapes, `type` for unions and aliases
 - Use `.js` extensions in relative imports (required by ESM): `import { db } from '../db/index.js'`
-- Module resolution is `bundler`; use `$lib/` alias for `src/lib/` imports
+- Module resolution is `bundler`; use the `#lib/*` subpath import (package.json `imports` field) for `src/lib/` imports, always with an explicit extension: `import { db } from '#lib/server/db/index.js'`, `import Foo from '#lib/components/Foo.svelte'`
+- `tsconfig.json` extends `$app/tsconfig` (SvelteKit 3) and declares its own `include`/`exclude`. TypeScript stays on 6.x until svelte-check supports TypeScript 7
 
 ## Svelte 5
 
@@ -28,9 +29,13 @@
 
 - **Load functions**: Export `load` from `+page.server.ts` (or `+layout.server.ts`). Return plain objects.
 - **Form actions**: Export `actions` from `+page.server.ts`. Use `request.formData()` to parse input. Return `fail(statusCode, data)` for validation errors.
-- **API routes**: `+server.ts` files in `src/routes/api/`. Use `json()` helper for responses.
+- **API routes**: `+server.ts` files in `src/routes/api/`. Use `Response.json()` for responses (the `json()`/`text()` helpers from `@sveltejs/kit` are deprecated in SvelteKit 3).
 - **Error handling**: Use SvelteKit's `fail()` for expected errors in actions. Throw or re-throw for unexpected errors.
-- **Imports**: Use `$lib/` for library code, `$app/` for SvelteKit builtins.
+- **Imports**: Use `#lib/` for library code, `$app/` for SvelteKit builtins.
+- **Page state**: Use `page` from `$app/state` (not the removed `$app/stores` / `$page`). `page.url` is read-only; copy it (`new URL(window.location.href)`) before mutating search params.
+- **Navigation**: Use `refreshAll()` (not `invalidateAll()`). `goto` options are `replace` (was `replaceState`), `reset: false` (was `keepFocus`/`noScroll`) and `refreshAll` (was `invalidateAll`).
+- **Environment variables**: Declare Kit-managed env vars in `src/env.ts` with `defineEnvVars()` and import them from `$app/env/private` or `$app/env/public` (the `$env/*` modules are gone). `DATABASE_URL`/`AUTH_SECRET` stay on `process.env` because non-Kit scripts also read them.
+- **Config**: Project config lives in `sveltekit({...})` in `vite.config.ts` (adapter, preprocess, csrf). There is no `svelte.config.js`.
 - **Context**: Use `setContext`/`getContext` for shared state (e.g., the WebSocket client is set in root layout and consumed by pages).
 
 ## Service Layer
@@ -70,7 +75,7 @@
 - Client-side store in `src/lib/stores/websocket.svelte.ts` uses Svelte 5 runes (`$state()` for `connected`)
 - Event types are defined in `src/lib/server/ws/events.ts` and shared between server and client (game, transaction, and `attendee_created`/`attendee_updated`/`attendee_deleted` events)
 - Broadcast helpers in `src/lib/server/ws/broadcast.ts` provide typed convenience functions
-- `LIVE_UPDATE_PAGES` in the client store includes `/management/attendees`; the attendees page reacts to attendee events via `invalidateAll()`
+- `LIVE_UPDATE_PAGES` in the client store includes `/management/attendees`; the attendees page reacts to attendee events via `refreshAll()`
 - The connection manager is a singleton class tracking active WebSocket connections
 - Production uses a standalone `server.js` that creates the WSS before importing the SvelteKit build
 - Development uses a Vite plugin that attaches to the dev server's HTTP upgrade event (filtering by `/ws` path to avoid breaking Vite HMR)

@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import toast from 'svelte-hot-french-toast';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
 
 	type AttendeeRecord = {
 		id: number;

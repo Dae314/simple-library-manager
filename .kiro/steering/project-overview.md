@@ -4,7 +4,7 @@ This is a convention board game library management system for tracking game chec
 
 ## Tech Stack
 
-- **Framework**: SvelteKit 2 with Svelte 5 (TypeScript, `$props()` / `$derived()` runes)
+- **Framework**: SvelteKit 3 with Svelte 5 (TypeScript, `$props()` / `$derived()` runes)
 - **Database**: PostgreSQL 17 via Drizzle ORM
 - **Adapter**: `@sveltejs/adapter-node` (output to `build/`)
 - **Real-time**: WebSocket (`ws` library) with custom Vite plugin for dev, standalone `server.js` for production
@@ -21,6 +21,7 @@ This is a convention board game library management system for tracking game chec
 src/
 ├── app.css                        # Global CSS variables and resets
 ├── app.html                       # HTML shell
+├── env.ts                         # defineEnvVars() declarations for $app/env/private (ALLOW_TEST_RESET)
 ├── hooks.server.ts                # Runs migrations, seed, and WebSocket init on startup
 ├── lib/
 │   ├── components/                # Reusable Svelte 5 components (15 total)
@@ -87,6 +88,7 @@ src/
 │       ├── backup/export/         # DB export
 │       └── test-helpers, test-reset  # Test-only support endpoints
 server.js                          # Production entry: WebSocket + adapter-node
+vite.config.ts                     # Vite + sveltekit({ adapter, preprocess, csrf }) config (no svelte.config.js)
 tests/
 ├── properties/                    # Property-based tests (fast-check) — 19 files
 └── integration/                   # Playwright E2E tests — 28 files
@@ -132,7 +134,7 @@ The app uses WebSocket for live updates across all connected clients:
 - **Server**: `ws` library with `{ noServer: true }` mode, handling upgrades on `/ws` path
 - **Production**: `server.js` creates the WebSocketServer before importing the SvelteKit build, attaches upgrade handler to the HTTP server
 - **Development**: Vite plugin (`webSocketPlugin()`) attaches to the dev server without interfering with Vite's HMR WebSocket
-- **Client**: Svelte runes-based store (`websocket.svelte.ts`) with exponential backoff reconnection, debounced `invalidateAll()`, and conflict detection
+- **Client**: Svelte runes-based store (`websocket.svelte.ts`) with exponential backoff reconnection, debounced `refreshAll()`, and conflict detection
 - **Event types**: `game_created`, `game_updated`, `game_deleted`, `game_checked_out`, `game_checked_in`, `game_retired`, `game_restored`, `games_imported`, `games_batch_changed`, `transaction_created`, `attendee_created`, `attendee_updated`, `attendee_deleted`, `full_resync`
 - **Page routing**: Pages are classified as "live update" (library, games list, transactions, attendees) or "static" (statistics, config, backup). Only live-update pages react to events; `full_resync` triggers a reload on all pages.
 - **Conflict detection**: Game edit pages detect when the currently-edited game is modified by another user and show a warning. The Swap dialog extends this pattern to monitor two games at once (the return game and the selected new game).

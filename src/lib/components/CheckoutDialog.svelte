@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { LibraryGameRecord } from '$lib/server/services/games.js';
+	import type { LibraryGameRecord } from '#lib/server/services/games.js';
 	import AttendeeAutofill from './AttendeeAutofill.svelte';
 
 	let {

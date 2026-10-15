@@ -84,7 +84,7 @@ let gamesTable: unknown;
 let transactionsTable: unknown;
 
 // Mock the database module
-vi.mock('$lib/server/db/index.js', () => {
+vi.mock('#lib/server/db/index.js', () => {
 	const mockDb = {
 		select: vi.fn().mockImplementation((_fields?: unknown) => {
 			return {
@@ -111,11 +111,11 @@ vi.mock('$lib/server/db/index.js', () => {
 });
 
 // Import after mocking
-const schemaModule = await import('$lib/server/db/schema.js');
+const schemaModule = await import('#lib/server/db/schema.js');
 gamesTable = schemaModule.games;
 transactionsTable = schemaModule.transactions;
 
-const { gameService } = await import('$lib/server/services/games.js');
+const { gameService } = await import('#lib/server/services/games.js');
 
 beforeEach(() => {
 	mockDbOperations = [];

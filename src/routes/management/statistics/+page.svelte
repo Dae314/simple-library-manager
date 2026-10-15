@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import BarChart from '$lib/components/BarChart.svelte';
-	import FilterPanel from '$lib/components/FilterPanel.svelte';
-	import SortableTable from '$lib/components/SortableTable.svelte';
-	import GameTypeBadge from '$lib/components/GameTypeBadge.svelte';
-	import { formatDuration } from '$lib/utils/formatting.js';
+	import BarChart from '#lib/components/BarChart.svelte';
+	import FilterPanel from '#lib/components/FilterPanel.svelte';
+	import SortableTable from '#lib/components/SortableTable.svelte';
+	import GameTypeBadge from '#lib/components/GameTypeBadge.svelte';
+	import { formatDuration } from '#lib/utils/formatting.js';
 
-	import type { StatisticsResult, TopAttendeeItem } from '$lib/server/services/statistics.js';
+	import type { StatisticsResult, TopAttendeeItem } from '#lib/server/services/statistics.js';
 
 	type FilterValues = {
 		timeRangeStart: string;
@@ -86,7 +86,7 @@
 			}
 		}
 		url.searchParams.delete('page');
-		goto(url.toString(), { replaceState: true, keepFocus: true });
+		goto(url.toString(), { replace: true, reset: false });
 	}
 
 	function handleFilterChange(values: Record<string, any>) {
@@ -108,14 +108,14 @@
 	function handlePageChange(page: number) {
 		const url = new URL(window.location.href);
 		url.searchParams.set('page', String(page));
-		goto(url.toString(), { replaceState: true });
+		goto(url.toString(), { replace: true });
 	}
 
 	function handlePageSizeChange(size: number) {
 		const url = new URL(window.location.href);
 		url.searchParams.set('pageSize', String(size));
 		url.searchParams.set('page', '1');
-		goto(url.toString(), { replaceState: true });
+		goto(url.toString(), { replace: true });
 	}
 
 	function statusLabel(status: string): string {

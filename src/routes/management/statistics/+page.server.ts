@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
-import { statisticsService, type StatisticsFilters, type TopGamesSortField } from '$lib/server/services/statistics.js';
-import { configService } from '$lib/server/services/config.js';
+import { statisticsService, type StatisticsFilters, type TopGamesSortField } from '#lib/server/services/statistics.js';
+import { configService } from '#lib/server/services/config.js';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const timeRangeStart = url.searchParams.get('timeRangeStart') || '';

@@ -21,6 +21,10 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/boardgames
       - NODE_ENV=production
+      # adapter-node 6 removed ORIGIN; derive the request origin from Caddy's
+      # forwarded headers (the app port is only exposed to Caddy, never published).
+      - PROTOCOL_HEADER=x-forwarded-proto
+      - HOST_HEADER=x-forwarded-host
       - TZ=Pacific/Honolulu
     depends_on:
       db:

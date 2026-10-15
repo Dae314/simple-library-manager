@@ -1,9 +1,9 @@
 import type { Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
-import { gameService } from '$lib/server/services/games.js';
-import { validateGameInput } from '$lib/server/validation.js';
-import { isDuplicateKeyError, getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
-import { broadcastGameEvent } from '$lib/server/ws/broadcast.js';
+import { gameService } from '#lib/server/services/games.js';
+import { validateGameInput } from '#lib/server/validation.js';
+import { isDuplicateKeyError, getUserFriendlyDbMessage } from '#lib/server/services/db-errors.js';
+import { broadcastGameEvent } from '#lib/server/ws/broadcast.js';
 
 export const actions: Actions = {
 	default: async ({ request }) => {

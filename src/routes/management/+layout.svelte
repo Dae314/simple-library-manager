@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { refreshAll } from '$app/navigation';
 	import type { Snippet } from 'svelte';
 
 	let { data, form, children }: {
@@ -25,7 +25,7 @@
 				loginError = '';
 				return async ({ result }) => {
 					if (result.type === 'success') {
-						await invalidateAll();
+						await refreshAll();
 					} else if (result.type === 'failure') {
 						const data = result.data as Record<string, any> | undefined;
 						loginError = data?.loginError ?? 'Login failed';

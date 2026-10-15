@@ -1,11 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
-import { gameService } from '$lib/server/services/games.js';
-import { validateGameInput } from '$lib/server/validation.js';
-import { isDuplicateKeyError, getUserFriendlyDbMessage } from '$lib/server/services/db-errors.js';
-import { broadcastGameEvent, broadcastTransactionEvent } from '$lib/server/ws/broadcast.js';
-import { configService } from '$lib/server/services/config.js';
-import { authService } from '$lib/server/services/auth.js';
+import { gameService } from '#lib/server/services/games.js';
+import { validateGameInput } from '#lib/server/validation.js';
+import { isDuplicateKeyError, getUserFriendlyDbMessage } from '#lib/server/services/db-errors.js';
+import { broadcastGameEvent, broadcastTransactionEvent } from '#lib/server/ws/broadcast.js';
+import { configService } from '#lib/server/services/config.js';
+import { authService } from '#lib/server/services/auth.js';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const id = parseInt(params.id, 10);

@@ -1,9 +1,9 @@
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
-import { attendeeService } from '$lib/server/services/attendees.js';
-import { configService } from '$lib/server/services/config.js';
-import { validateAttendeeInput } from '$lib/server/validation.js';
-import { broadcastAttendeeEvent } from '$lib/server/ws/broadcast.js';
+import { attendeeService } from '#lib/server/services/attendees.js';
+import { configService } from '#lib/server/services/config.js';
+import { validateAttendeeInput } from '#lib/server/validation.js';
+import { broadcastAttendeeEvent } from '#lib/server/ws/broadcast.js';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const id = parseInt(params.id, 10);

@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import fc from 'fast-check';
 import { WebSocket } from 'ws';
-import { connectionManager } from '$lib/server/ws/connection-manager.js';
-import type { EventMessage } from '$lib/server/ws/events.js';
+import { connectionManager } from '#lib/server/ws/connection-manager.js';
+import type { EventMessage } from '#lib/server/ws/events.js';
 import {
 	calculateReconnectDelay,
 	handleEvent,
 	LIVE_UPDATE_PAGES,
 	STATIC_PAGES
-} from '$lib/stores/websocket.svelte.js';
+} from '#lib/stores/websocket.svelte.js';
 
 // Mock $app/navigation so the module can be imported without SvelteKit runtime
 vi.mock('$app/navigation', () => ({
-	invalidateAll: vi.fn(() => Promise.resolve())
+	refreshAll: vi.fn(() => Promise.resolve())
 }));
 
 /**
@@ -417,25 +417,25 @@ describe('Property 6: Static_Pages ignore all events', () => {
  * Property 7: Debounce coalesces rapid events
  *
  * For any number of events N (where N >= 2) arriving within the debounce window,
- * the debounce mechanism shall produce exactly 1 invalidateAll call rather than N calls.
+ * the debounce mechanism shall produce exactly 1 refreshAll call rather than N calls.
  *
  * Feature: real-time-game-updates, Property 7: Debounce coalesces rapid events
  * Validates: Requirements 4.5
  */
 describe('Property 7: Debounce coalesces rapid events', () => {
-	it('coalesces N rapid triggers into exactly 1 invalidateAll call', async () => {
-		const { invalidateAll: mockInvalidateAll } = await import('$app/navigation');
+	it('coalesces N rapid triggers into exactly 1 refreshAll call', async () => {
+		const { refreshAll: mockRefreshAll } = await import('$app/navigation');
 
 		fc.assert(
 			fc.property(
 				fc.integer({ min: 2, max: 50 }),
 				(n) => {
 					// Reset mock call count
-					(mockInvalidateAll as ReturnType<typeof vi.fn>).mockClear();
+					(mockRefreshAll as ReturnType<typeof vi.fn>).mockClear();
 
 					// Use a very short debounce window for testing
 					// We can't use the real createInvalidateDebouncer because it calls
-					// the real invalidateAll. Instead, test the debounce pattern directly.
+					// the real refreshAll. Instead, test the debounce pattern directly.
 					let timer: ReturnType<typeof setTimeout> | null = null;
 					let callCount = 0;
 

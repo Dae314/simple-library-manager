@@ -1,10 +1,10 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { db } from '$lib/server/db/index.js';
-import { games } from '$lib/server/db/schema.js';
+import { db } from '#lib/server/db/index.js';
+import { games } from '#lib/server/db/schema.js';
 import { count, eq } from 'drizzle-orm';
-import { configService } from '$lib/server/services/config.js';
-import { authService } from '$lib/server/services/auth.js';
+import { configService } from '#lib/server/services/config.js';
+import { authService } from '#lib/server/services/auth.js';
 
 const COOKIE_NAME = 'mgmt_session';
 

@@ -66,7 +66,7 @@ docker compose down -v
 
 ## Tech Stack
 
-- **Frontend**: SvelteKit 2 with Svelte 5 (TypeScript)
+- **Frontend**: SvelteKit 3 with Svelte 5 (TypeScript)
 - **Database**: PostgreSQL 17
 - **ORM**: Drizzle ORM
 - **Reverse Proxy**: Caddy (HTTP)
