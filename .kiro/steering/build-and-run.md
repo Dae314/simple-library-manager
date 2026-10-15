@@ -39,6 +39,8 @@ npm run check           # One-shot svelte-check + TypeScript
 npm run check:watch     # Watch mode (for local dev only)
 ```
 
+`npm install` runs the `prepare` script (`svelte-kit sync || echo ''`), which regenerates `.svelte-kit/tsconfig.json` and the `$types`. Run `npx svelte-kit sync` (or `npm run prepare`) manually if `tsconfig.json` complains about a missing `.svelte-kit/tsconfig.json`. `check` and `check:watch` also sync first.
+
 ## Static Analysis (Fallow)
 
 ```bash
@@ -109,6 +111,8 @@ adapter-node 6 removed the `ORIGIN` env var. Because the LAN hostname isn't know
 ```bash
 npm run test            # Vitest property-based + unit tests (single run)
 npm run test:e2e        # Full E2E: build Docker test env → Playwright → teardown
+npm run test:unit       # Alias of `npm run test` (vitest run)
+npm run test:integration  # Bare `playwright test` (expects the test Docker environment already running)
 npm run test:e2e:setup  # Just start the test Docker environment
 npm run test:e2e:teardown  # Just tear down the test Docker environment
 npm run fallow          # Static analysis: dead code, duplication, complexity
